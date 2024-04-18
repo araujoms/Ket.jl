@@ -10,4 +10,9 @@ include("games.jl")
 include("sicpovm.jl")
 include("entropy.jl")
 
+import Requires
+function __init__()
+    Requires.@require MATLAB = "10e44e05-a98a-55b3-a45b-ba969058deb6" include("TsirelsonBoundMATLAB.jl")
+end
+
 end # module Ket
