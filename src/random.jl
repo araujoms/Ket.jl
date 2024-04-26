@@ -40,13 +40,24 @@ export random_unitary
 """
     random_povm(d::Integer, n::Integer, r::Integer)
 
-Produces a random POVM of dimension `d` with `n` outcomes and rank `r`.
+Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k,d)`.
+
+Reference: Heinosaari et al., https://arxiv.org/abs/1902.04751
 """
-function random_povm(d::Integer, n::Integer, r::Integer=1; T::Type = Float64, R::Type = Complex{T})
-    d <= r * n || throw(ArgumentError("We need d ≤ n*r, but got d = $(d) and n*r = $(n*r)"))
-    U = random_unitary(r * n; T, R)
-    V = U[:, 1:d]
-    E = LA.Hermitian.([V' * kron(LA.I(r), proj(i, n; T, R)) * V for i = 1:n])
-    return E
+function random_povm(d::Integer, n::Integer, k::Integer = d; T::Type = Float64, R::Type = Complex{T})
+    d <= n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n*k)"))
+    E = [Matrix{R}(undef, (d, d)) for _ = 1:n]
+    for i = 1:n
+        G = randn(R, (d, k))
+        LA.mul!(E[i], G, G')
+    end
+    S = sum(LA.Hermitian.(E))
+    rootinvS = sqrt(inv(S)) #don't worry, the probability of getting a singular S is zero
+    mat = Matrix{R}(undef, (d, d))
+    for i = 1:n
+        LA.mul!(mat, rootinvS, E[i])
+        LA.mul!(E[i], mat, rootinvS)
+    end
+    return LA.Hermitian.(E)
 end
 export random_povm
