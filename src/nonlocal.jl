@@ -1,6 +1,6 @@
 """
     local_bound(G::Array{T,4})
-    
+
 Computes the local bound of a bipartite Bell functional `G`, written in full probability notation
 as a 4-dimensional array.
 """
@@ -51,7 +51,8 @@ end
     partition(n::Integer, k::Integer)
 
 If `n >= k` partitions the set `1:n` into `k` parts as equally sized as possible.
-Otherwise partitions it into `n` parts of size 1."""
+Otherwise partitions it into `n` parts of size 1.
+"""
 function partition(n::T, k::T) where {T<:Integer}
     num_parts = min(k, n)
     parts = Vector{Tuple{T,T}}(undef, num_parts)
@@ -73,7 +74,7 @@ function partition(n::T, k::T) where {T<:Integer}
     end
     return parts
 end
-export partition
+export partition # SD: is it necessary?
 
 #copyed from QETLAB
 function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)

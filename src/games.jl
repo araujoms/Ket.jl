@@ -1,8 +1,9 @@
 """
     chshd(d::Integer)
-    
+
 CHSH-d nonlocal game in full probability notation
-Reference: Buhrman and Massar, https://arxiv.org/abs/quant-ph/0409066
+
+Reference: Buhrman and Massar, https://arxiv.org/abs/quant-ph/0409066.
 """
 function chshd(d::Integer; T::Type = Float64)
     G = zeros(T, d, d, d, d)
@@ -18,13 +19,14 @@ function chshd(d::Integer; T::Type = Float64)
 end
 export chshd
 
-chsh(; T = Float64) = chshd(2; T)
+chsh(; T = Float64) = chshd(2; T) # SD: why not having chsh(d::Integer = 2) above?
 export chsh
 
 """
     cglmp(d::Integer)
-    
+
 CGLMP nonlocal game in full probability notation
+
 References: https://arxiv.org/abs/quant-ph/0106024 for the original game, and
 https://arxiv.org/abs/2005.13418 for the form presented here.
 """

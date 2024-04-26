@@ -1,6 +1,8 @@
 """
     ket(i::Integer, d::Integer; T=ComplexF64)
-Produces a ket of dimension `d` with nonzero element `i`."""
+
+Produces a ket of dimension `d` with nonzero element `i`.
+"""
 function ket(i::Integer, d::Integer; T::Type = Float64, R::Type = Complex{T})
     psi = zeros(R, d)
     psi[i] = R(1)

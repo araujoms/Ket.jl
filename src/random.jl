@@ -3,7 +3,7 @@
 
 Produces a uniformly distributed random quantum state in dimension `d` with rank `k`.
 
-Reference: Życzkowski and Sommers, https://arxiv.org/abs/quant-ph/0012101
+Reference: Życzkowski and Sommers, https://arxiv.org/abs/quant-ph/0012101.
 """
 function random_state(d::Integer, k::Integer = d; T::Type = Float64, R::Type = Complex{T})
     x = randn(R, (d, k))
@@ -24,10 +24,10 @@ export random_state_pure_vector
 """
     random_unitary(d::Integer; T::Type, R::Type = Complex{T})
 
-Produces a Haar-random unitary matrix in dimension `d`. If `R` is a real type the output is instead
-a Haar-random (real) orthogonal matrix.
+Produces a Haar-random unitary matrix in dimension `d`.
+If `R` is a real type the output is instead a Haar-random (real) orthogonal matrix.
 
-Reference: Mezzadri, https://arxiv.org/abs/math-ph/0609050
+Reference: Mezzadri, https://arxiv.org/abs/math-ph/0609050.
 """
 function random_unitary(d::Integer; T::Type = Float64, R::Type = Complex{T})
     z = randn(R, (d, d))
@@ -42,7 +42,7 @@ export random_unitary
 
 Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k,d)`.
 
-Reference: Heinosaari et al., https://arxiv.org/abs/1902.04751
+Reference: Heinosaari et al., https://arxiv.org/abs/1902.04751.
 """
 function random_povm(d::Integer, n::Integer, k::Integer = d; T::Type = Float64, R::Type = Complex{T})
     d <= n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n*k)"))

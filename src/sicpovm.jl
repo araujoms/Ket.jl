@@ -74,9 +74,12 @@ function dilate_povm(E::Vector{<:AbstractMatrix})
     return V = sum(kron(rtE[i], ket(i, n)) for i = 1:n)
 end
 
-"""Computes the fiducial Weyl-Heisenberg vector of dimension `d`
+"""
+    _fiducial_WH(d::Integer)
 
-Reference: Appleby, Yadsan-Appleby, Zauner, http://arxiv.org/abs/1209.1813 http://www.gerhardzauner.at/sicfiducials.html
+Computes the fiducial Weyl-Heisenberg vector of dimension `d`.
+
+Reference: Appleby, Yadsan-Appleby, Zauner, http://arxiv.org/abs/1209.1813 http://www.gerhardzauner.at/sicfiducials.html.
 """
 function _fiducial_WH(d::Integer; T::Type = Float64)
     maxd = 7
