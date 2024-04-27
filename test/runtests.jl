@@ -1,6 +1,7 @@
 using Ket
 using Test
-
+using DoubleFloats
+using Quadmath
 
 tests = ["norms.jl"]
 
