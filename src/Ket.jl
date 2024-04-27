@@ -9,6 +9,7 @@ include("random.jl")
 include("games.jl")
 include("sicpovm.jl")
 include("entropy.jl")
+include("norms.jl")
 
 import Requires
 function __init__()
