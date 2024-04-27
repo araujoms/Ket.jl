@@ -26,7 +26,7 @@ export trace_norm
 """
 function frobenius_norm(X::AbstractMatrix)
     # Faster than schatten_norm(X,2)
-    return sqrt(LA.tr(X * X'))
+    return sqrt(real(LA.dot(X, X)))
 end
 export frobenius_norm
 
