@@ -1,4 +1,9 @@
 @testset "Measurements" begin
+    @testset "SIC POVMs" begin
+        for T in [Float16, Float32, Float64, Double64, Float128, BigFloat], d in 1:7
+            @test test_sic(sic_povm(d; T))
+        end
+    end
     @testset "MUBs" begin
         for T in [Float16, Float32, Float64, Double64, Float128, BigFloat]
             @test test_mub(mub(2; T))
