@@ -379,6 +379,11 @@ end
 
 # MUBs
 
+# auxiliary function to compute the trace in finite fields as an Int
+function _tr_ff(a::Nemo.FqFieldElem)
+    Int(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
+end
+
 """
 Construction of the standard complete set of MUBs.
 The output contains min_i p_i^r_i+1 bases where d = p_1^r_1*...*p_n^r_n.
@@ -387,11 +392,6 @@ Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.334
 function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    # auxiliary function to compute the trace in finite fields as an Int
-    # is quite dirty, but I could not find the proper syntax in Nemo (SD)
-    function tr_ff(a)
-        parse(Int, string(Nemo.tr(a)))
-    end
     f = collect(Primes.factor(d))
     p = f[1][1]
     r = f[1][2]
@@ -424,14 +424,14 @@ function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
                 aux = one(R)
                 q_bin = digits(q; base = 2, pad = r)
                 for m in 0:r-1, n in 0:r-1
-                    aux *= conj(im^tr_ff(el[i]*el[q_bin[m+1]*2^m+1]*el[q_bin[n+1]*2^n+1]))
+                    aux *= conj(im^_tr_ff(el[i]*el[q_bin[m+1]*2^m+1]*el[q_bin[n+1]*2^n+1]))
                 end
-                B[:, k+1, i+1] += (-1)^tr_ff(el[q+1]*el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
+                B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1]*el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
             end
         else
             inv_two = inv(2*one(f))
             for i in 1:d, k in 0:d-1, q in 0:d-1
-                B[:, k+1, i+1] += γ^tr_ff(-el[q+1]*el[k+1]) * γ^tr_ff(el[i]*el[q+1]*el[q+1]*inv_two) * B[:, q+1, 1] * inv_sqrt_d
+                B[:, k+1, i+1] += γ^_tr_ff(-el[q+1]*el[k+1]) * γ^_tr_ff(el[i]*el[q+1]*el[q+1]*inv_two) * B[:, q+1, 1] * inv_sqrt_d
             end
         end
     end
