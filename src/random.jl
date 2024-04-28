@@ -45,7 +45,7 @@ Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k,d)`.
 Reference: Heinosaari et al., https://arxiv.org/abs/1902.04751.
 """
 function random_povm(d::Integer, n::Integer, k::Integer = d; T::Type = Float64, R::Type = Complex{T})
-    d <= n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n*k)"))
+    d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n*k)"))
     E = [Matrix{R}(undef, (d, d)) for _ = 1:n]
     for i = 1:n
         G = randn(R, (d, k))

@@ -50,7 +50,7 @@ end
 """
     partition(n::Integer, k::Integer)
 
-If `n >= k` partitions the set `1:n` into `k` parts as equally sized as possible.
+If `n ≥ k` partitions the set `1:n` into `k` parts as equally sized as possible.
 Otherwise partitions it into `n` parts of size 1.
 """
 function partition(n::T, k::T) where {T<:Integer}
@@ -64,11 +64,11 @@ function partition(n::T, k::T) where {T<:Integer}
         parts[1] = (1, base_size)
     end
     i = 2
-    while i <= num_larger
+    while i ≤ num_larger
         parts[i] = (1, base_size + 1) .+ parts[i-1][2]
         i += 1
     end
-    while i <= num_parts
+    while i ≤ num_parts
         parts[i] = (1, base_size) .+ parts[i-1][2]
         i += 1
     end
@@ -88,9 +88,9 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
     for j = ind_len:-1:1
         # If we've hit the upper limit in this entry, move onto the next
         # entry.
-        if ind[j] >= upper_lim
+        if ind[j] ≥ upper_lim
             ind[j] = 0
-            if j >= 2
+            if j ≥ 2
                 ind[j-1] += 1
             else # we're at the left end of the vector; just stop
                 return
