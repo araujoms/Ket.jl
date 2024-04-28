@@ -392,7 +392,7 @@ Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.334
 function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    f = collect(Primes.factor(d))
+    f = collect(Nemo.factor(d))
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors

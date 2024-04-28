@@ -5,7 +5,6 @@ import CyclotomicNumbers as CN
 import GenericLinearAlgebra
 import LinearAlgebra as LA
 import Nemo
-import Primes
 
 include("states.jl")
 include("nonlocal.jl")
