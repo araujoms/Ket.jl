@@ -78,7 +78,7 @@ function _cleanup!(M; eps::Real = 1e-10)
     return M[abs.(M).<eps] .= 0
 end
 
-function applykraus(K,M)
+function applykraus(K, M)
     return sum(LA.Hermitian(Ki*M*Ki') for Ki in K)
 end
 export applykraus

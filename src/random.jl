@@ -40,7 +40,7 @@ export random_unitary
 """
     random_povm(d::Integer, n::Integer, r::Integer)
 
-Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k,d)`.
+Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k, d)`.
 
 Reference: Heinosaari et al., https://arxiv.org/abs/1902.04751.
 """
