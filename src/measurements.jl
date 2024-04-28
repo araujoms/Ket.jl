@@ -397,7 +397,7 @@ function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
     r = f[1][2]
     if length(f) > 1 # different prime factors
         B_aux1 = mub(p^r; T, R)
-        B_aux2 = mub(d÷p^r; T, R)
+        B_aux2 = mub(d ÷ p^r; T, R)
         k = min(size(B_aux1, 3), size(B_aux2, 3))
         B = zeros(R, d, d, k)
         for j in 1:k
@@ -422,7 +422,7 @@ function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
         if p == 2
             for i in 1:d, k in 0:d-1, q in 0:d-1
                 aux = one(R)
-                q_bin = digits(q; base=2, pad=r)
+                q_bin = digits(q; base = 2, pad = r)
                 for m in 0:r-1, n in 0:r-1
                     aux *= conj(im^tr_ff(el[i]*el[q_bin[m+1]*2^m+1]*el[q_bin[n+1]*2^n+1]))
                 end
@@ -448,30 +448,13 @@ function mub(d::Int, k::Int, s::Int = 1; T::Type = Float64, R::Type = Complex{T}
 end
 
 # Check whether the input is indeed mutually unbiased
-function test_mub(B::Array{Complex{T},3}) where {T<:AbstractFloat}
-    tol = Base.rtoldefault(T)
-    d = size(B, 1)
-    k = size(B, 3)
-    inv_d = 1 / T(d)
-    for x in 1:k, y in x:k, a in 1:d, b in 1:d
-        # expected scalar product squared
-        if x == y
-            sc2_exp = T(a == b)
-        else
-            sc2_exp = inv_d
-        end
-        sc2 = LA.dot(B[:, a, x], B[:, b, y])
-        sc2 *= conj(sc2)
-        if abs(sc2 - sc2_exp) > tol
-            return false
-        end
+function test_mub(B::Array{R,3}) where {R<:Number}
+    T = real(R)
+    if R <: Complex && T <: AbstractFloat
+        tol = eps(T)
+    else
+        tol = T(0)
     end
-    return true
-end
-export test_mub
-
-# Check whether the input is indeed mutually unbiased
-function test_mub(B::Array{R,3}) where {R<:CN.Cyc}
     d = size(B, 1)
     k = size(B, 3)
     inv_d = 1 / R(d)
@@ -484,9 +467,10 @@ function test_mub(B::Array{R,3}) where {R<:CN.Cyc}
         end
         sc2 = LA.dot(B[:, a, x], B[:, b, y])
         sc2 *= conj(sc2)
-        if sc2 != sc2_exp
+        if abs2(sc2 - sc2_exp) > tol
             return false
         end
     end
     return true
 end
+export test_mub
