@@ -55,27 +55,31 @@ function anti_iso(v::Real, d::Integer; T::Type = Float64)
 end
 export anti_iso
 
-"Zeroes out real or imaginary parts of M that are smaller than `eps`"
-function cleanup!(M::Array{R}; eps::Real = 1e-10) where {R<:Complex}
-    M2 = reinterpret(real(R), M)
-    _cleanup!(M2; eps)
+"Zeroes out real or imaginary parts of M that are smaller than `tol`"
+function cleanup!(M::Array{Complex{T}}; tol::T = Base.rtoldefault(T)) where {T<:Real}
+    M2 = reinterpret(T, M)
+    _cleanup!(M2; tol)
     return M
 end
 export cleanup!
 
-function cleanup!(M::Array{<:Real}; eps::Real = 1e-10)
-    _cleanup!(M; eps)
+function cleanup!(M::Array{T}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
+    _cleanup!(M; tol)
     return M
 end
 
-function cleanup!(M::AbstractMatrix; eps::Real = 1e-10)
+function cleanup!(M::AbstractArray{T}; tol::T = T(0)) where {T<:Number}
+    return M
+end
+
+function cleanup!(M::Union{AbstractMatrix{Complex{T}},AbstractMatrix{T}}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
     wrapper = Base.typename(typeof(M)).wrapper
-    cleanup!(parent(M); eps)
+    cleanup!(parent(M); tol)
     return wrapper(M)
 end
 
-function _cleanup!(M; eps::Real = 1e-10)
-    return M[abs.(M).<eps] .= 0
+function _cleanup!(M::AbstractArray{T}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
+    return M[abs.(M).<tol] .= 0
 end
 
 function applykraus(K, M)
