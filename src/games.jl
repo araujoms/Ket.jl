@@ -1,11 +1,11 @@
 """
-    chshd(d::Integer)
+    chsh(d::Integer = 2)
 
 CHSH-d nonlocal game in full probability notation
 
 Reference: Buhrman and Massar, https://arxiv.org/abs/quant-ph/0409066.
 """
-function chshd(d::Integer; T::Type = Float64)
+function chsh(d::Integer = 2; T::Type = Float64)
     G = zeros(T, d, d, d, d)
 
     for a = 0:d-1, b = 0:d-1, x = 0:d-1, y = 0:d-1
@@ -17,9 +17,6 @@ function chshd(d::Integer; T::Type = Float64)
     #G /= d^2
     return G
 end
-export chshd
-
-chsh(; T = Float64) = chshd(2; T) # SD: why not having chsh(d::Integer = 2) above?
 export chsh
 
 """
