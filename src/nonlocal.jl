@@ -74,7 +74,7 @@ function partition(n::T, k::T) where {T<:Integer}
     end
     return parts
 end
-export partition # SD: is it necessary?
+export partition
 
 #copyed from QETLAB
 function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
