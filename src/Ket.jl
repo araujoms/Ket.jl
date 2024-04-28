@@ -11,7 +11,7 @@ include("states.jl")
 include("nonlocal.jl")
 include("random.jl")
 include("games.jl")
-include("sicpovm.jl")
+include("measurements.jl")
 include("entropy.jl")
 include("norms.jl")
 
