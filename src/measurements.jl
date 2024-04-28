@@ -1,3 +1,5 @@
+# SIC POVMs
+
 function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64)
     X = zeros(Complex{T}, d, d)
     for i = 0:d-1
