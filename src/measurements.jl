@@ -442,8 +442,8 @@ export mub
 # Select a specific subset with k bases
 function mub(d::Int, k::Int, s::Int = 1; T::Type = Float64, R::Type = Complex{T})
     B = mub(d; T, R)
-    subs = collect(Combinatorics.combinations(1:size(B, 3), k))
-    sub = subs[s]
+    subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k)), s)
+    sub = subs[end]
     return B[:, :, sub]
 end
 
