@@ -1,7 +1,7 @@
 # SIC POVMs
 
-function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64)
-    X = zeros(Complex{T}, d, d)
+function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
+    X = zeros(R, d, d)
     for i = 0:d-1
         X[mod(i + p, d)+1, i+1] = 1
     end
@@ -9,8 +9,8 @@ function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64)
 end
 export shift_operator
 
-function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
-    z = zeros(Complex{T}, d)
+function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
+    z = zeros(R, d)
     for i = 0:d-1
         if mod(i * p, d) == 0
             z[i+1] = 1
@@ -28,13 +28,13 @@ function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
 end
 export clock_operator
 
-function sic_povm(d; T::Type = Float64)
+function sic_povm(d; T::Type = Float64, R::Type = Complex{T})
     fiducial = _fiducial_WH(d; T)
-    vecs = Vector{Vector{Complex{T}}}(undef, d^2)
+    vecs = Vector{Vector{R}}(undef, d^2)
     for p = 0:d-1
-        Xp = shift_operator(d, p; T)
+        Xp = shift_operator(d, p; T, R)
         for q = 0:d-1
-            Zq = clock_operator(d, q; T)
+            Zq = clock_operator(d, q; T, R)
             vecs[d*p+q+1] = Xp * Zq * fiducial
         end
     end
@@ -48,10 +48,8 @@ export sic_povm
 function test_sic(vecs::Vector{Vector{Complex{T}}}) where {T<:Real}
     d = length(vecs[1])
     m = zeros(T, d^2, d^2)
-    for j = 1:d^2
-        for i = 1:j
-            m[i, j] = abs2(vecs[i]' * vecs[j])
-        end
+    for j = 1:d^2, i = 1:j
+        m[i, j] = abs2(vecs[i]' * vecs[j])
     end
     is_normalized = LA.diag(m) ≈ T(1) / d^2 * ones(d^2)
     is_uniform = LA.triu(m, 1) ≈ (1 / T(d^2 * (d + 1))) * LA.triu(ones(d^2, d^2), 1)
@@ -386,7 +384,7 @@ Construction of the standard complete set of MUBs.
 The output contains min_i p_i^r_i+1 bases where d = p_1^r_1*...*p_n^r_n.
 Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
 """
-function mub(d::Int; T = ComplexF64)
+function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
     # auxiliary function to compute the trace in finite fields as an Int
@@ -398,24 +396,24 @@ function mub(d::Int; T = ComplexF64)
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors
-        B_aux1 = mub(p^r; T)
-        B_aux2 = mub(d÷p^r; T)
+        B_aux1 = mub(p^r; T, R)
+        B_aux2 = mub(d÷p^r; T, R)
         k = min(size(B_aux1, 3), size(B_aux2, 3))
-        B = zeros(T, d, d, k)
+        B = zeros(R, d, d, k)
         for j in 1:k
             B[:, :, j] = kron(B_aux1[:, :, j], B_aux2[:, :, j])
         end
     else # prime power
-        if T <: Complex
-            γ = exp(2*im*T(π)/p)
-            inv_sqrt_d = 1 / √T(d)
-        elseif T <: CN.Cyc
+        if R <: Complex
+            γ = exp(2*im*R(π)/p)
+            inv_sqrt_d = 1 / √R(d)
+        elseif R <: CN.Cyc
             γ = CN.E(p)
-            inv_sqrt_d = inv(CN.root(T(d)))
+            inv_sqrt_d = inv(CN.root(R(d)))
         else
-            error("Datatype ", T, " not supported")
+            error("Datatype ", R, " not supported")
         end
-        B = zeros(T, d, d, d+1)
+        B = zeros(R, d, d, d+1)
         B[:, :, 1] .= Matrix(LA.I, d, d)
         f, x = Nemo.finite_field(p, r, "x") # syntax for newer versions of Nemo
         #  f, x = FiniteField(p, r, "x") # syntax for older versions of Nemo
@@ -423,7 +421,7 @@ function mub(d::Int; T = ComplexF64)
         el = [sum(digits(i; base=p, pad=r) .* pow) for i in 0:d-1]
         if p == 2
             for i in 1:d, k in 0:d-1, q in 0:d-1
-                aux = one(T)
+                aux = one(R)
                 q_bin = digits(q; base=2, pad=r)
                 for m in 0:r-1, n in 0:r-1
                     aux *= conj(im^tr_ff(el[i]*el[q_bin[m+1]*2^m+1]*el[q_bin[n+1]*2^n+1]))
@@ -442,20 +440,15 @@ end
 export mub
 
 # Select a specific subset with k bases
-function mub(d::Int, k::Int, s::Int; T = ComplexF64)
-    B = mub(d; T)
+function mub(d::Int, k::Int, s::Int = 1; T::Type = Float64, R::Type = Complex{T})
+    B = mub(d; T, R)
     subs = collect(Combinatorics.combinations(1:size(B, 3), k))
     sub = subs[s]
     return B[:, :, sub]
 end
 
-# Select the first subset with k bases
-function mub(d::Int, k::Int; T = ComplexF64)
-    return mub(d, k, 1; T)
-end
-
 # Check whether the input is indeed mutually unbiased
-function _check_mutually_unbiased(B::Array{Complex{T},3}) where {T<:AbstractFloat}
+function test_mub(B::Array{Complex{T},3}) where {T<:AbstractFloat}
     tol = Base.rtoldefault(T)
     d = size(B, 1)
     k = size(B, 3)
@@ -475,16 +468,17 @@ function _check_mutually_unbiased(B::Array{Complex{T},3}) where {T<:AbstractFloa
     end
     return true
 end
+export test_mub
 
 # Check whether the input is indeed mutually unbiased
-function _check_mutually_unbiased(B::Array{T,3}) where {T<:CN.Cyc}
+function test_mub(B::Array{R,3}) where {R<:CN.Cyc}
     d = size(B, 1)
     k = size(B, 3)
-    inv_d = 1 / T(d)
+    inv_d = 1 / R(d)
     for x in 1:k, y in x:k, a in 1:d, b in 1:d
         # expected scalar product squared
         if x == y
-            sc2_exp = T(a == b)
+            sc2_exp = R(a == b)
         else
             sc2_exp = inv_d
         end
