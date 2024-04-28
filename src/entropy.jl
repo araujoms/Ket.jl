@@ -9,10 +9,8 @@ function relative_entropy(ρ::AbstractMatrix, σ::AbstractMatrix; base::Real = 2
     logρ = _goodlog.(Ref(base), ρ_fact.values)
     logσ = log.(Ref(base), σ_fact.values)
     h = T(0)
-    for j = 1:d
-        for i = 1:d
-            @views h += ρ_fact.values[i] * (logρ[i] - logσ[j]) * m[i, j]
-        end
+    for j = 1:d, i = 1:d
+        @views h += ρ_fact.values[i] * (logρ[i] - logσ[j]) * m[i, j]
     end
     return h
 end
@@ -29,10 +27,8 @@ function conditional_entropy(p::AbstractMatrix{T}; base::Real = 2) where {T<:Rea
     nA, nB = size(p)
     h = T(0)
     pB = sum(p; dims = 2)
-    for a = 1:nA
-        for b = 1:nB
-            h -= p[a, b] * _goodlog(base, p[a, b] / pB[b])
-        end
+    for a = 1:nA, b = 1:nB
+        h -= p[a, b] * _goodlog(base, p[a, b] / pB[b])
     end
     return h
 end

@@ -30,10 +30,8 @@ https://arxiv.org/abs/2005.13418 for the form presented here.
 function cglmp(d::Integer; T::Type = Float64)
     V = zeros(T, d, d, 2, 2)
 
-    for a = 0:d-1, b = 0:d-1, x = 0:1, y = 0:1
-        for k = 0:d-2
-            V[a+1, b+1, x+1, y+1] += (1 - T(k) / (d - 1)) * (mod(a - b, d) == mod((-1)^mod(x + y, 2) * k + x * y, d))
-        end
+    for a = 0:d-1, b = 0:d-1, x = 0:1, y = 0:1, k = 0:d-2
+        V[a+1, b+1, x+1, y+1] += (1 - T(k) / (d - 1)) * (mod(a - b, d) == mod((-1)^mod(x + y, 2) * k + x * y, d))
     end
     V /= 4
 
