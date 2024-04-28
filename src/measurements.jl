@@ -373,6 +373,7 @@ function _fiducial_WH(d::Integer; T::Type = Float64)
 end
 
 # MUBs
+# SD: TODO add the link to Ket.jl on my MUB repo once public
 
 # auxiliary function to compute the trace in finite fields as an Int
 function _tr_ff(a::Nemo.FqFieldElem)
