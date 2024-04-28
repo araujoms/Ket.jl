@@ -392,7 +392,7 @@ Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.334
 function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    f = collect(Nemo.factor(d))
+    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int (or UInt)
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors
@@ -409,7 +409,7 @@ function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
             inv_sqrt_d = 1 / √R(d)
         elseif R <: CN.Cyc
             γ = CN.E(p)
-            inv_sqrt_d = inv(CN.root(R(d)))
+            inv_sqrt_d = inv(R(CN.root(d))) # CN.root also works better with Int
         else
             error("Datatype ", R, " not supported")
         end
