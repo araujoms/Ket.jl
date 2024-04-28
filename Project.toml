@@ -11,7 +11,7 @@ Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
-Nemo = "≥ 0.37"
+Nemo = "0.43"
 
 [extras]
 DoubleFloats = "497a8b3b-efae-58df-a0af-a86822472b78"
