@@ -6,3 +6,4 @@ trailing_comma = false
 remove_extra_newlines = true
 separate_kwargs_with_semicolon = true
 normalize_line_endings = "unix"
+always_for_in = true
