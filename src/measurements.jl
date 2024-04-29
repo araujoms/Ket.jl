@@ -9,8 +9,8 @@ function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type =
 end
 export shift_operator
 
-function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
-    z = zeros(R, d)
+function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
+    z = zeros(Complex{T}, d)
     for i = 0:d-1
         if mod(i * p, d) == 0
             z[i+1] = 1
@@ -28,13 +28,13 @@ function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type =
 end
 export clock_operator
 
-function sic_povm(d; T::Type = Float64, R::Type = Complex{T})
+function sic_povm(d; T::Type = Float64)
     fiducial = _fiducial_WH(d; T)
-    vecs = Vector{Vector{R}}(undef, d^2)
+    vecs = Vector{Vector{Complex{T}}}(undef, d^2)
     for p = 0:d-1
-        Xp = shift_operator(d, p; T, R)
+        Xp = shift_operator(d, p; T)
         for q = 0:d-1
-            Zq = clock_operator(d, q; T, R)
+            Zq = clock_operator(d, q; T)
             vecs[d*p+q+1] = Xp * Zq * fiducial
         end
     end
