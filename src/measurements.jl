@@ -433,7 +433,7 @@ function mub(d::Int64; T::Type = Float64, R::Type = Complex{T})
             error("Datatype ", R, " not supported")
         end
         B = zeros(R, d, d, d+1)
-        B[:, :, 1] .= Matrix(LA.I, d, d)
+        B[:, :, 1] .= LA.I(d)
         f, x = Nemo.finite_field(p, r, "x") # syntax for newer versions of Nemo
         #  f, x = FiniteField(p, r, "x") # syntax for older versions of Nemo
         pow = [x^i for i in 0:r-1]

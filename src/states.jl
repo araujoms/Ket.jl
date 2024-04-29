@@ -5,7 +5,7 @@ Produces a ket of dimension `d` with nonzero element `i`.
 """
 function ket(i::Integer, d::Integer; T::Type = Float64, R::Type = Complex{T})
     psi = zeros(R, d)
-    psi[i] = R(1)
+    psi[i] = 1
     return psi
 end
 export ket
@@ -18,7 +18,7 @@ export ketbra
 "Produces a projector onto the basis state `i` in dimension `d`."
 function proj(i::Integer, d::Integer; T::Type = Float64, R::Type = Complex{T})
     ketbra = LA.Hermitian(zeros(R, d, d))
-    ketbra[i, i] = R(1)
+    ketbra[i, i] = 1
     return ketbra
 end
 export proj
@@ -29,7 +29,7 @@ function phiplus(d::Integer; T::Type = Float64, R::Type = Complex{T})
     for i = 1:d
         psi += kron(ket(i, d; T), ket(i, d; T))
     end
-    return LA.Hermitian(psi * psi' / T(d))
+    return LA.Hermitian(psi * psi' / d)
 end
 export phiplus
 
@@ -39,7 +39,7 @@ function psiminus(d::Integer; T::Type = Float64, R::Type = Complex{T})
     for i = 1:d
         psi += (-1)^(i + 1) * kron(ket(i, d; T), ket(d - i + 1, d; T))
     end
-    return LA.Hermitian(psi * psi' / T(d))
+    return LA.Hermitian(psi * psi' / d)
 end
 export psiminus
 
