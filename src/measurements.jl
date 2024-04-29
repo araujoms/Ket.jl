@@ -1,5 +1,10 @@
 # SIC POVMs
 
+"""
+    shift_operator(d::Integer, p::Integer = 1)
+
+Constructs the shift operator X of dimension `d` to the power `p`.
+"""
 function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
     X = zeros(R, d, d)
     for i = 0:d-1
@@ -9,6 +14,11 @@ function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type =
 end
 export shift_operator
 
+"""
+    clock_operator(d::Integer, p::Integer = 1)
+
+Constructs the clock operator Z of dimension `d` to the power `p`.
+"""
 function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
     z = zeros(Complex{T}, d)
     for i = 0:d-1
@@ -28,6 +38,11 @@ function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
 end
 export clock_operator
 
+"""
+    sic_povm(d::Integer)
+
+Constructs a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
+"""
 function sic_povm(d; T::Type = Float64)
     fiducial = _fiducial_WH(d; T)
     vecs = Vector{Vector{Complex{T}}}(undef, d^2)
@@ -45,8 +60,14 @@ function sic_povm(d; T::Type = Float64)
 end
 export sic_povm
 
+"""
+    test_sic(vecs)
+
+Tests whether `vecs` is a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
+"""
 function test_sic(vecs::Vector{Vector{Complex{T}}}) where {T<:Real}
     d = length(vecs[1])
+    length(vecs) == d^2 || throw(ArgumentError("Number of vectors must be d² = $(d^2), got $(length(vecs))."))
     m = zeros(T, d^2, d^2)
     for j = 1:d^2, i = 1:j
         m[i, j] = abs2(vecs[i]' * vecs[j])
@@ -375,20 +396,22 @@ end
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
 
-# auxiliary function to compute the trace in finite fields as an Int
+# auxiliary function to compute the trace in finite fields as an Int64
 function _tr_ff(a::Nemo.FqFieldElem)
-    Int(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
+    Int64(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
 end
 
 """
+    mub(d::Int64)
+
 Construction of the standard complete set of MUBs.
-The output contains min_i p_i^r_i+1 bases where d = p_1^r_1*...*p_n^r_n.
+The output contains 1+minᵢ pᵢ^rᵢ bases where `d` = ∏ᵢ pᵢ^rᵢ.
 Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
 """
-function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
+function mub(d::Int64; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int (or UInt)
+    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int64 (or UInt64)
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors
@@ -405,7 +428,7 @@ function mub(d::Int; T::Type = Float64, R::Type = Complex{T})
             inv_sqrt_d = 1 / √R(d)
         elseif R <: CN.Cyc
             γ = CN.E(p)
-            inv_sqrt_d = inv(R(CN.root(d))) # CN.root also works better with Int
+            inv_sqrt_d = inv(R(CN.root(d))) # CN.root also works better with Int64
         else
             error("Datatype ", R, " not supported")
         end
@@ -436,7 +459,7 @@ end
 export mub
 
 # Select a specific subset with k bases
-function mub(d::Int, k::Int, s::Int = 1; T::Type = Float64, R::Type = Complex{T})
+function mub(d::Int64, k::Int64, s::Int64 = 1; T::Type = Float64, R::Type = Complex{T})
     B = mub(d; T, R)
     subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k), s))
     sub = subs[end]

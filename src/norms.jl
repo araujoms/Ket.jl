@@ -4,8 +4,14 @@
     Computes Schatten p-norm of matrix X 
 """
 function schatten_norm(X::AbstractMatrix, p::Real)
-    sv = LA.svdvals(X);
-    return LA.norm(sv,p)
+    if p == 2
+        return LA.norm(X)
+    elseif p == Inf
+        return LA.opnorm(X)
+    else
+        sv = LA.svdvals(X)
+        return LA.norm(sv,p)
+    end
 end
 export schatten_norm
 
@@ -18,27 +24,6 @@ function trace_norm(X::AbstractMatrix)
     return schatten_norm(X,1)
 end
 export trace_norm
-
-"""
-    frobenius_norm(X::AbstractMatrix)
-
-    Computes frobenius norm of matrix X 
-"""
-function frobenius_norm(X::AbstractMatrix)
-    # Faster than schatten_norm(X,2)
-    return sqrt(real(LA.dot(X, X)))
-end
-export frobenius_norm
-
-"""
-    operator_norm(X::AbstractMatrix)
-
-    Computes operator norm of matrix X 
-"""
-function operator_norm(X::AbstractMatrix)
-    return schatten_norm(X,Inf)
-end
-export operator_norm
 
 """
     kyfan_norm(X::AbstractMatrix, k::Int, p::Real = 2)
