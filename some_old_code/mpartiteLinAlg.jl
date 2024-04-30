@@ -18,17 +18,17 @@ function tidx(idx::Integer, dims::Vector{<:Integer})
         To comply with Julia's count from 1 we also index from 1!
         (But in the actual computations we shift to 0 counting and then back again)
     =#
-    nsys = length(dims);
+    nsys = length(dims)
     tidx = Vector{Int64}(undef, nsys)
-    cidx = idx-1          # Current index 
-    dr = prod(dims);
+    cidx = idx - 1          # Current index 
+    dr = prod(dims)
     for k = 1:nsys
         # Everytime you increase a tensor index you shift by the product of remaining dimensions
         dr ÷= dims[k]
-        tidx[k] = (cidx ÷ dr) + 1;
-        cidx %= dr;
+        tidx[k] = (cidx ÷ dr) + 1
+        cidx %= dr
     end
-    return tidx 
+    return tidx
 end
 
 function idx(tidx::Vector{<:Integer}, dims::Vector{<:Integer})
@@ -55,7 +55,7 @@ function idx(tidx::Vector{<:Integer}, dims::Vector{<:Integer})
     shift = 1
 
     for k in length(tidx):-1:1
-        i += (tidx[k]-1)*shift
+        i += (tidx[k] - 1) * shift
         shift *= dims[k]
     end
     return i
@@ -72,37 +72,37 @@ function ptr(X::Hermitian, sys::Vector{<:Integer}, dims::Vector{<:Integer})
         Y    -       Matrix which is partial trace of X
     =#
 
-    sysidx = 1 : length(dims)
+    sysidx = 1:length(dims)
     sysKeep = sysidx[Not(sys)]                  # Systems kept 
-    dimsY = dims[sysKeep];                      # The tensor dimensions of Y 
-    dimsR = dims[sys];                          # The tensor dimensions of the traced out systems
-    dY = prod(dimsY);                           # Dimension of Y
-    dR = prod(dimsR);                           # Dimension of system traced out
+    dimsY = dims[sysKeep]                      # The tensor dimensions of Y 
+    dimsR = dims[sys]                          # The tensor dimensions of the traced out systems
+    dY = prod(dimsY)                           # Dimension of Y
+    dR = prod(dimsR)                           # Dimension of system traced out
 
-    Y = Matrix{ComplexF64}(undef, (dY,dY))      # Final output Y
-    tXi = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for column 
-    tXj = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for row
+    Y = Matrix{ComplexF64}(undef, (dY, dY))      # Final output Y
+    tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column 
+    tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
 
     # We loop through Y and find the corresponding element
     for i = 1:dY
         # Find current column tensor index for Y 
-        ti = tidx(i, dimsY);
-        tXi[sysKeep] = ti;
+        ti = tidx(i, dimsY)
+        tXi[sysKeep] = ti
         for j = i:dY
             # Find current row tensor index for Y
-            tj = tidx(j, dimsY);
-            tXj[sysKeep] = tj;
+            tj = tidx(j, dimsY)
+            tXj[sysKeep] = tj
             # Now loop through the diagonal of the traced out systems 
             val = 0
             for k = 1:dR
-                tk = tidx(k, dimsR);
-                tXi[sys], tXj[sys] = tk, tk;
+                tk = tidx(k, dimsR)
+                tXi[sys], tXj[sys] = tk, tk
 
                 # Find (i,j) index of X that we are currently on and add it to total
-                Xi, Xj = idx(tXi,dims), idx(tXj,dims);
-                val += X[Xi,Xj];
+                Xi, Xj = idx(tXi, dims), idx(tXj, dims)
+                val += X[Xi, Xj]
             end
-            Y[i,j] = val;
+            Y[i, j] = val
         end
     end
     return Hermitian(Y)
@@ -119,37 +119,37 @@ function ptr(X::Symmetric, sys::Vector{<:Integer}, dims::Vector{<:Integer})
         Y    -       Matrix which is partial trace of X
     =#
 
-    sysidx = 1 : length(dims)
+    sysidx = 1:length(dims)
     sysKeep = sysidx[Not(sys)]                  # Systems kept 
-    dimsY = dims[sysKeep];                      # The tensor dimensions of Y 
-    dimsR = dims[sys];                          # The tensor dimensions of the traced out systems
-    dY = prod(dimsY);                           # Dimension of Y
-    dR = prod(dimsR);                           # Dimension of system traced out
+    dimsY = dims[sysKeep]                      # The tensor dimensions of Y 
+    dimsR = dims[sys]                          # The tensor dimensions of the traced out systems
+    dY = prod(dimsY)                           # Dimension of Y
+    dR = prod(dimsR)                           # Dimension of system traced out
 
-    Y = Matrix{Float64}(undef, (dY,dY))         # Final output Y
-    tXi = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for column 
-    tXj = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for row
+    Y = Matrix{Float64}(undef, (dY, dY))         # Final output Y
+    tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column 
+    tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
 
     # We loop through Y and find the corresponding element
     for i = 1:dY
         # Find current column tensor index for Y 
-        ti = tidx(i, dimsY);
-        tXi[sysKeep] = ti;
+        ti = tidx(i, dimsY)
+        tXi[sysKeep] = ti
         for j = i:dY
             # Find current row tensor index for Y
-            tj = tidx(j, dimsY);
-            tXj[sysKeep] = tj;
+            tj = tidx(j, dimsY)
+            tXj[sysKeep] = tj
             # Now loop through the diagonal of the traced out systems 
             val = 0
             for k = 1:dR
-                tk = tidx(k, dimsR);
-                tXi[sys], tXj[sys] = tk, tk;
+                tk = tidx(k, dimsR)
+                tXi[sys], tXj[sys] = tk, tk
 
                 # Find (i,j) index of X that we are currently on and add it to total
-                Xi, Xj = idx(tXi,dims), idx(tXj,dims);
-                val += X[Xi,Xj];
+                Xi, Xj = idx(tXi, dims), idx(tXj, dims)
+                val += X[Xi, Xj]
             end
-            Y[i,j] = val;
+            Y[i, j] = val
         end
     end
     return Symmetric(Y)
@@ -166,42 +166,38 @@ function ptr(X::AbstractMatrix, sys::Vector{<:Integer}, dims::Vector{<:Integer})
         Y    -       Matrix which is partial trace of X
     =#
 
-    sysidx = 1 : length(dims)
+    sysidx = 1:length(dims)
     sysKeep = sysidx[Not(sys)]                  # Systems kept 
-    dimsY = dims[sysKeep];                      # The tensor dimensions of Y 
-    dimsR = dims[sys];                          # The tensor dimensions of the traced out systems
-    dY = prod(dimsY);                           # Dimension of Y
-    dR = prod(dimsR);                           # Dimension of system traced out
+    dimsY = dims[sysKeep]                      # The tensor dimensions of Y 
+    dimsR = dims[sys]                          # The tensor dimensions of the traced out systems
+    dY = prod(dimsY)                           # Dimension of Y
+    dR = prod(dimsR)                           # Dimension of system traced out
 
-    Y = Matrix{eltype(X)}(undef, (dY,dY))       # Final output Y
-    tXi = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for column 
-    tXj = Vector{Int64}(undef,length(dims));    # Tensor indexing of X for row
+    Y = Matrix{eltype(X)}(undef, (dY, dY))       # Final output Y
+    tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column 
+    tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
 
     # We loop through Y and find the corresponding element
     for i = 1:dY
         # Find current column tensor index for Y 
-        ti = tidx(i, dimsY);
-        tXi[sysKeep] = ti;
+        ti = tidx(i, dimsY)
+        tXi[sysKeep] = ti
         for j = 1:dY
             # Find current row tensor index for Y
-            tj = tidx(j, dimsY);
-            tXj[sysKeep] = tj;
+            tj = tidx(j, dimsY)
+            tXj[sysKeep] = tj
             # Now loop through the diagonal of the traced out systems 
             val = 0
             for k = 1:dR
-                tk = tidx(k, dimsR);
-                tXi[sys], tXj[sys] = tk, tk;
+                tk = tidx(k, dimsR)
+                tXi[sys], tXj[sys] = tk, tk
 
                 # Find (i,j) index of X that we are currently on and add it to total
-                Xi, Xj = idx(tXi,dims), idx(tXj,dims);
-                val += X[Xi,Xj];
+                Xi, Xj = idx(tXi, dims), idx(tXj, dims)
+                val += X[Xi, Xj]
             end
-            Y[i,j] = val;
+            Y[i, j] = val
         end
     end
     return Y
 end
-
-
-
-

@@ -10,7 +10,7 @@ function schatten_norm(X::AbstractMatrix, p::Real)
         return LA.opnorm(X)
     else
         sv = LA.svdvals(X)
-        return LA.norm(sv,p)
+        return LA.norm(sv, p)
     end
 end
 export schatten_norm
@@ -21,7 +21,7 @@ export schatten_norm
     Computes trace norm of matrix X 
 """
 function trace_norm(X::AbstractMatrix)
-    return schatten_norm(X,1)
+    return schatten_norm(X, 1)
 end
 export trace_norm
 
@@ -32,6 +32,6 @@ export trace_norm
 """
 function kyfan_norm(X::AbstractMatrix, k::Int, p::Real = 2)
     sv = LA.svdvals(X)
-    return LA.norm(sv[1:k],p)
+    return LA.norm(sv[1:k], p)
 end
 export kyfan_norm

@@ -5,21 +5,22 @@ Produces a uniformly distributed random quantum state in dimension `d` with rank
 
 Reference: Życzkowski and Sommers, https://arxiv.org/abs/quant-ph/0012101.
 """
-function random_state(d::Integer, k::Integer = d; T::Type = Float64, R::Type = Complex{T})
-    x = randn(R, (d, k))
+function random_state(::Type{T}, d::Integer, k::Integer = d) where {T}
+    x = randn(T, (d, k))
     y = x * x'
-    return LA.Hermitian(y / LA.tr(y))
+    y ./= LA.tr(y)
+    return LA.Hermitian(y)
 end
+random_state(d::Integer, k::Integer = d) = random_state(ComplexF64, d, k)
 export random_state
 
-random_state_pure(d::Integer; T::Type = Float64, R::Type = Complex{T}) = random_state(d, 1; T, R)
-export random_state_pure
-
-function random_state_pure_vector(d::Integer; T::Type = Float64, R::Type = Complex{T})
-    psi = randn(R, d)
-    return psi / LA.norm(psi)
+function random_state_vector(::Type{T}, d::Integer) where {T}
+    psi = randn(T, d)
+    LA.normalize!(psi)
+    return psi
 end
-export random_state_pure_vector
+random_state_vector(d::Integer) = random_state_vector(ComplexF64, d)
+export random_state_vector
 
 """
     random_unitary(d::Integer; T::Type, R::Type = Complex{T})
@@ -29,12 +30,13 @@ If `R` is a real type the output is instead a Haar-random (real) orthogonal matr
 
 Reference: Mezzadri, https://arxiv.org/abs/math-ph/0609050.
 """
-function random_unitary(d::Integer; T::Type = Float64, R::Type = Complex{T})
-    z = randn(R, (d, d))
-    fact = LA.qr(z)
-    Λ = sign.(real(LA.Diagonal(fact.R)))
-    return fact.Q * Λ
+function random_unitary(::Type{T}, d::Integer) where {T}
+    z = randn(T, (d, d))
+    Q, R = LA.qr(z)
+    Λ = sign.(real(LA.Diagonal(R)))
+    return Q * Λ
 end
+random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
 
 """

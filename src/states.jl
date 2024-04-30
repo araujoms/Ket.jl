@@ -72,7 +72,10 @@ function cleanup!(M::AbstractArray{T}; tol::T = T(0)) where {T<:Number}
     return M
 end
 
-function cleanup!(M::Union{AbstractMatrix{Complex{T}},AbstractMatrix{T}}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
+function cleanup!(
+    M::Union{AbstractMatrix{Complex{T}},AbstractMatrix{T}};
+    tol::T = Base.rtoldefault(T)
+) where {T<:AbstractFloat}
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)
@@ -83,6 +86,6 @@ function _cleanup!(M::AbstractArray{T}; tol::T = Base.rtoldefault(T)) where {T<:
 end
 
 function applykraus(K, M)
-    return sum(LA.Hermitian(Ki*M*Ki') for Ki in K)
+    return sum(LA.Hermitian(Ki * M * Ki') for Ki in K)
 end
 export applykraus
