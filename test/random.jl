@@ -49,4 +49,14 @@
             @test isa(U, Matrix{R})
         end
     end
+    @testset "Probability" begin
+        p = random_probability(3)
+        @test isa(p, Vector{Float64})
+        for T in [Float64, Double64, Float128, BigFloat]
+            p = random_probability(T, 5)
+            @test sum(p) ≈ 1
+            @test minimum(p) ≥ 0
+            @test isa(p, Vector{T})
+        end
+    end
 end
