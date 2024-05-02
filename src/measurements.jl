@@ -1,46 +1,6 @@
 # SIC POVMs
 
 """
-    shift_operator(d::Integer, p::Integer = 1)
-
-Constructs the shift operator X of dimension `d` to the power `p`.
-"""
-function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
-    X = zeros(R, d, d)
-    for i in 0:d-1
-        X[mod(i + p, d)+1, i+1] = 1
-    end
-    return X
-end
-export shift_operator
-
-"""
-    clock_operator(d::Integer, p::Integer = 1)
-
-Constructs the clock operator Z of dimension `d` to the power `p`.
-"""
-function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
-    z = zeros(Complex{T}, d)
-    ω = exp(im * 2 * T(π) / d)
-    for i in 0:d-1
-        exponent = mod(i * p, d)
-        if exponent == 0
-            z[i+1] = 1
-        elseif 4 * exponent == d
-            z[i+1] = im
-        elseif 2 * exponent == d
-            z[i+1] = -1
-        elseif 4 * exponent == 3 * d
-            z[i+1] = -im
-        else
-            z[i+1] = ω^exponent
-        end
-    end
-    return LA.Diagonal(z)
-end
-export clock_operator
-
-"""
     sic_povm(d::Integer)
 
 Constructs a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
@@ -80,16 +40,27 @@ function test_sic(vecs::Vector{Vector{Complex{T}}}) where {T<:Real}
 end
 export test_sic
 
-function dilate_povm(vecs::Vector{Vector{R}}) where {R<:Union{Real,Complex}}
+"""
+    dilate_povm(vecs::Vector{Vector{T}})
+
+Does the Naimark dilation of a rank-1 POVM given as a vector of vectors. This is the minimal dilation.
+"""
+function dilate_povm(vecs::Vector{Vector{T}}) where {T<:Union{Real,Complex}}
     d = length(vecs[1])
-    V = zeros(R, d^2, d)
-    for i in 1:d^2
+    n = length(vecs)
+    V = zeros(T, n, d)
+    for i in 1:n
         V[i, :] = vecs[i]'
     end
     return V
 end
 export dilate_povm
 
+"""
+    dilate_povm(E::Vector{<:AbstractMatrix})
+
+Does the Naimark dilation of a POVM given as a vector of matrices. This always works, but is wasteful if the POVM elements are not full rank.
+"""
 function dilate_povm(E::Vector{<:AbstractMatrix})
     n = length(E)
     d = size(E[1], 1)
@@ -370,7 +341,8 @@ end
     mub(d::Int64)
 
 Construction of the standard complete set of MUBs.
-The output contains 1+minᵢ pᵢ^rᵢ bases where `d` = ∏ᵢ pᵢ^rᵢ.
+The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
+
 Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
 """
 function mub(d::Int64; T::Type = Float64, R::Type = Complex{T})
@@ -435,7 +407,7 @@ function mub(d::Int64, k::Int64, s::Int64 = 1; T::Type = Float64, R::Type = Comp
     return B[:, :, sub]
 end
 
-# Check whether the input is indeed mutually unbiased
+""" Check whether the input is indeed mutually unbiased"""
 function test_mub(B::Array{R,3}) where {R<:Number}
     T = real(R)
     if R <: Complex && T <: AbstractFloat

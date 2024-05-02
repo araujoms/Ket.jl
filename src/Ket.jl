@@ -6,6 +6,7 @@ import GenericLinearAlgebra
 import LinearAlgebra as LA
 import Nemo
 
+include("basic.jl")
 include("states.jl")
 include("nonlocal.jl")
 include("random.jl")

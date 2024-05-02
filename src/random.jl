@@ -14,6 +14,13 @@ end
 random_state(d::Integer, k::Integer = d) = random_state(ComplexF64, d, k)
 export random_state
 
+"""
+    random_state_vector(d::Integer)
+
+Produces a Haar-random quantum state vector in dimension `d`.
+
+Reference: Życzkowski and Sommers, https://arxiv.org/abs/quant-ph/0012101.
+"""
 function random_state_vector(::Type{T}, d::Integer) where {T}
     psi = randn(T, d)
     LA.normalize!(psi)

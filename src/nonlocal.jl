@@ -18,7 +18,7 @@ function local_bound(G::Array{T,4}) where {T<:Real}
     offset = Vector(1 .+ ob * (0:ib-1))
     @views initial_score = sum(maximum(reshape(sum(squareG[:, offset]; dims = 2), oa, ia); dims = 1)) #compute initial_score for the all-zeros strategy to serve as a reference point
 
-    chunks = partition(ob^ib - 1, Threads.nthreads())
+    chunks = _partition(ob^ib - 1, Threads.nthreads())
     tasks = map(chunks) do chunk
         Threads.@spawn _local_bound_single(initial_score, chunk, sizeG, offset, squareG)
     end
@@ -53,7 +53,7 @@ end
 If `n ≥ k` partitions the set `1:n` into `k` parts as equally sized as possible.
 Otherwise partitions it into `n` parts of size 1.
 """
-function partition(n::T, k::T) where {T<:Integer}
+function _partition(n::T, k::T) where {T<:Integer}
     num_parts = min(k, n)
     parts = Vector{Tuple{T,T}}(undef, num_parts)
     base_size = div(n, k)
@@ -74,7 +74,6 @@ function partition(n::T, k::T) where {T<:Integer}
     end
     return parts
 end
-export partition
 
 #copyed from QETLAB
 function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
