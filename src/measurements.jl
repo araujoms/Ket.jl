@@ -304,14 +304,16 @@ end
 # SD: TODO add the link to Ket.jl on my MUB repo once public
 # MA: TODO incorporate function prime_mub properly
 function prime_mub(::Type{T}, d::Integer) where {T}
-    U = [zeros(Complex{T}, d, d) for _ in 1:d+1]
-    U[1] = I(d)
+    R = real(T)
+    U = [zeros(T, d, d) for _ in 1:d+1]
+    U[1] = LA.I(d)
 
     if d == 2
-        U[2] = [1 1; 1 -1] / sqrt(T(2))
-        U[3] = [1 1; im -im] / sqrt(T(2))
+        U[2] = [1 1; 1 -1] / sqrt(R(2))
+        U[3] = [1 1; im -im] / sqrt(R(2))
     else
-        ω = exp(im * 2 * T(π) / d)
+        ω = exp(im * 2 * R(π) / d)
+        inv_sqrt_d = inv(sqrt(R(d)))
         for k in 0:d-1, t in 0:d-1, j in 0:d-1
             exponent = mod(j * (t + k * j), d)
             if exponent == 0
@@ -325,12 +327,12 @@ function prime_mub(::Type{T}, d::Integer) where {T}
             else
                 phase = ω^exponent
             end
-            U[k+2][j+1, t+1] = phase / sqrt(T(d))
+            U[k+2][j+1, t+1] = phase * inv_sqrt_d
         end
     end
     return U
 end
-prime_mub(d::Integer) = prime_mub(Float64, d)
+prime_mub(d::Integer) = prime_mub(ComplexF64, d)
 
 # auxiliary function to compute the trace in finite fields as an Int64
 function _tr_ff(a::Nemo.FqFieldElem)
@@ -345,7 +347,7 @@ The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
 
 Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
 """
-function mub(d::Int64; T::Type = Float64, R::Type = Complex{T})
+function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
     f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int64 (or UInt64)
@@ -371,8 +373,7 @@ function mub(d::Int64; T::Type = Float64, R::Type = Complex{T})
         end
         B = zeros(R, d, d, d + 1)
         B[:, :, 1] .= LA.I(d)
-        f, x = Nemo.finite_field(p, r, "x") # syntax for newer versions of Nemo
-        #  f, x = FiniteField(p, r, "x") # syntax for older versions of Nemo
+        f, x = Nemo.finite_field(p, r, "x")
         pow = [x^i for i in 0:r-1]
         el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
         if p == 2
