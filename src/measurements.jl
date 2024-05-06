@@ -313,7 +313,7 @@ function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     else
         error("Datatype ", T, " not supported")
     end
-    B = zeros(T, p, p, p + 1)
+    B = Array{T, 3}(undef, p, p, p + 1)
     B[:, :, 1] .= LA.I(p)
 
     if p == 2
@@ -354,7 +354,7 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
     else
         error("Datatype ", T, " not supported")
     end
-    B = zeros(T, d, d, d + 1)
+    B = Array{T, 3}(undef, d, d, d + 1)
     B[:, :, 1] .= LA.I(d)
     f, x = Nemo.finite_field(p, r, "x")
     pow = [x^i for i in 0:r-1]
