@@ -21,7 +21,7 @@ function randRho(d::Integer, rank::Integer = d)
     spectrum = [spectrum; zeros(d - rank)]
 
     # Apply a Haar random unitary 
-    U = randUnitary(d)
+    U = random_unitary(d)
     rho = U * Diagonal(spectrum) * U'
 
     return Hermitian(rho)
