@@ -305,8 +305,8 @@ end
 # MA: TODO incorporate function prime_mub properly
 function prime_mub(::Type{T}, d::Integer) where {T}
     R = real(T)
-    U = [zeros(T, d, d) for _ in 1:d+1]
-    U[1] = LA.I(d)
+    U = [Matrix{T}(undef, d, d) for _ in 1:d+1]
+    U[1] .= LA.I(d)
 
     if d == 2
         U[2] = [1 1; 1 -1] / sqrt(R(2))
@@ -314,20 +314,22 @@ function prime_mub(::Type{T}, d::Integer) where {T}
     else
         ω = exp(2 * im * R(π) / d)
         inv_sqrt_d = inv(sqrt(R(d)))
-        for k in 0:d-1, t in 0:d-1, j in 0:d-1
-            exponent = mod(j * (t + k * j), d)
-            if exponent == 0
-                phase = 1
-            elseif 4exponent == d
-                phase = im
-            elseif 2exponent == d
-                phase = -1
-            elseif 4exponent == 3d
-                phase = -im
-            else
-                phase = ω^exponent
+        for k in 0:d-1
+            fill!(U[k+2], inv_sqrt_d)
+            for t in 0:d-1, j in 0:d-1
+                exponent = mod(j * (t + k * j), d)
+                if exponent == 0
+                    continue
+                elseif 4exponent == d
+                    U[k+2][j+1, t+1] *= im
+                elseif 2exponent == d
+                    U[k+2][j+1, t+1] *= -1
+                elseif 4exponent == 3d
+                    U[k+2][j+1, t+1] *= -im
+                else
+                    U[k+2][j+1, t+1] *= ω^exponent
+                end
             end
-            U[k+2][j+1, t+1] = phase * inv_sqrt_d
         end
     end
     return U
