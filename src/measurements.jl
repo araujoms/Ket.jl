@@ -405,9 +405,9 @@ function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
         B_aux1 = mub(p^r; T, R)
         B_aux2 = mub(d ÷ p^r; T, R)
         k = min(size(B_aux1, 3), size(B_aux2, 3))
-        B = zeros(R, d, d, k)
+        B = Array{R, 3}(undef, d, d, k)
         for j in 1:k
-            B[:, :, j] = kron(B_aux1[:, :, j], B_aux2[:, :, j])
+            B[:, :, j] .= kron(B_aux1[:, :, j], B_aux2[:, :, j])
         end
     elseif r == 1 # prime
         return mub_prime(R, p)
