@@ -1,15 +1,15 @@
 """
-    ket(i::Integer, d::Integer; T=ComplexF64)
+    ket([T=ComplexF64,] i::Integer, d::Integer)
 
 Produces a ket of dimension `d` with nonzero element `i`.
 """
-function ket(i::Integer, d::Integer; T::Type = Float64, R::Type = Complex{T})
-    psi = zeros(R, d)
+function ket(::Type{T}, i::Integer, d::Integer) where {T}
+    psi = zeros(T, d)
     psi[i] = 1
     return psi
 end
+ket(i::Integer, d::Integer) = ket(ComplexF64, i, d)
 export ket
-
 """
     ketbra(v::AbstractVector)
 
@@ -20,35 +20,41 @@ function ketbra(v::AbstractVector)
 end
 export ketbra
 
-"Produces a projector onto the basis state `i` in dimension `d`."
-function proj(i::Integer, d::Integer; T::Type = Float64, R::Type = Complex{T})
-    ketbra = LA.Hermitian(zeros(R, d, d))
-    ketbra[i, i] = 1
-    return ketbra
+"""
+    proj([T=ComplexF64,] i::Integer, d::Integer)
+
+Produces a projector onto the basis state `i` in dimension `d`.
+"""
+function proj(::Type{T}, i::Integer, d::Integer) where {T}
+    p = LA.Hermitian(zeros(T, d, d))
+    p[i, i] = 1
+    return p
 end
+proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
 export proj
 
 """
-    shift_operator(d::Integer, p::Integer = 1)
+    shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 
 Constructs the shift operator X of dimension `d` to the power `p`.
 """
-function shift_operator(d::Integer, p::Integer = 1; T::Type = Float64, R::Type = Complex{T})
-    X = zeros(R, d, d)
+function shift(::Type{T}, d::Integer, p::Integer = 1) where {T}
+    X = zeros(T, d, d)
     for i in 0:d-1
         X[mod(i + p, d)+1, i+1] = 1
     end
     return X
 end
-export shift_operator
+shift(d::Integer, p::Integer = 1) = shift(ComplexF64, d, p)
+export shift
 
 """
-    clock_operator(d::Integer, p::Integer = 1)
+    clock([T=ComplexF64,] d::Integer, p::Integer = 1)
 
 Constructs the clock operator Z of dimension `d` to the power `p`.
 """
-function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
-    z = zeros(Complex{T}, d)
+function clock(::Type{T}, d::Integer, p::Integer = 1) where {T}
+    z = zeros(T, d)
     ω = exp(im * 2 * T(π) / d)
     for i in 0:d-1
         exponent = mod(i * p, d)
@@ -66,35 +72,29 @@ function clock_operator(d::Integer, p::Integer = 1; T::Type = Float64)
     end
     return LA.Diagonal(z)
 end
-export clock_operator
+clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
+export clock
 
 "Zeroes out real or imaginary parts of M that are smaller than `tol`"
-function cleanup!(M::Array{Complex{T}}; tol::T = Base.rtoldefault(T)) where {T<:Real}
+function cleanup!(M::Array{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
     M2 = reinterpret(T, M)
     _cleanup!(M2; tol)
     return M
 end
 export cleanup!
 
-function cleanup!(M::Array{T}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
+function cleanup!(M::Array{T}; tol = Base.rtoldefault(T)) where {T<:Real}
     _cleanup!(M; tol)
     return M
 end
 
-function cleanup!(M::AbstractArray{T}; tol::T = T(0)) where {T<:Number}
-    return M
-end
-
-function cleanup!(
-    M::Union{AbstractMatrix{Complex{T}},AbstractMatrix{T}};
-    tol::T = Base.rtoldefault(T)
-) where {T<:AbstractFloat}
+function cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)
 end
 
-function _cleanup!(M::AbstractArray{T}; tol::T = Base.rtoldefault(T)) where {T<:AbstractFloat}
+function _cleanup!(M::AbstractArray; tol)
     return M[abs.(M).<tol] .= 0
 end
 

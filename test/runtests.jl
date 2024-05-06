@@ -1,10 +1,12 @@
+using Ket
+using LinearAlgebra
 using CyclotomicNumbers
 using DoubleFloats
-using Ket
 using Quadmath
-using LinearAlgebra
+using Quaternions
 using Test
 
+include("basic.jl")
 include("measurements.jl")
 include("norms.jl")
 include("random.jl")

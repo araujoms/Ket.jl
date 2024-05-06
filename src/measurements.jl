@@ -1,3 +1,154 @@
+# MUBs
+# SD: TODO add the link to Ket.jl on my MUB repo once public
+function mub_prime(::Type{T}, p::Integer) where {T<:Number}
+    R = real(T)
+    if T <: Complex
+        γ = exp(2 * im * R(π) / p)
+        inv_sqrt_d = inv(sqrt(R(p)))
+    elseif T <: CN.Cyc
+        γ = CN.E(Int(p))
+        inv_sqrt_d = inv(T(CN.root(Int(p))))
+    else
+        error("Datatype ", T, " not supported")
+    end
+    B = Array{T,3}(undef, p, p, p + 1)
+    B[:, :, 1] .= LA.I(p)
+
+    if p == 2
+        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_d
+        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_d
+    else
+        for k in 0:p-1
+            fill!(view(B, :, :, k + 2), inv_sqrt_d)
+            for t in 0:p-1, j in 0:p-1
+                exponent = mod(j * (t + k * j), p)
+                if exponent == 0
+                    continue
+                elseif 4exponent == p
+                    B[j+1, t+1, k+2] *= im
+                elseif 2exponent == p
+                    B[j+1, t+1, k+2] *= -1
+                elseif 4exponent == 3p
+                    B[j+1, t+1, k+2] *= -im
+                else
+                    B[j+1, t+1, k+2] *= γ^exponent
+                end
+            end
+        end
+    end
+    return B
+end
+mub_prime(p::Integer) = mub_prime(ComplexF64, p)
+
+function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
+    d = Int(p^r)
+    R = real(T)
+    if T <: Complex
+        γ = exp(2 * im * R(π) / p)
+        inv_sqrt_d = inv(sqrt(R(d)))
+    elseif T <: CN.Cyc
+        γ = CN.E(Int(p))
+        inv_sqrt_d = inv(T(CN.root(d))) # CN.root also works better with Int64
+    else
+        error("Datatype ", T, " not supported")
+    end
+    B = Array{T,3}(undef, d, d, d + 1)
+    B[:, :, 1] .= LA.I(d)
+    f, x = Nemo.finite_field(p, r, "x")
+    pow = [x^i for i in 0:r-1]
+    el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
+    if p == 2
+        for i in 1:d, k in 0:d-1, q in 0:d-1
+            aux = one(T)
+            q_bin = digits(q; base = 2, pad = r)
+            for m in 0:r-1, n in 0:r-1
+                aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
+            end
+            B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
+        end
+    else
+        inv_two = inv(2 * one(f))
+        for i in 1:d, k in 0:d-1, q in 0:d-1
+            B[:, k+1, i+1] +=
+                γ^_tr_ff(-el[q+1] * el[k+1]) * γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) * B[:, q+1, 1] * inv_sqrt_d
+        end
+    end
+    return B
+end
+mub_prime_power(p::Integer, r::Integer) = mub_prime_power(ComplexF64, p, r)
+
+# auxiliary function to compute the trace in finite fields as an Int64
+function _tr_ff(a::Nemo.FqFieldElem)
+    Int64(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
+end
+
+"""
+    mub(d::Int64)
+
+Construction of the standard complete set of MUBs.
+The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
+
+Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
+"""
+function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
+    # the dimension d can be any integer greater than two
+    @assert d ≥ 2
+    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int64 (or UInt64)
+    p = f[1][1]
+    r = f[1][2]
+    if length(f) > 1 # different prime factors
+        B_aux1 = mub(p^r; T, R)
+        B_aux2 = mub(d ÷ p^r; T, R)
+        k = min(size(B_aux1, 3), size(B_aux2, 3))
+        B = Array{R,3}(undef, d, d, k)
+        for j in 1:k
+            B[:, :, j] .= kron(B_aux1[:, :, j], B_aux2[:, :, j])
+        end
+    elseif r == 1 # prime
+        return mub_prime(R, p)
+    else # prime power
+        return mub_prime_power(R, p, r)
+    end
+    return B
+end
+export mub
+
+# Select a specific subset with k bases
+function mub(d::Int64, k::Int64, s::Int64 = 1; T::Type = Float64, R::Type = Complex{T})
+    B = mub(d; T, R)
+    subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k), s))
+    sub = subs[end]
+    return B[:, :, sub]
+end
+
+""" Check whether the input is indeed mutually unbiased"""
+function test_mub(B::Array{R,3}) where {R<:Number}
+    T = real(R)
+    if R <: Complex && T <: AbstractFloat
+        tol = eps(T)
+    else
+        tol = T(0)
+    end
+    d = size(B, 1)
+    k = size(B, 3)
+    inv_d = 1 / R(d)
+    for x in 1:k, y in x:k, a in 1:d, b in 1:d
+        # expected scalar product squared
+        if x == y
+            sc2_exp = R(a == b)
+        else
+            sc2_exp = inv_d
+        end
+        sc2 = LA.dot(B[:, a, x], B[:, b, y])
+        sc2 *= conj(sc2)
+        if abs2(sc2 - sc2_exp) > tol
+            return false
+        end
+    end
+    return true
+end
+export test_mub
+
 # SIC POVMs
 
 """
@@ -5,21 +156,24 @@
 
 Constructs a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
 """
-function sic_povm(d; T::Type = Float64)
-    fiducial = _fiducial_WH(d; T)
-    vecs = Vector{Vector{Complex{T}}}(undef, d^2)
+function sic_povm(::Type{T}, d::Integer) where {T}
+    R = real(T)
+    fiducial = _fiducial_WH(R, d)
+    vecs = Vector{Vector{T}}(undef, d^2)
     for p in 0:d-1
-        Xp = shift_operator(d, p; T)
+        Xp = shift(T, d, p)
         for q in 0:d-1
-            Zq = clock_operator(d, q; T)
+            Zq = clock(T, d, q)
             vecs[d*p+q+1] = Xp * Zq * fiducial
         end
     end
+    sqrt_d = sqrt(R(d))
     for vi in vecs
-        vi ./= sqrt(T(d)) * LA.norm(vi)
+        vi ./= sqrt_d * LA.norm(vi)
     end
     return vecs
 end
+sic_povm(d::Integer) = sic_povm(ComplexF64, d)
 export sic_povm
 
 """
@@ -75,7 +229,7 @@ Computes the fiducial Weyl-Heisenberg vector of dimension `d`.
 
 Reference: Appleby, Yadsan-Appleby, Zauner, http://arxiv.org/abs/1209.1813 http://www.gerhardzauner.at/sicfiducials.html.
 """
-function _fiducial_WH(d::Integer; T::Type = Float64)
+function _fiducial_WH(::Type{T}, d::Integer) where {T}
     if d == 1
         return [T(1)]
     elseif d == 2
@@ -299,157 +453,3 @@ function _fiducial_WH(d::Integer; T::Type = Float64)
         throw(ArgumentError(string("Invalid input dimension d = ", d)))
     end
 end
-
-# MUBs
-# SD: TODO add the link to Ket.jl on my MUB repo once public
-function mub_prime(::Type{T}, p::Integer) where {T<:Number}
-    R = real(T)
-    if T <: Complex
-        γ = exp(2 * im * R(π) / p)
-        inv_sqrt_d = inv(sqrt(R(p)))
-    elseif T <: CN.Cyc
-        γ = CN.E(Int(p))
-        inv_sqrt_d = inv(T(CN.root(Int(p))))
-    else
-        error("Datatype ", T, " not supported")
-    end
-    B = Array{T, 3}(undef, p, p, p + 1)
-    B[:, :, 1] .= LA.I(p)
-
-    if p == 2
-        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_d
-        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_d
-    else
-        for k in 0:p-1
-            fill!(view(B, :, :, k+2), inv_sqrt_d)
-            for t in 0:p-1, j in 0:p-1
-                exponent = mod(j * (t + k * j), p)
-                if exponent == 0
-                    continue
-                elseif 4exponent == p
-                    B[j+1, t+1, k+2] *= im
-                elseif 2exponent == p
-                    B[j+1, t+1, k+2] *= -1
-                elseif 4exponent == 3p
-                    B[j+1, t+1, k+2] *= -im
-                else
-                    B[j+1, t+1, k+2] *= γ^exponent
-                end
-            end
-        end
-    end
-    return B
-end
-mub_prime(p::Integer) = mub_prime(ComplexF64, p)
-
-function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
-    d = Int(p^r)
-    R = real(T)
-    if T <: Complex
-        γ = exp(2 * im * R(π) / p)
-        inv_sqrt_d = inv(sqrt(R(d)))
-    elseif T <: CN.Cyc
-        γ = CN.E(Int(p))
-        inv_sqrt_d = inv(T(CN.root(d))) # CN.root also works better with Int64
-    else
-        error("Datatype ", T, " not supported")
-    end
-    B = Array{T, 3}(undef, d, d, d + 1)
-    B[:, :, 1] .= LA.I(d)
-    f, x = Nemo.finite_field(p, r, "x")
-    pow = [x^i for i in 0:r-1]
-    el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
-    if p == 2
-        for i in 1:d, k in 0:d-1, q in 0:d-1
-            aux = one(T)
-            q_bin = digits(q; base = 2, pad = r)
-            for m in 0:r-1, n in 0:r-1
-                aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
-            end
-            B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
-        end
-    else
-        inv_two = inv(2 * one(f))
-        for i in 1:d, k in 0:d-1, q in 0:d-1
-            B[:, k+1, i+1] +=
-            γ^_tr_ff(-el[q+1] * el[k+1]) *
-            γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) *
-            B[:, q+1, 1] *
-            inv_sqrt_d
-        end
-    end
-    return B
-end
-mub_prime_power(p::Integer, r::Integer) = mub_prime_power(ComplexF64, p, r)
-
-# auxiliary function to compute the trace in finite fields as an Int64
-function _tr_ff(a::Nemo.FqFieldElem)
-    Int64(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
-end
-
-"""
-    mub(d::Int64)
-
-Construction of the standard complete set of MUBs.
-The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
-
-Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
-"""
-function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
-    # the dimension d can be any integer greater than two
-    @assert d ≥ 2
-    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int64 (or UInt64)
-    p = f[1][1]
-    r = f[1][2]
-    if length(f) > 1 # different prime factors
-        B_aux1 = mub(p^r; T, R)
-        B_aux2 = mub(d ÷ p^r; T, R)
-        k = min(size(B_aux1, 3), size(B_aux2, 3))
-        B = Array{R, 3}(undef, d, d, k)
-        for j in 1:k
-            B[:, :, j] .= kron(B_aux1[:, :, j], B_aux2[:, :, j])
-        end
-    elseif r == 1 # prime
-        return mub_prime(R, p)
-    else # prime power
-        return mub_prime_power(R, p, r)
-    end
-    return B
-end
-export mub
-
-# Select a specific subset with k bases
-function mub(d::Int64, k::Int64, s::Int64 = 1; T::Type = Float64, R::Type = Complex{T})
-    B = mub(d; T, R)
-    subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k), s))
-    sub = subs[end]
-    return B[:, :, sub]
-end
-
-""" Check whether the input is indeed mutually unbiased"""
-function test_mub(B::Array{R,3}) where {R<:Number}
-    T = real(R)
-    if R <: Complex && T <: AbstractFloat
-        tol = eps(T)
-    else
-        tol = T(0)
-    end
-    d = size(B, 1)
-    k = size(B, 3)
-    inv_d = 1 / R(d)
-    for x in 1:k, y in x:k, a in 1:d, b in 1:d
-        # expected scalar product squared
-        if x == y
-            sc2_exp = R(a == b)
-        else
-            sc2_exp = inv_d
-        end
-        sc2 = LA.dot(B[:, a, x], B[:, b, y])
-        sc2 *= conj(sc2)
-        if abs2(sc2 - sc2_exp) > tol
-            return false
-        end
-    end
-    return true
-end
-export test_mub
