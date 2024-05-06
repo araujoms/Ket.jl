@@ -302,39 +302,85 @@ end
 
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
-# MA: TODO incorporate function mub_prime properly
-function mub_prime(::Type{T}, d::Integer) where {T}
+function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     R = real(T)
-    U = [Matrix{T}(undef, d, d) for _ in 1:d+1]
-    U[1] .= LA.I(d)
-
-    if d == 2
-        U[2] = [1 1; 1 -1] / sqrt(R(2))
-        U[3] = [1 1; im -im] / sqrt(R(2))
+    if T <: Complex
+        γ = exp(2 * im * R(π) / p)
+        inv_sqrt_d = inv(sqrt(R(p)))
+    elseif T <: CN.Cyc
+        γ = CN.E(Int(p))
+        inv_sqrt_d = inv(T(CN.root(Int(p))))
     else
-        ω = exp(2 * im * R(π) / d)
-        inv_sqrt_d = inv(sqrt(R(d)))
-        for k in 0:d-1
-            fill!(U[k+2], inv_sqrt_d)
-            for t in 0:d-1, j in 0:d-1
-                exponent = mod(j * (t + k * j), d)
+        error("Datatype ", T, " not supported")
+    end
+    B = zeros(T, p, p, p + 1)
+    B[:, :, 1] .= LA.I(p)
+
+    if p == 2
+        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_d
+        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_d
+    else
+        for k in 0:p-1
+            fill!(view(B, :, :, k+2), inv_sqrt_d)
+            for t in 0:p-1, j in 0:p-1
+                exponent = mod(j * (t + k * j), p)
                 if exponent == 0
                     continue
-                elseif 4exponent == d
-                    U[k+2][j+1, t+1] *= im
-                elseif 2exponent == d
-                    U[k+2][j+1, t+1] *= -1
-                elseif 4exponent == 3d
-                    U[k+2][j+1, t+1] *= -im
+                elseif 4exponent == p
+                    B[j+1, t+1, k+2] *= im
+                elseif 2exponent == p
+                    B[j+1, t+1, k+2] *= -1
+                elseif 4exponent == 3p
+                    B[j+1, t+1, k+2] *= -im
                 else
-                    U[k+2][j+1, t+1] *= ω^exponent
+                    B[j+1, t+1, k+2] *= γ^exponent
                 end
             end
         end
     end
-    return U
+    return B
 end
-mub_prime(d::Integer) = mub_prime(ComplexF64, d)
+mub_prime(p::Integer) = mub_prime(ComplexF64, p)
+
+function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
+    d = Int(p^r)
+    R = real(T)
+    if T <: Complex
+        γ = exp(2 * im * R(π) / p)
+        inv_sqrt_d = inv(sqrt(R(d)))
+    elseif T <: CN.Cyc
+        γ = CN.E(Int(p))
+        inv_sqrt_d = inv(T(CN.root(d))) # CN.root also works better with Int64
+    else
+        error("Datatype ", T, " not supported")
+    end
+    B = zeros(T, d, d, d + 1)
+    B[:, :, 1] .= LA.I(d)
+    f, x = Nemo.finite_field(p, r, "x")
+    pow = [x^i for i in 0:r-1]
+    el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
+    if p == 2
+        for i in 1:d, k in 0:d-1, q in 0:d-1
+            aux = one(T)
+            q_bin = digits(q; base = 2, pad = r)
+            for m in 0:r-1, n in 0:r-1
+                aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
+            end
+            B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
+        end
+    else
+        inv_two = inv(2 * one(f))
+        for i in 1:d, k in 0:d-1, q in 0:d-1
+            B[:, k+1, i+1] +=
+            γ^_tr_ff(-el[q+1] * el[k+1]) *
+            γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) *
+            B[:, q+1, 1] *
+            inv_sqrt_d
+        end
+    end
+    return B
+end
+mub_prime_power(p::Integer, r::Integer) = mub_prime_power(ComplexF64, p, r)
 
 # auxiliary function to compute the trace in finite fields as an Int64
 function _tr_ff(a::Nemo.FqFieldElem)
@@ -363,40 +409,10 @@ function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
         for j in 1:k
             B[:, :, j] = kron(B_aux1[:, :, j], B_aux2[:, :, j])
         end
+    elseif r == 1 # prime
+        return mub_prime(R, p)
     else # prime power
-        if R <: Complex
-            γ = exp(2 * im * R(π) / p)
-            inv_sqrt_d = 1 / √R(d)
-        elseif R <: CN.Cyc
-            γ = CN.E(p)
-            inv_sqrt_d = inv(R(CN.root(d))) # CN.root also works better with Int64
-        else
-            error("Datatype ", R, " not supported")
-        end
-        B = zeros(R, d, d, d + 1)
-        B[:, :, 1] .= LA.I(d)
-        f, x = Nemo.finite_field(p, r, "x")
-        pow = [x^i for i in 0:r-1]
-        el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
-        if p == 2
-            for i in 1:d, k in 0:d-1, q in 0:d-1
-                aux = one(R)
-                q_bin = digits(q; base = 2, pad = r)
-                for m in 0:r-1, n in 0:r-1
-                    aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
-                end
-                B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
-            end
-        else
-            inv_two = inv(2 * one(f))
-            for i in 1:d, k in 0:d-1, q in 0:d-1
-                B[:, k+1, i+1] +=
-                    γ^_tr_ff(-el[q+1] * el[k+1]) *
-                    γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) *
-                    B[:, q+1, 1] *
-                    inv_sqrt_d
-            end
-        end
+        return mub_prime_power(R, p, r)
     end
     return B
 end
