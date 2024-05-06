@@ -312,17 +312,17 @@ function prime_mub(::Type{T}, d::Integer) where {T}
         U[2] = [1 1; 1 -1] / sqrt(R(2))
         U[3] = [1 1; im -im] / sqrt(R(2))
     else
-        ω = exp(im * 2 * R(π) / d)
+        ω = exp(2 * im * R(π) / d)
         inv_sqrt_d = inv(sqrt(R(d)))
         for k in 0:d-1, t in 0:d-1, j in 0:d-1
             exponent = mod(j * (t + k * j), d)
             if exponent == 0
                 phase = 1
-            elseif 4 * exponent == d
+            elseif 4exponent == d
                 phase = im
-            elseif 2 * exponent == d
+            elseif 2exponent == d
                 phase = -1
-            elseif 4 * exponent == 3 * d
+            elseif 4exponent == 3d
                 phase = -im
             else
                 phase = ω^exponent
