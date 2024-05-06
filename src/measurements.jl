@@ -302,8 +302,8 @@ end
 
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
-# MA: TODO incorporate function prime_mub properly
-function prime_mub(::Type{T}, d::Integer) where {T}
+# MA: TODO incorporate function mub_prime properly
+function mub_prime(::Type{T}, d::Integer) where {T}
     R = real(T)
     U = [Matrix{T}(undef, d, d) for _ in 1:d+1]
     U[1] .= LA.I(d)
@@ -334,7 +334,7 @@ function prime_mub(::Type{T}, d::Integer) where {T}
     end
     return U
 end
-prime_mub(d::Integer) = prime_mub(ComplexF64, d)
+mub_prime(d::Integer) = mub_prime(ComplexF64, d)
 
 # auxiliary function to compute the trace in finite fields as an Int64
 function _tr_ff(a::Nemo.FqFieldElem)
