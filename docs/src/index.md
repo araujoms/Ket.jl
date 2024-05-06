@@ -6,8 +6,8 @@
 ket
 ketbra
 proj
-shift_operator
-clock_operator
+shift
+clock
 cleanup!
 ```
 

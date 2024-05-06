@@ -75,26 +75,25 @@ end
 clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
 
-"Zeroes out real or imaginary parts of M that are smaller than `tol`"
-function cleanup!(M::Array{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
-    M2 = reinterpret(T, M)
-    _cleanup!(M2; tol)
-    return M
-end
-export cleanup!
+"""
+    cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T)))
 
-function cleanup!(M::Array{T}; tol = Base.rtoldefault(T)) where {T<:Real}
-    _cleanup!(M; tol)
-    return M
-end
-
+Zeroes out real or imaginary parts of `M` that are smaller than `tol`.
+"""
 function cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)
 end
 
-function _cleanup!(M::AbstractArray; tol)
+function cleanup!(M::Array{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
+    M2 = reinterpret(T, M) #this is a no-op when T<:Real
+    _cleanup!(M2; tol)
+    return M
+end
+export cleanup!
+
+function _cleanup!(M::Array; tol)
     return M[abs.(M).<tol] .= 0
 end
 
