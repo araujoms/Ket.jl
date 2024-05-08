@@ -1,25 +1,24 @@
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
 function mub_prime(::Type{T}, p::Integer) where {T<:Number}
-    R = real(T)
     if T <: Complex
+        R = real(T)
         γ = exp(2 * im * R(π) / p)
-        inv_sqrt_d = inv(sqrt(R(p)))
+        inv_sqrt_p = inv(sqrt(R(p)))
     elseif T <: CN.Cyc
-        γ = CN.E(Int(p))
-        inv_sqrt_d = inv(T(CN.root(Int(p))))
+        γ = CN.E(Int64(p))
+        inv_sqrt_p = inv(T(CN.root(Int64(p))))
     else
         error("Datatype ", T, " not supported")
     end
     B = Array{T,3}(undef, p, p, p + 1)
     B[:, :, 1] .= LA.I(p)
-
     if p == 2
-        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_d
-        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_d
+        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_p
+        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_p
     else
         for k in 0:p-1
-            fill!(view(B, :, :, k + 2), inv_sqrt_d)
+            fill!(view(B, :, :, k + 2), inv_sqrt_p)
             for t in 0:p-1, j in 0:p-1
                 exponent = mod(j * (t + k * j), p)
                 if exponent == 0
@@ -41,18 +40,18 @@ end
 mub_prime(p::Integer) = mub_prime(ComplexF64, p)
 
 function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
-    d = Int(p^r)
-    R = real(T)
+    d = Int64(p^r)
     if T <: Complex
+        R = real(T)
         γ = exp(2 * im * R(π) / p)
         inv_sqrt_d = inv(sqrt(R(d)))
     elseif T <: CN.Cyc
-        γ = CN.E(Int(p))
-        inv_sqrt_d = inv(T(CN.root(d))) # CN.root also works better with Int64
+        γ = CN.E(Int64(p))
+        inv_sqrt_d = inv(T(CN.root(d)))
     else
         error("Datatype ", T, " not supported")
     end
-    B = Array{T,3}(undef, d, d, d + 1)
+    B = zeros(T, d, d, d + 1)
     B[:, :, 1] .= LA.I(d)
     f, x = Nemo.finite_field(p, r, "x")
     pow = [x^i for i in 0:r-1]
@@ -83,59 +82,60 @@ function _tr_ff(a::Nemo.FqFieldElem)
 end
 
 """
-    mub(d::Int64)
+    mub(d::Integer)
 
 Construction of the standard complete set of MUBs.
 The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
 
 Reference: Durt, Englert, Bengtsson, Życzkowski, https://arxiv.org/abs/1004.3348.
 """
-function mub(d::Union{Int64,UInt64}; T::Type = Float64, R::Type = Complex{T})
+function mub(::Type{T}, d::Integer) where {T<:Number}
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    f = collect(Nemo.factor(d)) # Nemo.factor requires d to be an Int64 (or UInt64)
+    f = collect(Nemo.factor(Int64(d))) # Nemo.factor requires d to be an Int64 (or UInt64)
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors
-        B_aux1 = mub(p^r; T, R)
-        B_aux2 = mub(d ÷ p^r; T, R)
+        B_aux1 = mub(T, p^r)
+        B_aux2 = mub(T, d ÷ p^r)
         k = min(size(B_aux1, 3), size(B_aux2, 3))
-        B = Array{R,3}(undef, d, d, k)
+        B = Array{T,3}(undef, d, d, k)
         for j in 1:k
             B[:, :, j] .= kron(B_aux1[:, :, j], B_aux2[:, :, j])
         end
     elseif r == 1 # prime
-        return mub_prime(R, p)
+        return mub_prime(T, p)
     else # prime power
-        return mub_prime_power(R, p, r)
+        return mub_prime_power(T, p, r)
     end
     return B
 end
+mub(d::Integer) = mub(ComplexF64, d)
 export mub
 
 # Select a specific subset with k bases
-function mub(d::Int64, k::Int64, s::Int64 = 1; T::Type = Float64, R::Type = Complex{T})
-    B = mub(d; T, R)
+function mub(::Type{T}, d::Integer, k::Integer, s::Integer = 1) where {T<:Number}
+    B = mub(T, d)
     subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k), s))
     sub = subs[end]
     return B[:, :, sub]
 end
+mub(d::Integer, k::Integer, s::Integer = 1) = mub(ComplexF64, d, k, s)
 
 """ Check whether the input is indeed mutually unbiased"""
-function test_mub(B::Array{R,3}) where {R<:Number}
-    T = real(R)
-    if R <: Complex && T <: AbstractFloat
-        tol = eps(T)
+function test_mub(B::Array{T,3}) where {T<:Number}
+    if T <: Complex
+        tol = Base.rtoldefault(real(T))
     else
         tol = T(0)
     end
     d = size(B, 1)
     k = size(B, 3)
-    inv_d = 1 / R(d)
+    inv_d = inv(T(d))
     for x in 1:k, y in x:k, a in 1:d, b in 1:d
         # expected scalar product squared
         if x == y
-            sc2_exp = R(a == b)
+            sc2_exp = T(a == b)
         else
             sc2_exp = inv_d
         end

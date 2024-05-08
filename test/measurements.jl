@@ -5,6 +5,9 @@
         end
     end
     @testset "MUBs" begin
+        for T in [Int8, Int64, BigInt]
+            @test test_mub(mub(T(6)))
+        end
         for R in [Float64, Double64, Float128, BigFloat]
             T = Complex{R}
             @test test_mub(mub(T, 2))
@@ -14,9 +17,9 @@
             @test test_mub(mub(T, 9))
         end
         for T in [Int64, Int128, BigInt]
-            @test test_mub(Rational{T}.(mub(4, 2; R = Cyc{Rational{T}})))
-            @test test_mub(Complex{Rational{T}}.(mub(4; R = Cyc{Rational{T}})))
+            @test test_mub(Rational{T}.(mub(Cyc{Rational{T}}, 4, 2)))
+            @test test_mub(Complex{Rational{T}}.(mub(Cyc{Rational{T}}, 4)))
         end
-        @test test_mub(mub(5, 5, 7; R = Cyc{Rational{BigInt}})) # can access beyond the number of combinations
+        @test test_mub(mub(Cyc{Rational{BigInt}}, 5, 5, 7)) # can access beyond the number of combinations
     end
 end
