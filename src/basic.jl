@@ -79,18 +79,21 @@ end
 clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
 
+_tol(::Type{Complex{R}}) where {R<:Real} = Base.rtoldefault(R)
+_tol(::Type{R}) where {R<:Real} = Base.rtoldefault(R)
+
 """
     cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T)))
 
 Zeroes out real or imaginary parts of `M` that are smaller than `tol`.
 """
-function cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
+function cleanup!(M::AbstractArray{T}; tol = _tol(T)) where {T<:Number} # SD: is it type stable?
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)
 end
 
-function cleanup!(M::Array{T}; tol = Base.rtoldefault(real(T))) where {T<:Number}
+function cleanup!(M::Array{T}; tol = _tol(T)) where {T<:Number}
     M2 = reinterpret(T, M) #this is a no-op when T<:Real
     _cleanup!(M2; tol)
     return M
