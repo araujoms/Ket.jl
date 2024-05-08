@@ -3,13 +3,14 @@
 
 Produces a ket of dimension `d` with nonzero element `i`.
 """
-function ket(::Type{T}, i::Integer, d::Integer) where {T}
+function ket(::Type{T}, i::Integer, d::Integer) where {T<:Number}
     psi = zeros(T, d)
     psi[i] = 1
     return psi
 end
 ket(i::Integer, d::Integer) = ket(ComplexF64, i, d)
 export ket
+
 """
     ketbra(v::AbstractVector)
 
@@ -25,7 +26,7 @@ export ketbra
 
 Produces a projector onto the basis state `i` in dimension `d`.
 """
-function proj(::Type{T}, i::Integer, d::Integer) where {T}
+function proj(::Type{T}, i::Integer, d::Integer) where {T<:Number}
     p = LA.Hermitian(zeros(T, d, d))
     p[i, i] = 1
     return p
@@ -40,7 +41,7 @@ Constructs the shift operator X of dimension `d` to the power `p`.
 
 Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
 """
-function shift(::Type{T}, d::Integer, p::Integer = 1) where {T}
+function shift(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     X = zeros(T, d, d)
     for i in 0:d-1
         X[mod(i + p, d)+1, i+1] = 1
@@ -57,18 +58,18 @@ Constructs the clock operator Z of dimension `d` to the power `p`.
 
 Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
 """
-function clock(::Type{T}, d::Integer, p::Integer = 1) where {T}
+function clock(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     z = zeros(T, d)
-    ω = exp(im * 2 * T(π) / d)
+    ω = _root_unity(T, d)
     for i in 0:d-1
         exponent = mod(i * p, d)
         if exponent == 0
             z[i+1] = 1
-        elseif 4 * exponent == d
+        elseif 4exponent == d
             z[i+1] = im
-        elseif 2 * exponent == d
+        elseif 2exponent == d
             z[i+1] = -1
-        elseif 4 * exponent == 3 * d
+        elseif 4exponent == 3d
             z[i+1] = -im
         else
             z[i+1] = ω^exponent
