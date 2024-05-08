@@ -1,16 +1,13 @@
+_root_unity(::Type{Complex{R}}, n::Integer) where {R<:Real} = exp(2 * im * R(π) / n)
+_sqrt(::Type{Complex{R}}, n::Integer) where {R<:Real} = sqrt(R(n))
+_tol(::Type{Complex{R}}) where {R<:Real} = Base.rtoldefault(R)
+_tol(::Type{R}) where {R<:Real} = Base.rtoldefault(R)
+
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
 function mub_prime(::Type{T}, p::Integer) where {T<:Number}
-    if T <: Complex
-        R = real(T)
-        γ = exp(2 * im * R(π) / p)
-        inv_sqrt_p = inv(sqrt(R(p)))
-    elseif T <: CN.Cyc
-        γ = CN.E(Int64(p))
-        inv_sqrt_p = inv(T(CN.root(Int64(p))))
-    else
-        error("Datatype ", T, " not supported")
-    end
+    γ = _root_unity(T, p)
+    inv_sqrt_p = inv(_sqrt(T, p))
     B = Array{T,3}(undef, p, p, p + 1)
     B[:, :, 1] .= LA.I(p)
     if p == 2
@@ -41,16 +38,8 @@ mub_prime(p::Integer) = mub_prime(ComplexF64, p)
 
 function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
     d = Int64(p^r)
-    if T <: Complex
-        R = real(T)
-        γ = exp(2 * im * R(π) / p)
-        inv_sqrt_d = inv(sqrt(R(d)))
-    elseif T <: CN.Cyc
-        γ = CN.E(Int64(p))
-        inv_sqrt_d = inv(T(CN.root(d)))
-    else
-        error("Datatype ", T, " not supported")
-    end
+    γ = _root_unity(T, p)
+    inv_sqrt_d = inv(_sqrt(T, d))
     B = zeros(T, d, d, d + 1)
     B[:, :, 1] .= LA.I(d)
     f, x = Nemo.finite_field(p, r, "x")
@@ -124,11 +113,7 @@ mub(d::Integer, k::Integer, s::Integer = 1) = mub(ComplexF64, d, k, s)
 
 """ Check whether the input is indeed mutually unbiased"""
 function test_mub(B::Array{T,3}) where {T<:Number}
-    if T <: Complex
-        tol = Base.rtoldefault(real(T))
-    else
-        tol = T(0)
-    end
+    tol = _tol(T)
     d = size(B, 1)
     k = size(B, 3)
     inv_d = inv(T(d))
