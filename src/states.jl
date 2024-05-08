@@ -1,31 +1,35 @@
 "Produces the maximally entangled state Φ⁺ of local dimension `d`"
-function phiplus(d::Integer; T::Type = Float64, R::Type = Complex{T})
-    psi = zeros(R, d^2)
+function phiplus(::Type{T}, d::Integer) where {T<:Number}
+    psi = zeros(T, d^2)
     for i = 1:d
-        psi += kron(ket(i, d; T), ket(i, d; T))
+        psi += kron(ket(T, i, d), ket(T, i, d))
     end
-    return LA.Hermitian(psi * psi' / d)
+    return LA.Hermitian(psi * psi' / T(d))
 end
-export phiplus
+phiplus(d::Integer) = phiplus(ComplexF64, d)
+export phiplus # SD: maybe call it ϕ_plus or even ϕp? There is also φ potentially.
 
 "Produces the maximally entangled state ψ⁻ of local dimension `d`"
-function psiminus(d::Integer; T::Type = Float64, R::Type = Complex{T})
-    psi = zeros(R, d^2)
+function psiminus(::Type{T}, d::Integer) where {T<:Number}
+    psi = zeros(T, d^2)
     for i = 1:d
-        psi += (-1)^(i + 1) * kron(ket(i, d; T), ket(d - i + 1, d; T))
+        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d))
     end
-    return LA.Hermitian(psi * psi' / d)
+    return LA.Hermitian(psi * psi' / T(d))
 end
-export psiminus
+phiminus(d::Integer) = phiminus(ComplexF64, d)
+export psiminus # SD: maybe call it ψ_minus or even ψm?
 
 "Produces the isotropic state of local dimension `d` with visibility `v`"
-function iso(v::Real, d::Integer; T::Type = Float64)
-    return LA.Hermitian(v * phiplus(d; T) + (1 - v) * LA.I(d^2) / T(d^2))
+function iso(::Type{T}, v::Real, d::Integer) where {T<:Number}
+    return LA.Hermitian(v * phiplus(T, d) + (1 - v) * LA.I(d^2) / T(d^2))
 end
+iso(v::Real, d::Integer) = iso(ComplexF64, v, d)
 export iso
 
 "Produces the anti-isotropic state of local dimension `d` with visibility `v`"
-function anti_iso(v::Real, d::Integer; T::Type = Float64)
-    return LA.Hermitian(v * psiminus(d; T) + (1 - v) * LA.I(d^2) / T(d^2))
+function anti_iso(::Type{T}, v::Real, d::Integer) where {T<:Number}
+    return LA.Hermitian(v * psiminus(T, d) + (1 - v) * LA.I(d^2) / T(d^2))
 end
+anti_iso(v::Real, d::Integer) = anti_iso(ComplexF64, v, d)
 export anti_iso
