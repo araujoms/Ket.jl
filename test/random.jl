@@ -17,7 +17,7 @@
             ρ = random_state(R, 3, 1)
             @test tr(ρ) ≈ 1
             @test rank(ρ) == 1
-            @test minimum(eigvals(ρ)) > -10 * eps(R)
+            @test minimum(eigvals(ρ)) > -Base.rtoldefault(R)
             @test isa(ρ, Hermitian{R})
             T = Complex{R}
             ψ = random_state_vector(T, 3)
@@ -32,7 +32,7 @@
             ρ = random_state(T, 3, 1)
             @test tr(ρ) ≈ 1
             @test rank(ρ) == 1
-            @test minimum(eigvals(ρ)) > -10 * eps(R)
+            @test minimum(eigvals(ρ)) > -Base.rtoldefault(R)
             @test isa(ρ, Hermitian{T})
         end
     end
