@@ -37,6 +37,8 @@ export proj
     shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 
 Constructs the shift operator X of dimension `d` to the power `p`.
+
+Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
 """
 function shift(::Type{T}, d::Integer, p::Integer = 1) where {T}
     X = zeros(T, d, d)
@@ -52,6 +54,8 @@ export shift
     clock([T=ComplexF64,] d::Integer, p::Integer = 1)
 
 Constructs the clock operator Z of dimension `d` to the power `p`.
+
+Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
 """
 function clock(::Type{T}, d::Integer, p::Integer = 1) where {T}
     z = zeros(T, d)
