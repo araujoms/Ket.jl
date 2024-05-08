@@ -1,7 +1,5 @@
 _root_unity(::Type{Complex{R}}, n::Integer) where {R<:Real} = exp(2 * im * R(π) / n)
 _sqrt(::Type{Complex{R}}, n::Integer) where {R<:Real} = sqrt(R(n))
-_tol(::Type{Complex{R}}) where {R<:Real} = Base.rtoldefault(R)
-_tol(::Type{R}) where {R<:Real} = Base.rtoldefault(R)
 
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public
