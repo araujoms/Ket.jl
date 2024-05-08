@@ -1,7 +1,6 @@
 module Ket
 
 import Combinatorics
-import CyclotomicNumbers as CN
 import GenericLinearAlgebra
 import LinearAlgebra as LA
 import Nemo
