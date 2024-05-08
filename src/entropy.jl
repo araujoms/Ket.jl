@@ -1,4 +1,4 @@
-_goodlog(base::Real, x::Real) = x > 0 ? log(base, x) : zero(x)
+_log(base::Real, x::Real) = x > 0 ? log(base, x) : zero(x)
 
 function relative_entropy(ρ::AbstractMatrix, σ::AbstractMatrix; base::Real = 2)
     T = real(eltype(ρ))
@@ -6,7 +6,7 @@ function relative_entropy(ρ::AbstractMatrix, σ::AbstractMatrix; base::Real = 2
     ρ_fact = LA.eigen(ρ)
     σ_fact = LA.eigen(σ)
     m = abs2.(ρ_fact.vectors' * σ_fact.vectors)
-    logρ = _goodlog.(Ref(base), ρ_fact.values)
+    logρ = _log.(Ref(base), ρ_fact.values)
     logσ = log.(Ref(base), σ_fact.values)
     h = T(0)
     for j = 1:d, i = 1:d
@@ -18,7 +18,7 @@ export relative_entropy
 
 function vonneumann_entropy(ρ::AbstractMatrix; base::Real = 2)
     λ = LA.eigvals(ρ)
-    h = -LA.dot(λ, _goodlog.(Ref(base), λ))
+    h = -LA.dot(λ, _log.(Ref(base), λ))
     return h
 end
 export vonneumann_entropy
@@ -28,7 +28,7 @@ function conditional_entropy(p::AbstractMatrix{T}; base::Real = 2) where {T<:Rea
     h = T(0)
     pB = sum(p; dims = 2)
     for a = 1:nA, b = 1:nB
-        h -= p[a, b] * _goodlog(base, p[a, b] / pB[b])
+        h -= p[a, b] * _log(base, p[a, b] / pB[b])
     end
     return h
 end
