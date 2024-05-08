@@ -48,3 +48,12 @@ random_unitary
 random_povm
 random_probability
 ```
+
+## Entropy
+
+```@docs
+entropy
+binary_entropy
+relative_entropy
+binary_relative_entropy
+```
