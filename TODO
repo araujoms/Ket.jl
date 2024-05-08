@@ -2,5 +2,8 @@ MA - Partial transpose
 MA - Permute systems
 MA - DPS hierarchy
 MA - See-saw
-MA - translations between FP, CG, and FC
-MA - multipartite Bell stuff?
+MA - translations between FP, CG, and FC (SD)
+MA - multipartite Bell stuff (SD)
+SD - noise maps: general last argument or separate function?
+SD - import states from BellPolytopes (SD)
+SD - NL/steering/incompatibility/entanglement robustness SDPs?
