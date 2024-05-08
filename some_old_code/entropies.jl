@@ -7,32 +7,6 @@
 include("mpartiteLinAlg.jl")
 using LinearAlgebra
 
-function xlogx(x::Real)
-    return 0.0 < x < 1.0 ? x * log2(x) : -0.0
-end
-
-function ent(x::Real)
-    #=
-    Binary Shannon entropy 
-    =#
-    return 0 < x < 1 ? -xlogx(x) - xlogx(1 - x) : 0.0
-end
-
-function ent(x::Vector{<:Real})
-    #=
-    Shannon entropy of a distribution
-    =#
-    return -sum(xlogx.(x))
-end
-
-function ent(rho::AbstractMatrix)
-    #=
-    von Neumann entropy of a positive operator
-    =#
-    spectrum = eigvals(rho)
-    return entropy(spectrum)
-end
-
 function ent(rho::AbstractMatrix, csys::Vector{<:Integer}, dims::Vector{<:Real})
     #=
     Conditional von Neumann entropy with conditioning systems indicated by csys
@@ -68,17 +42,4 @@ function m0log2(X::AbstractMatrix)
         end
     end
     return U * Diagonal(v) * U'
-end
-
-function divergence(rho::Hermitian{T}, sig::Hermitian) where {T<:Complex}
-    #=
-    Divergence between rho and sigma 
-
-    Don't check for finiteness at the moment! 
-    =#
-    l_rho, U_rho = eigen(rho)
-    l_sig, U_sig = eigen(sig)
-    for i = 1:eachindex(l_rho)
-    end
-    return
 end
