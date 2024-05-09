@@ -11,9 +11,11 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [weakdeps]
 CyclotomicNumbers = "c380f8b6-65b3-4789-a31b-7d6b5dc6d4c5"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [extensions]
 KetExact = "CyclotomicNumbers"
+KetSparse = "SparseArrays"
 
 [compat]
 DoubleFloats = "1.3.8"
