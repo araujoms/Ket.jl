@@ -81,7 +81,8 @@ clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
 
 """
-    GellMann([T=ComplexF64,], d::Integer = 3)
+    gell_mann([T=ComplexF64,], d::Integer = 3)
+    gell_mann([T=ComplexF64,], k::Integer, j::Integer, d::Integer = 3)
 
 Constructs the set `G` of generalized Gell-Mann matrices in dimension `d` such that
 `G[1] = I` and `G[i]*G[j] = 2 δ_ij`.
@@ -91,17 +92,21 @@ Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Gen
 # d=2, ρ = 1/2(σ0 + n*σ)
 # d=3, ρ = 1/3(I + √3 n*λ)
 #      ρ = 1/d(I + sqrt(2/(d*(d-1))) n*λ)
-function GellMann(::Type{T}, d::Integer = 3) where {T<:Number}
-    return [GellMann(T, k, j, d) for j in 1:d, k in 1:d][:]
+function gell_mann(::Type{T}, d::Integer = 3) where {T<:Number}
+    return [gell_mann(T, k, j, d) for j in 1:d, k in 1:d][:]
     # SD: the next line would be for a potential KetSparse extension
     # SD: I Haven't thought yet how to deal with this.
-    # return [GellMann(T, k, j, d, sparse(zeros(Complex{T}, d, d))) for j in 1:d, k in 1:d][:]
+    # return [gell_mann(T, k, j, d, sparse(zeros(Complex{T}, d, d))) for j in 1:d, k in 1:d][:]
 end
-GellMann(d::Integer = 3) = GellMann(ComplexF64, d)
-export GellMann
+gell_mann(d::Integer = 3) = gell_mann(ComplexF64, d)
+export gell_mann
 
-# SD: maybe it could be wise to add a ! here as res gets modified in place
-function GellMann(::Type{T}, k::Integer, j::Integer, d::Integer = 3, res::AbstractMatrix{T} = zeros(T, d, d)) where {T<:Number}
+function gell_mann(::Type{T}, k::Integer, j::Integer, d::Integer = 3) where {T<:Number}
+    return gell_mann!(zeros(T, d, d), k, j, d)
+end
+gell_mann(k::Integer, j::Integer, d::Integer = 3) = gell_mann(ComplexF64, k, j, d)
+
+function gell_mann!(res::AbstractMatrix{T}, k::Integer, j::Integer, d::Integer = 3) where {T<:Number}
     if k < j
         res[k, j] = 1
         res[j, k] = 1
@@ -119,11 +124,10 @@ function GellMann(::Type{T}, k::Integer, j::Integer, d::Integer = 3, res::Abstra
         end
         res[d, d] = -(d - 1) * tmp
     else
-        GellMann(T, k, j, d - 1, view(res, 1:d-1, 1:d-1))
+        gell_mann!(view(res, 1:d-1, 1:d-1), k, j, d - 1)
     end
     return res
 end
-GellMann(k::Integer, j::Integer, d::Integer = 3) = GellMann(ComplexF64, k, j, d)
 
 _tol(::Type{T}) where {T<:Number} = Base.rtoldefault(real(T))
 
