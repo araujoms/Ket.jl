@@ -125,8 +125,7 @@ function GellMann(::Type{T}, k::Integer, j::Integer, d::Integer = 3, res::Abstra
 end
 GellMann(k::Integer, j::Integer, d::Integer = 3) = GellMann(ComplexF64, k, j, d)
 
-_tol(::Type{Complex{R}}) where {R<:Real} = Base.rtoldefault(R)
-_tol(::Type{R}) where {R<:Real} = Base.rtoldefault(R)
+_tol(::Type{T}) where {T<:Number} = Base.rtoldefault(real(T))
 
 """
     cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T)))

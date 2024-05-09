@@ -30,4 +30,4 @@ Quaternions = "94ee1d12-ae83-5a48-8b1c-48b8ff168ae0"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["DoubleFloats", "Quadmath", "Quaternions", "Test"]
+test = ["CyclotomicNumbers", "DoubleFloats", "Quadmath", "Quaternions", "Test"]
