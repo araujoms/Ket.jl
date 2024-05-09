@@ -111,7 +111,6 @@ mub(d::Integer, k::Integer, s::Integer = 1) = mub(ComplexF64, d, k, s)
 
 """ Check whether the input is indeed mutually unbiased"""
 function test_mub(B::Array{T,3}) where {T<:Number}
-    tol = _tol(T)
     d = size(B, 1)
     k = size(B, 3)
     inv_d = inv(T(d))
@@ -122,9 +121,8 @@ function test_mub(B::Array{T,3}) where {T<:Number}
         else
             sc2_exp = inv_d
         end
-        sc2 = LA.dot(B[:, a, x], B[:, b, y])
-        sc2 *= conj(sc2)
-        if abs2(sc2 - sc2_exp) > tol
+        sc2 = abs2(LA.dot(B[:, a, x], B[:, b, y]))
+        if abs2(sc2 - sc2_exp) > _tol(T)
             return false
         end
     end
@@ -142,8 +140,7 @@ Constructs a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a
 Reference: Appleby, Yadsan-Appleby, Zauner, [arXiv:1209.1813](http://arxiv.org/abs/1209.1813)
 """
 function sic_povm(::Type{T}, d::Integer) where {T}
-    R = real(T)
-    fiducial = _fiducial_WH(R, d)
+    fiducial = _fiducial_WH(real(T), d)
     vecs = Vector{Vector{T}}(undef, d^2)
     for p in 0:d-1
         Xp = shift(T, d, p)
@@ -152,7 +149,7 @@ function sic_povm(::Type{T}, d::Integer) where {T}
             vecs[d*p+q+1] = Xp * Zq * fiducial
         end
     end
-    sqrt_d = sqrt(R(d))
+    sqrt_d = _sqrt(T, d)
     for vi in vecs
         vi ./= sqrt_d * LA.norm(vi)
     end
@@ -166,16 +163,23 @@ export sic_povm
 
 Tests whether `vecs` is a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
 """
-function test_sic(vecs::Vector{Vector{Complex{T}}}) where {T<:Real}
+function test_sic(vecs::Vector{Vector{T}}) where {T<:Number}
     d = length(vecs[1])
     length(vecs) == d^2 || throw(ArgumentError("Number of vectors must be d² = $(d^2), got $(length(vecs))."))
     m = zeros(T, d^2, d^2)
     for j in 1:d^2, i in 1:j
-        m[i, j] = abs2(vecs[i]' * vecs[j])
+        # expected scalar product
+        if i == j
+            sc2_exp = inv(T(d^2))
+        else
+            sc2_exp = inv(T(d^2 * (d + 1)))
+        end
+        sc2 = abs2(LA.dot(vecs[i], vecs[j]))
+        if abs2(sc2 - sc2_exp) > _tol(T)
+            return false
+        end
     end
-    is_normalized = LA.diag(m) ≈ T(1) / d^2 * ones(d^2)
-    is_uniform = LA.triu(m, 1) ≈ (1 / T(d^2 * (d + 1))) * LA.triu(ones(d^2, d^2), 1)
-    return is_normalized && is_uniform
+    return true
 end
 export test_sic
 
