@@ -82,18 +82,17 @@ export clock
 
 """
     gell_mann([T=ComplexF64,], d::Integer = 3)
-    gell_mann([T=ComplexF64,], k::Integer, j::Integer, d::Integer = 3)
 
 Constructs the set `G` of generalized Gell-Mann matrices in dimension `d` such that
 `G[1] = I` and `G[i]*G[j] = 2 δ_ij`.
 
 Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Generalizations_of_Pauli_matrices)
 """
-# d=2, ρ = 1/2(σ0 + n*σ)
-# d=3, ρ = 1/3(I + √3 n*λ)
-#      ρ = 1/d(I + sqrt(2/(d*(d-1))) n*λ)
 function gell_mann(::Type{T}, d::Integer = 3) where {T<:Number}
-    return [gell_mann(T, k, j, d) for j in 1:d, k in 1:d][:]
+    return [gell_mann(T, i, j, d) for j in 1:d, i in 1:d][:]
+    # d=2, ρ = 1/2(σ0 + n*σ)
+    # d=3, ρ = 1/3(I + √3 n*λ)
+    #      ρ = 1/d(I + sqrt(2/(d*(d-1))) n*λ)
     # SD: the next line would be for a potential KetSparse extension
     # SD: I Haven't thought yet how to deal with this.
     # return [gell_mann(T, k, j, d, sparse(zeros(Complex{T}, d, d))) for j in 1:d, k in 1:d][:]
@@ -101,33 +100,46 @@ end
 gell_mann(d::Integer = 3) = gell_mann(ComplexF64, d)
 export gell_mann
 
-function gell_mann(::Type{T}, k::Integer, j::Integer, d::Integer = 3) where {T<:Number}
-    return gell_mann!(zeros(T, d, d), k, j, d)
-end
-gell_mann(k::Integer, j::Integer, d::Integer = 3) = gell_mann(ComplexF64, k, j, d)
+"""
+    gell_mann([T=ComplexF64,], i::Integer, j::Integer, d::Integer = 3)
 
-function gell_mann!(res::AbstractMatrix{T}, k::Integer, j::Integer, d::Integer = 3) where {T<:Number}
-    if k < j
-        res[k, j] = 1
-        res[j, k] = 1
-    elseif k > j
-        res[k, j] = im
-        res[j, k] = -im
-    elseif k == 1
-        for i in 1:d
-            res[i, i] = 1 # _sqrt(T, 2) / _sqrt(T, d) if we want a proper normalisation
+Constructs the set `i`,`j`th Gell-Mann matrix of dimension `d`.
+
+Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Generalizations_of_Pauli_matrices)
+"""
+function gell_mann(::Type{T}, i::Integer, j::Integer, d::Integer = 3) where {T<:Number}
+    return gell_mann!(zeros(T, d, d), i, j, d)
+end
+gell_mann(i::Integer, j::Integer, d::Integer = 3) = gell_mann(ComplexF64, i, j, d)
+
+"""
+    gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3)
+
+In-place version of `gell_mann`.
+"""
+function gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3) where {T<:Number}
+    if i < j
+        res[i, j] = 1
+        res[j, i] = 1
+    elseif i > j
+        res[i, j] = im
+        res[j, i] = -im
+    elseif i == 1
+        for k in 1:d
+            res[k, k] = 1 # _sqrt(T, 2) / _sqrt(T, d) if we want a proper normalisation
         end
-    elseif k == d
+    elseif i == d
         tmp = _sqrt(T, 2) / _sqrt(T, d * (d - 1))
-        for i in 1:d-1
-            res[i, i] = tmp
+        for k in 1:d-1
+            res[k, k] = tmp
         end
         res[d, d] = -(d - 1) * tmp
     else
-        gell_mann!(view(res, 1:d-1, 1:d-1), k, j, d - 1)
+        gell_mann!(view(res, 1:d-1, 1:d-1), i, j, d - 1)
     end
     return res
 end
+export gell_mann!
 
 _tol(::Type{T}) where {T<:Number} = Base.rtoldefault(real(T))
 

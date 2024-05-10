@@ -1,5 +1,5 @@
-_root_unity(::Type{Complex{R}}, n::Integer) where {R<:Real} = exp(2 * im * R(π) / n)
-_sqrt(::Type{Complex{R}}, n::Integer) where {R<:Real} = sqrt(R(n))
+_root_unity(::Type{T}, n::Integer) where {T<:Number} = exp(2 * im * real(T)(π) / n)
+_sqrt(::Type{T}, n::Integer) where {T<:Number} = sqrt(real(T)(n))
 
 # MUBs
 # SD: TODO add the link to Ket.jl on my MUB repo once public

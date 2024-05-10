@@ -17,19 +17,19 @@ function psiminus(::Type{T}, d::Integer = 2) where {T<:Number}
     end
     return LA.Hermitian(psi * psi' / T(d))
 end
-phiminus(d::Integer = 2) = phiminus(ComplexF64, d)
+psiminus(d::Integer = 2) = psiminus(ComplexF64, d)
 export psiminus # SD: maybe call it ψ_minus or even ψm?
 
 "Produces the isotropic state of local dimension `d` with visibility `v`"
-function iso(::Type{T}, v::Real = 1.0, d::Integer = 2) where {T<:Number}
+function isotropic(::Type{T}, v::Real = 1.0, d::Integer = 2) where {T<:Number}
     return LA.Hermitian(v * phiplus(T, d) + (1 - v) * LA.I(d^2) / T(d^2))
 end
-iso(v::Real = 1.0, d::Integer = 2) = iso(ComplexF64, v, d)
-export iso
+isotropic(v::Real = 1.0, d::Integer = 2) = isotropic(ComplexF64, v, d)
+export isotropic
 
 "Produces the anti-isotropic state of local dimension `d` with visibility `v`"
-function anti_iso(::Type{T}, v::Real = 1.0, d::Integer = 2) where {T<:Number}
+function anti_isotropic(::Type{T}, v::Real = 1.0, d::Integer = 2) where {T<:Number}
     return LA.Hermitian(v * psiminus(T, d) + (1 - v) * LA.I(d^2) / T(d^2))
 end
-anti_iso(v::Real = 1.0, d::Integer = 2) = anti_iso(ComplexF64, v, d)
-export anti_iso
+anti_isotropic(v::Real = 1.0, d::Integer = 2) = anti_isotropic(ComplexF64, v, d)
+export anti_isotropic

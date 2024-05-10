@@ -8,6 +8,8 @@ ketbra
 proj
 shift
 clock
+gell_mann
+gell_mann!
 cleanup!
 ```
 
@@ -16,8 +18,8 @@ cleanup!
 ```@docs
 phiplus
 psiminus
-iso
-anti_iso
+isotropic
+anti_isotropic
 ```
 
 ## Measurements
