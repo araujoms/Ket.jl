@@ -6,26 +6,26 @@ _sqrt(::Type{T}, n::Integer) where {T<:Number} = sqrt(real(T)(n))
 function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     γ = _root_unity(T, p)
     inv_sqrt_p = inv(_sqrt(T, p))
-    B = Array{T,3}(undef, p, p, p + 1)
-    B[:, :, 1] .= LA.I(p)
+    B = [Matrix{T}(undef, p, p) for _ in 1:p+1]
+    B[1] .= LA.I(p)
     if p == 2
-        B[:, :, 2] .= [1 1; 1 -1] .* inv_sqrt_p
-        B[:, :, 3] .= [1 1; im -im] .* inv_sqrt_p
+        B[2] .= [1 1; 1 -1] .* inv_sqrt_p
+        B[3] .= [1 1; im -im] .* inv_sqrt_p
     else
         for k in 0:p-1
-            fill!(view(B, :, :, k + 2), inv_sqrt_p)
+            fill!(B[k+2], inv_sqrt_p)
             for t in 0:p-1, j in 0:p-1
                 exponent = mod(j * (t + k * j), p)
                 if exponent == 0
                     continue
                 elseif 4exponent == p
-                    B[j+1, t+1, k+2] *= im
+                    B[k+2][j+1, t+1] *= im
                 elseif 2exponent == p
-                    B[j+1, t+1, k+2] *= -1
+                    B[k+2][j+1, t+1] *= -1
                 elseif 4exponent == 3p
-                    B[j+1, t+1, k+2] *= -im
+                    B[k+2][j+1, t+1] *= -im
                 else
-                    B[j+1, t+1, k+2] *= γ^exponent
+                    B[k+2][j+1, t+1] *= γ^exponent
                 end
             end
         end
@@ -38,8 +38,8 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
     d = Int64(p^r)
     γ = _root_unity(T, p)
     inv_sqrt_d = inv(_sqrt(T, d))
-    B = zeros(T, d, d, d + 1)
-    B[:, :, 1] .= LA.I(d)
+    B = [zeros(T, d, d) for _ in 1:d+1]
+    B[1] .= LA.I(d)
     f, x = Nemo.finite_field(p, r, "x")
     pow = [x^i for i in 0:r-1]
     el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
@@ -50,13 +50,13 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
             for m in 0:r-1, n in 0:r-1
                 aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
             end
-            B[:, k+1, i+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[:, q+1, 1] * inv_sqrt_d
+            B[i+1][:, k+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[1][:, q+1] * inv_sqrt_d
         end
     else
         inv_two = inv(2 * one(f))
         for i in 1:d, k in 0:d-1, q in 0:d-1
-            B[:, k+1, i+1] +=
-                γ^_tr_ff(-el[q+1] * el[k+1]) * γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) * B[:, q+1, 1] * inv_sqrt_d
+            B[i+1][:, k+1] +=
+                γ^_tr_ff(-el[q+1] * el[k+1]) * γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) * B[1][:, q+1] * inv_sqrt_d
         end
     end
     return B
@@ -85,10 +85,10 @@ function mub(::Type{T}, d::Integer) where {T<:Number}
     if length(f) > 1 # different prime factors
         B_aux1 = mub(T, p^r)
         B_aux2 = mub(T, d ÷ p^r)
-        k = min(size(B_aux1, 3), size(B_aux2, 3))
-        B = Array{T,3}(undef, d, d, k)
+        k = min(length(B_aux1), length(B_aux2))
+        B = [Matrix{T}(undef, d, d) for _ in 1:k]
         for j in 1:k
-            B[:, :, j] .= kron(B_aux1[:, :, j], B_aux2[:, :, j])
+            B[j] .= kron(B_aux1[j], B_aux2[j])
         end
     elseif r == 1 # prime
         return mub_prime(T, p)
@@ -103,16 +103,16 @@ export mub
 # Select a specific subset with k bases
 function mub(::Type{T}, d::Integer, k::Integer, s::Integer = 1) where {T<:Number}
     B = mub(T, d)
-    subs = collect(Iterators.take(Combinatorics.combinations(1:size(B, 3), k), s))
+    subs = collect(Iterators.take(Combinatorics.combinations(1:length(B), k), s))
     sub = subs[end]
-    return B[:, :, sub]
+    return B[sub]
 end
 mub(d::Integer, k::Integer, s::Integer = 1) = mub(ComplexF64, d, k, s)
 
 """ Check whether the input is indeed mutually unbiased"""
-function test_mub(B::Array{T,3}) where {T<:Number}
-    d = size(B, 1)
-    k = size(B, 3)
+function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
+    d = size(B[1], 1)
+    k = length(B)
     inv_d = inv(T(d))
     for x in 1:k, y in x:k, a in 1:d, b in 1:d
         # expected scalar product squared
@@ -121,7 +121,7 @@ function test_mub(B::Array{T,3}) where {T<:Number}
         else
             sc2_exp = inv_d
         end
-        sc2 = abs2(LA.dot(B[:, a, x], B[:, b, y]))
+        sc2 = abs2(LA.dot(B[x][:, a], B[y][:, b]))
         if abs2(sc2 - sc2_exp) > _tol(T)
             return false
         end

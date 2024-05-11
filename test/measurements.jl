@@ -17,8 +17,8 @@
             @test test_mub(mub(T, 9))
         end
         for T in [Int64, Int128, BigInt]
-            @test test_mub(Rational{T}.(mub(Cyc{Rational{T}}, 4, 2)))
-            @test test_mub(Complex{Rational{T}}.(mub(Cyc{Rational{T}}, 4)))
+            @test test_mub(broadcast.(Rational{T}, mub(Cyc{Rational{T}}, 4, 2)))
+            @test test_mub(broadcast.(Complex{Rational{T}}, mub(Cyc{Rational{T}}, 4)))
         end
         @test test_mub(mub(Cyc{Rational{BigInt}}, 5, 5, 7)) # can access beyond the number of combinations
     end
