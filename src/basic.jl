@@ -35,6 +35,48 @@ proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
 export proj
 
 """
+    povm(B::Vector{<:AbstractMatrix{T}})
+
+Creates a set of (projective) POVMs from a set of bases.
+"""
+function povm(B::Vector{<:AbstractMatrix{T}}) where {T<:Number}
+    n = size(B[1], 2) # number of outputs
+    k = length(B) # number of measurements
+    res = Matrix{LA.Hermitian{T, Matrix{T}}}(undef, n, k)
+    for a = 1:n, x = 1:k
+        res[a, x] = ketbra(B[x][:, a])
+    end
+    return res
+end
+export povm
+
+"""
+    povm(A::Array{T, 4})
+
+Converts a set of POVMs in the common tensor format into a matrix of matrices.
+"""
+function povm(A::Array{T, 4}) where {T<:Number}
+    n = size(A, 3) # number of outputs
+    k = size(A, 4) # number of measurements
+    res = Matrix{LA.Hermitian{T, Matrix{T}}}(undef, n, k)
+    for a = 1:n, x = 1:k
+        res[a, x] = LA.Hermitian(A[:, :, a, x])
+    end
+    return res
+end
+export povm
+
+"""
+    test_povm(A::Matrix{<:AbstractMatrix{T}})
+
+Checks if the POVM defined by A is valid (hermitian, semi-definite positive, and normalized).
+"""
+# SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
+function test_povm(A::Matrix{<:AbstractMatrix{T}}) where {T<:Number}
+    # TODO
+end
+
+"""
     shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 
 Constructs the shift operator X of dimension `d` to the power `p`.
