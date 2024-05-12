@@ -37,34 +37,22 @@ export proj
 """
     povm(B::Vector{<:AbstractMatrix{T}})
 
-Creates a set of (projective) POVMs from a set of bases.
+Creates a set of (projective) POVMs from a set of bases given as unitary matrices.
 """
 function povm(B::Vector{<:AbstractMatrix{T}}) where {T<:Number}
-    n = size(B[1], 2) # number of outputs
-    k = length(B) # number of measurements
-    res = Matrix{LA.Hermitian{T, Matrix{T}}}(undef, n, k)
-    for a = 1:n, x = 1:k
-        res[a, x] = ketbra(B[x][:, a])
-    end
-    return res
+    return [[ketbra(B[x][:, a]) for a in eachindex(B[x])] for x in eachindex(B)]
 end
 export povm
 
 """
-    povm(A::Array{T, 4})
+    povm(A::Array{T, 4}, n::Vector{Int64})
 
 Converts a set of POVMs in the common tensor format into a matrix of matrices.
+The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
-function povm(A::Array{T, 4}) where {T<:Number}
-    n = size(A, 3) # number of outputs
-    k = size(A, 4) # number of measurements
-    res = Matrix{LA.Hermitian{T, Matrix{T}}}(undef, n, k)
-    for a = 1:n, x = 1:k
-        res[a, x] = LA.Hermitian(A[:, :, a, x])
-    end
-    return res
+function povm(A::Array{T, 4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T<:Number}
+    return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
 end
-export povm
 
 """
     test_povm(A::Matrix{<:AbstractMatrix{T}})
