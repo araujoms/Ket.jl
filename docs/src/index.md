@@ -1,61 +1,14 @@
-# List of functions
-
-## Basic
-
-```@docs
-ket
-ketbra
-proj
-shift
-clock
-gell_mann
-gell_mann!
-cleanup!
+```@meta
+CurrentModule = Ket
 ```
 
-## States
+# BellPolytopes
 
-```@docs
-phiplus
-psiminus
-isotropic
-anti_isotropic
+Documentation for [Ket](https://github.com/araujoms/Ket.jl).
+
+```@index
 ```
 
-## Measurements
-
-```@docs
-sic_povm
-test_sic
-dilate_povm
-mub
-test_mub
-```
-
-## Nonlocality
-
-```@docs
-local_bound
-tsirelson_bound
-chsh
-cglmp
-```
-
-## Random
-
-```@docs
-random_state
-random_state_vector
-random_unitary
-random_povm
-random_probability
-```
-
-## Entropy
-
-```@docs
-entropy
-binary_entropy
-relative_entropy
-binary_relative_entropy
+```@autodocs
+Modules = [Ket]
 ```
