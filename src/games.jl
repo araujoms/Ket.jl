@@ -75,11 +75,26 @@ function probability_tensor(
     end
     return p
 end
+# accepts a pure state
 function probability_tensor(
     psi::AbstractVector,
     all_Aax::Vararg{Vector{POVM{T}}, N},
 ) where {T<:Number, N}
     return probability_tensor(ketbra(psi), all_Aax...)
+end
+# accepts projective measurements
+function probability_tensor(
+    rho::LA.Hermitian{T1, Matrix{T1}},
+    all_φax::Vararg{Vector{<:AbstractMatrix{T2}}, N},
+) where {T1<:Number, T2<:Number, N}
+    return probability_tensor(rho, povm.(all_φax)...)
+end
+# accepts pure states and projective measurements
+function probability_tensor(
+    psi::AbstractVector,
+    all_φax::Vararg{Vector{<:AbstractMatrix{T}}, N},
+) where {T<:Number, N}
+    return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
 export probability_tensor
 
@@ -111,6 +126,8 @@ function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T
     end
     return res
 end
+# accepts directly the arguments of probability_tensor
+# SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
 function correlation_tensor(
     rho::LA.Hermitian{T1, Matrix{T1}},
     all_Aax::Vararg{Vector{POVM{T2}}, N};
@@ -124,5 +141,17 @@ function correlation_tensor(
     marg::Bool = true,
 ) where {T<:Number, N}
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
+end
+function correlation_tensor(
+    rho::LA.Hermitian{T1, Matrix{T1}},
+    all_φax::Vararg{Vector{<:AbstractMatrix{T2}}, N},
+) where {T1<:Number, T2<:Number, N}
+    return correlation_tensor(probability_tensor(rho, all_φax))
+end
+function correlation_tensor(
+    psi::AbstractVector,
+    all_φax::Vararg{Vector{<:AbstractMatrix{T}}, N},
+) where {T<:Number, N}
+    return correlation_tensor(probability_tensor(psi, all_φax))
 end
 export correlation_tensor
