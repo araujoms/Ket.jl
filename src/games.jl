@@ -86,7 +86,7 @@ end
 export probability_tensor
 
 """
-    correlation_tensor(p::AbstractArray{T, N2}, marg::Bool = true)
+    correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true)
 
 Applies N sets of POVMs onto a state `rho` to form a probability array.
 Convert a 2x...x2xmx...xm probability array into
