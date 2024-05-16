@@ -34,6 +34,9 @@ end
 proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
 export proj
 
+const POVM{T} = Vector{LA.Hermitian{T, Matrix{T}}}
+export POVM
+
 """
     povm(B::Vector{<:AbstractMatrix{T}})
 
