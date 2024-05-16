@@ -51,3 +51,76 @@ function cglmp(::Type{T}, d::Integer) where {T}
 end
 cglmp(d::Integer) = cglmp(Float64, d)
 export cglmp
+
+# SD: not sure these functions belong here
+# SD: use POVM{T} = Vector{Vector{LA.Hermitian{T, Matrix{T}}}} for the docstrings?
+# SD: maybe find a way to add an alias?
+"""
+    probability_tensor(Aax::Vector{Vector{LA.Hermitian{T, Matrix{T}}}})
+
+Applies N sets of POVMs onto a state `rho` to form a probability array.
+"""
+function probability_tensor(
+    rho::LA.Hermitian{T1, Matrix{T1}},
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T2, Matrix{T2}}}}, N},
+) where {T1<:Number, T2<:Number, N}
+    T = real(promote_type(T1, T2))
+    m = length.(all_Aax) # numbers of inputs per party
+    o = broadcast(Aax -> maximum(length.(Aax)), all_Aax) # numbers of outputs per party
+    p = zeros(T, o..., m...)
+    cia = CartesianIndices(o)
+    cix = CartesianIndices(m)
+    for a in cia, x in cix
+        if all([a[n] ≤ length(all_Aax[n][x[n]]) for n in 1:N])
+            p[a, x] = real(LA.tr(kron([all_Aax[n][x[n]][a[n]] for n in 1:N]...) * rho))
+        end
+    end
+    return p
+end
+function probability_tensor(
+    psi::AbstractVector,
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T, Matrix{T}}}}, N},
+) where {T<:Number, N}
+    return probability_tensor(ketbra(psi), all_Aax)
+end
+export probability_tensor
+
+"""
+    correlation_tensor(p::AbstractArray{T, N2}, marg::Bool = true)
+
+Applies N sets of POVMs onto a state `rho` to form a probability array.
+Convert a 2x...x2xmx...xm probability array into
+- a mx...xm correlation array (no marginals)
+- a (m+1)x...x(m+1) correlation array (marginals).
+"""
+function correlation_tensor(p::AbstractArray{T, N2}, marg::Bool = true) where {T<:Number} where {N2}
+    @assert iseven(N2)
+    N = N2 ÷ 2
+    m = size(p)[N+1:end] # numbers of inputs per party
+    res = zeros(T, (marg ? m .+ 1 : m)...)
+    cia = CartesianIndices(Tuple(2ones(Int, N)))
+    cix = CartesianIndices(Tuple(marg ? m .+ 1 : m))
+    for x in cix
+        x_colon = [x[n] ≤ m[n] ? x[n] : Colon() for n in 1:N]
+        res[x] =
+            sum((-1)^sum(a[n] for n in 1:N if x[n] ≤ m[n]; init = 0) * sum(p[a, x_colon...]) for a in cia) /
+            prod(m[n] for n in 1:N if x[n] > m[n]; init = 1)
+        if abs2(res[x]) < _tol(T)
+            res[x] = 0
+        end
+    end
+    return res
+end
+function correlation_tensor(
+    rho::LA.Hermitian{T1, Matrix{T1}},
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T2, Matrix{T2}}}}, N},
+) where {T1<:Number, T2<:Number, N}
+    return correlation_tensor(probability_tensor(rho, all_Aax))
+end
+function correlation_tensor(
+    psi::AbstractVector,
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T, Matrix{T}}}}, N},
+) where {T<:Number, N}
+    return correlation_tensor(probability_tensor(psi, all_Aax))
+end
+export correlation_tensor
