@@ -40,7 +40,7 @@ export proj
 Creates a set of (projective) POVMs from a set of bases given as unitary matrices.
 """
 function povm(B::Vector{<:AbstractMatrix{T}}) where {T<:Number}
-    return [[ketbra(B[x][:, a]) for a in eachindex(B[x])] for x in eachindex(B)]
+    return [[ketbra(B[x][:, a]) for a in 1:size(B[x], 2)] for x in eachindex(B)]
 end
 export povm
 
