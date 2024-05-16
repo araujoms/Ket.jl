@@ -81,7 +81,7 @@ function probability_tensor(
     psi::AbstractVector,
     all_Aax::Vararg{Vector{Vector{LA.Hermitian{T, Matrix{T}}}}, N},
 ) where {T<:Number, N}
-    return probability_tensor(ketbra(psi), all_Aax)
+    return probability_tensor(ketbra(psi), all_Aax...)
 end
 export probability_tensor
 
@@ -93,10 +93,12 @@ Convert a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
 """
-function correlation_tensor(p::AbstractArray{T, N2}, marg::Bool = true) where {T<:Number} where {N2}
+function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T<:Number} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     m = size(p)[N+1:end] # numbers of inputs per party
+    o = size(p)[1:N] # numbers of outputs per party
+    @assert collect(o) == 2ones(Int, N)
     res = zeros(T, (marg ? m .+ 1 : m)...)
     cia = CartesianIndices(Tuple(2ones(Int, N)))
     cix = CartesianIndices(Tuple(marg ? m .+ 1 : m))
@@ -113,14 +115,16 @@ function correlation_tensor(p::AbstractArray{T, N2}, marg::Bool = true) where {T
 end
 function correlation_tensor(
     rho::LA.Hermitian{T1, Matrix{T1}},
-    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T2, Matrix{T2}}}}, N},
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T2, Matrix{T2}}}}, N};
+    marg::Bool = true,
 ) where {T1<:Number, T2<:Number, N}
-    return correlation_tensor(probability_tensor(rho, all_Aax))
+    return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
 function correlation_tensor(
     psi::AbstractVector,
-    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T, Matrix{T}}}}, N},
+    all_Aax::Vararg{Vector{Vector{LA.Hermitian{T, Matrix{T}}}}, N};
+    marg::Bool = true,
 ) where {T<:Number, N}
-    return correlation_tensor(probability_tensor(psi, all_Aax))
+    return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
 export correlation_tensor
