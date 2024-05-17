@@ -2,7 +2,7 @@
 CurrentModule = Ket
 ```
 
-# BellPolytopes
+# Ket.jl
 
 Documentation for [Ket](https://github.com/araujoms/Ket.jl).
 
