@@ -13,13 +13,13 @@ gell_mann!
 cleanup!
 ```
 
-## States
+## Entropy
 
 ```@docs
-phiplus
-psiminus
-isotropic
-anti_isotropic
+entropy
+binary_entropy
+relative_entropy
+binary_relative_entropy
 ```
 
 ## Measurements
@@ -28,6 +28,7 @@ anti_isotropic
 sic_povm
 test_sic
 dilate_povm
+povm
 mub
 test_mub
 ```
@@ -44,6 +45,14 @@ probability_tensor
 fp2cg
 ```
 
+## Norms
+
+```@docs
+trace_norm
+kyfan_norm
+schatten_norm
+```
+
 ## Random
 
 ```@docs
@@ -54,12 +63,17 @@ random_povm
 random_probability
 ```
 
-## Entropy
+## States
 
 ```@docs
-entropy
-binary_entropy
-relative_entropy
-binary_relative_entropy
+phiplus
+psiminus
+isotropic
+anti_isotropic
 ```
+## Internal functions
 
+```@docs
+Ket._partition
+Ket._fiducial_WH
+```
