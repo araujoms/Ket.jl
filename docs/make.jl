@@ -26,7 +26,7 @@ end
 
 makedocs(;
     modules = [Ket],
-    authors = "Mateus Araujo et al.",
+    authors = "Mateus Araújo et al.",
     repo = "https://github.com/araujoms/Ket.jl/blob/{commit}{path}#{line}",
     sitename = "Ket.jl",
     format = Documenter.HTML(;
