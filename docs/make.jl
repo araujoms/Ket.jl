@@ -35,7 +35,7 @@ makedocs(;
         edit_link = "master",
         assets = String[],
     ),
-    pages = ["Home" => "index.md", "API reference" => "api.md"],
+    pages = ["Home" => "index.md", "List of functions" => "api.md"],
 )
 
 deploydocs(; repo = "github.com/araujoms/Ket.jl", devbranch = "master", push_preview = true)
