@@ -136,9 +136,9 @@ export fp2cg
 Applies N sets of POVMs onto a state `rho` to form a probability array.
 """
 function probability_tensor(
-    rho::LA.Hermitian{T1, Matrix{T1}},
-    all_Aax::Vararg{Vector{POVM{T2}}, N},
-) where {T1<:Number, T2<:Number, N}
+    rho::LA.Hermitian{T1,Matrix{T1}},
+    all_Aax::Vararg{Vector{POVM{T2}},N}
+) where {T1<:Number,T2<:Number,N}
     T = real(promote_type(T1, T2))
     m = length.(all_Aax) # numbers of inputs per party
     o = broadcast(Aax -> maximum(length.(Aax)), all_Aax) # numbers of outputs per party
@@ -153,24 +153,18 @@ function probability_tensor(
     return p
 end
 # accepts a pure state
-function probability_tensor(
-    psi::AbstractVector,
-    all_Aax::Vararg{Vector{POVM{T}}, N},
-) where {T<:Number, N}
+function probability_tensor(psi::AbstractVector, all_Aax::Vararg{Vector{POVM{T}},N}) where {T<:Number,N}
     return probability_tensor(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
 function probability_tensor(
-    rho::LA.Hermitian{T1, Matrix{T1}},
-    all_φax::Vararg{Vector{<:AbstractMatrix{T2}}, N},
-) where {T1<:Number, T2<:Number, N}
+    rho::LA.Hermitian{T1,Matrix{T1}},
+    all_φax::Vararg{Vector{<:AbstractMatrix{T2}},N}
+) where {T1<:Number,T2<:Number,N}
     return probability_tensor(rho, povm.(all_φax)...)
 end
 # accepts pure states and projective measurements
-function probability_tensor(
-    psi::AbstractVector,
-    all_φax::Vararg{Vector{<:AbstractMatrix{T}}, N},
-) where {T<:Number, N}
+function probability_tensor(psi::AbstractVector, all_φax::Vararg{Vector{<:AbstractMatrix{T}},N}) where {T<:Number,N}
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
 export probability_tensor
@@ -183,7 +177,7 @@ Convert a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
 """
-function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T<:Number} where {N2}
+function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T<:Number} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     m = size(p)[N+1:end] # numbers of inputs per party
@@ -206,29 +200,26 @@ end
 # accepts directly the arguments of probability_tensor
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
 function correlation_tensor(
-    rho::LA.Hermitian{T1, Matrix{T1}},
-    all_Aax::Vararg{Vector{POVM{T2}}, N};
-    marg::Bool = true,
-) where {T1<:Number, T2<:Number, N}
+    rho::LA.Hermitian{T1,Matrix{T1}},
+    all_Aax::Vararg{Vector{POVM{T2}},N};
+    marg::Bool = true
+) where {T1<:Number,T2<:Number,N}
     return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
 function correlation_tensor(
     psi::AbstractVector,
-    all_Aax::Vararg{Vector{POVM{T}}, N};
-    marg::Bool = true,
-) where {T<:Number, N}
+    all_Aax::Vararg{Vector{POVM{T}},N};
+    marg::Bool = true
+) where {T<:Number,N}
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
 function correlation_tensor(
-    rho::LA.Hermitian{T1, Matrix{T1}},
-    all_φax::Vararg{Vector{<:AbstractMatrix{T2}}, N},
-) where {T1<:Number, T2<:Number, N}
+    rho::LA.Hermitian{T1,Matrix{T1}},
+    all_φax::Vararg{Vector{<:AbstractMatrix{T2}},N}
+) where {T1<:Number,T2<:Number,N}
     return correlation_tensor(probability_tensor(rho, all_φax))
 end
-function correlation_tensor(
-    psi::AbstractVector,
-    all_φax::Vararg{Vector{<:AbstractMatrix{T}}, N},
-) where {T<:Number, N}
+function correlation_tensor(psi::AbstractVector, all_φax::Vararg{Vector{<:AbstractMatrix{T}},N}) where {T<:Number,N}
     return correlation_tensor(probability_tensor(psi, all_φax))
 end
 export correlation_tensor

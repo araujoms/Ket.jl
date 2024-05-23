@@ -3,7 +3,6 @@ using LinearAlgebra
 using CyclotomicNumbers
 using DoubleFloats
 using Quadmath
-using Quaternions
 using Test
 
 include("basic.jl")

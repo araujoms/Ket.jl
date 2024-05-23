@@ -16,7 +16,7 @@ open(joinpath(generated_path, "index.md"), "w") do io
         ```@meta
         EditURL = "$(base_url)README.md"
         ```
-        """,
+        """
     )
     # Write the contents out below the meta block
     for line in eachline(joinpath(dirname(@__DIR__), "README.md"))
@@ -33,9 +33,9 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://araujoms.github.io/Ket.jl",
         edit_link = "master",
-        assets = String[],
+        assets = String[]
     ),
-    pages = ["Home" => "index.md", "List of functions" => "api.md"],
+    pages = ["Home" => "index.md", "List of functions" => "api.md"]
 )
 
 deploydocs(; repo = "github.com/araujoms/Ket.jl", devbranch = "master", push_preview = true)

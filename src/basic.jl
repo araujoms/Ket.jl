@@ -34,7 +34,7 @@ end
 proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
 export proj
 
-const POVM{T} = Vector{LA.Hermitian{T, Matrix{T}}}
+const POVM{T} = Vector{LA.Hermitian{T,Matrix{T}}}
 export POVM
 
 """
@@ -53,7 +53,7 @@ export povm
 Converts a set of POVMs in the common tensor format into a matrix of matrices.
 The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
-function povm(A::Array{T, 4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T<:Number}
+function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T<:Number}
     return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
 end
 
@@ -188,13 +188,21 @@ function cleanup!(M::AbstractArray{T}; tol = _tol(T)) where {T<:Number} # SD: is
 end
 
 function cleanup!(M::Array{T}; tol = _tol(T)) where {T<:Number}
-    M2 = reinterpret(T, M) #this is a no-op when T<:Real
-    _cleanup!(M2; tol)
+    if isbitstype(T)
+        M2 = reinterpret(real(T), M) #this is a no-op when T<:Real
+        _cleanup!(M2; tol)
+    else
+        reM = real(M)
+        imM = imag(M)
+        _cleanup!(reM; tol)
+        _cleanup!(imM; tol)
+        M .= Complex.(reM, imM)
+    end
     return M
 end
 export cleanup!
 
-function _cleanup!(M::Array; tol)
+function _cleanup!(M; tol)
     return M[abs.(M).<tol] .= 0
 end
 

@@ -31,25 +31,37 @@
         end
     end
     @testset "Cleanup" begin
-        for T in [
-            Float64,
-            Double64,
-            Float128,
-            BigFloat,
-            ComplexF64,
-            Complex{Double64},
-            Complex{Float128},
-            Complex{BigFloat},
-            QuaternionF64
-        ]
-            a = randn(T, 2, 2)
-            b = Hermitian(a)
-            c = UpperTriangular(a)
-            d = Diagonal(diag(a))
-            @test a ≈ cleanup!(a)
-            @test b ≈ cleanup!(b)
-            @test c ≈ cleanup!(c)
-            @test d ≈ cleanup!(d)
+        for R in [Float64, Double64, Float128, BigFloat]
+            a = zeros(R, 2, 2)
+            a[1] = 0.5 * Ket._tol(R)
+            a[4] = 1
+            b = Hermitian(copy(a))
+            c = UpperTriangular(copy(a))
+            d = Diagonal(copy(a))
+            cleanup!(a)
+            cleanup!(b)
+            cleanup!(c)
+            cleanup!(d)
+            @test a == [0 0; 0 1]
+            @test b == [0 0; 0 1]
+            @test c == [0 0; 0 1]
+            @test d == [0 0; 0 1]
+            T = Complex{R}
+            a = zeros(T, 2, 2)
+            a[1] = 0.5 * Ket._tol(T) + im
+            a[3] = 1 + 0.5 * Ket._tol(T) * im
+            a[4] = 1
+            b = Hermitian(copy(a))
+            c = UpperTriangular(copy(a))
+            d = Diagonal(copy(a))
+            cleanup!(a)
+            cleanup!(b)
+            cleanup!(c)
+            cleanup!(d)
+            @test a == [im 1; 0 1]
+            @test b == [0 1; 1 1]
+            @test c == [im 1; 0 1]
+            @test d == [im 0; 0 1]
         end
     end
 end
