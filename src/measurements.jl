@@ -122,7 +122,7 @@ function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
             sc2_exp = inv_d
         end
         sc2 = abs2(LA.dot(B[x][:, a], B[y][:, b]))
-        if abs2(sc2 - sc2_exp) > _tol(T)
+        if abs2(sc2 - sc2_exp) > _eps(T)
             return false
         end
     end
@@ -166,16 +166,16 @@ Tests whether `vecs` is a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨
 function test_sic(vecs::Vector{Vector{T}}) where {T<:Number}
     d = length(vecs[1])
     length(vecs) == d^2 || throw(ArgumentError("Number of vectors must be d² = $(d^2), got $(length(vecs))."))
-    m = zeros(T, d^2, d^2)
+    normalization = inv(T(d^2))
+    symmetry = inv(T(d^2 * (d + 1)))
     for j in 1:d^2, i in 1:j
-        # expected scalar product
+        inner_product = abs2(LA.dot(vecs[i], vecs[j]))
         if i == j
-            sc2_exp = inv(T(d^2))
+            deviation = abs2(inner_product - normalization)
         else
-            sc2_exp = inv(T(d^2 * (d + 1)))
+            deviation = abs2(inner_product - symmetry)
         end
-        sc2 = abs2(LA.dot(vecs[i], vecs[j]))
-        if abs2(sc2 - sc2_exp) > _tol(T)
+        if deviation > _eps(T)
             return false
         end
     end

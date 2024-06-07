@@ -191,7 +191,7 @@ function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T<
         res[x] =
             sum((-1)^sum(a[n] for n in 1:N if x[n] ≤ m[n]; init = 0) * sum(p[a, x_colon...]) for a in cia) /
             prod(m[n] for n in 1:N if x[n] > m[n]; init = 1)
-        if abs2(res[x]) < _tol(T)
+        if abs2(res[x]) < _eps(T)
             res[x] = 0
         end
     end

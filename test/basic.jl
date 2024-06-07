@@ -33,7 +33,7 @@
     @testset "Cleanup" begin
         for R in [Float64, Double64, Float128, BigFloat]
             a = zeros(R, 2, 2)
-            a[1] = 0.5 * Ket._tol(R)
+            a[1] = 0.5 * Ket._eps(R)
             a[4] = 1
             b = Hermitian(copy(a))
             c = UpperTriangular(copy(a))
@@ -48,8 +48,8 @@
             @test d == [0 0; 0 1]
             T = Complex{R}
             a = zeros(T, 2, 2)
-            a[1] = 0.5 * Ket._tol(T) + im
-            a[3] = 1 + 0.5 * Ket._tol(T) * im
+            a[1] = 0.5 * Ket._eps(T) + im
+            a[3] = 1 + 0.5 * Ket._eps(T) * im
             a[4] = 1
             b = Hermitian(copy(a))
             c = UpperTriangular(copy(a))

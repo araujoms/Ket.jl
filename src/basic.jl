@@ -174,20 +174,24 @@ function gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer =
 end
 export gell_mann!
 
-_tol(::Type{T}) where {T<:Number} = Base.rtoldefault(real(T))
+_rtol(::Type{T}) where {T<:Number} = Base.rtoldefault(real(T))
+
+_eps(::Type{T}) where {T<:Number} = _realeps(real(T))
+_realeps(::Type{T}) where {T<:AbstractFloat} = eps(T)
+_realeps(::Type{<:Real}) = 0
 
 """
     cleanup!(M::AbstractArray{T}; tol = Base.rtoldefault(real(T)))
 
 Zeroes out real or imaginary parts of `M` that are smaller than `tol`.
 """
-function cleanup!(M::AbstractArray{T}; tol = _tol(T)) where {T<:Number} # SD: is it type stable?
+function cleanup!(M::AbstractArray{T}; tol = _eps(T)) where {T<:Number} # SD: is it type stable?
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)
 end
 
-function cleanup!(M::Array{T}; tol = _tol(T)) where {T<:Number}
+function cleanup!(M::Array{T}; tol = _eps(T)) where {T<:Number}
     if isbitstype(T)
         M2 = reinterpret(real(T), M) #this is a no-op when T<:Real
         _cleanup!(M2; tol)

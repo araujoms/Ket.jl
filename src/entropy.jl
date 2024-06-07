@@ -94,8 +94,8 @@ Computes the Shannon entropy -Σᵢpᵢlog(pᵢ) of a non-negative vector `p` us
 
 Reference: [Entropy (information theory)](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 """
-function entropy(b::Real, p::AbstractVector)
-    if any(p .< -Base.rtoldefault(eltype(p)))
+function entropy(b::Real, p::AbstractVector{T}) where {T<:Real}
+    if any(p .< -Base.rtoldefault(T))
         throw(ArgumentError("p must be non-negative."))
     end
     h = -sum(p[i] * _log(b, p[i]) for i = 1:length(p))
