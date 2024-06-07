@@ -39,8 +39,7 @@ function _idx(tidx::Vector{<:Integer}, dims::Vector{<:Integer})
 end
 
 """
-    partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::
-AbstractVector)
+    partial_trace(X::AbstractMatrix, remove::Vector, dims::Vector)
 
 Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems in `remove`.
 """
@@ -93,5 +92,10 @@ function partial_trace(X::AbstractMatrix{T}, remove::Vector{<:Integer}, dims::Ve
     end
     return Y
 end
-partial_trace(X::AbstractMatrix, sys::Integer, dims::Vector{<:Integer}) = partial_trace(X, [sys], dims)
+"""
+    partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector)
+
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`.
+"""
+partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector{<:Integer}) = partial_trace(X, [remove], dims)
 export partial_trace

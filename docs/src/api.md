@@ -10,6 +10,7 @@ shift
 clock
 gell_mann
 gell_mann!
+partial_trace
 cleanup!
 ```
 
@@ -76,4 +77,6 @@ anti_isotropic
 ```@docs
 Ket._partition
 Ket._fiducial_WH
+Ket._idx
+Ket._tidx
 ```
