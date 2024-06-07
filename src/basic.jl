@@ -185,7 +185,7 @@ _realeps(::Type{<:Real}) = 0
 
 Zeroes out real or imaginary parts of `M` that are smaller than `tol`.
 """
-function cleanup!(M::AbstractArray{T}; tol = _eps(T)) where {T<:Number} # SD: is it type stable?
+function cleanup!(M::AbstractArray{T}; tol = _eps(T)) where {T<:Number}
     wrapper = Base.typename(typeof(M)).wrapper
     cleanup!(parent(M); tol)
     return wrapper(M)

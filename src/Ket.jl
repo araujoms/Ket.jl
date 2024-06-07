@@ -13,6 +13,7 @@ include("games.jl")
 include("measurements.jl")
 include("entropy.jl")
 include("norms.jl")
+include("partial_tra.jl")
 
 import Requires
 function __init__()

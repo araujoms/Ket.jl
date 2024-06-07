@@ -6,8 +6,9 @@ using Quadmath
 using Test
 
 include("basic.jl")
-include("measurements.jl")
-include("norms.jl")
-include("random.jl")
-include("nonlocal.jl")
 include("entropy.jl")
+include("measurements.jl")
+include("nonlocal.jl")
+include("norms.jl")
+include("partial_tra.jl")
+include("random.jl")
