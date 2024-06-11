@@ -101,7 +101,7 @@ partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector{<:Integer}) = par
 export partial_trace
 
 """
-    partial_trasnpose(X::AbstractMatrix, transp::Vector, dims::Vector)
+    partial_transpose(X::AbstractMatrix, transp::Vector, dims::Vector)
 
 Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`.
 """
@@ -151,7 +151,7 @@ function partial_transpose(X::AbstractMatrix{T}, transp::Vector{<:Integer}, dims
     return Y
 end
 """
-    partial_trasnpose(X::AbstractMatrix, transp::Vector, dims::Vector)
+    partial_transpose(X::AbstractMatrix, transp::Vector, dims::Vector)
 
 Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`.
 """
