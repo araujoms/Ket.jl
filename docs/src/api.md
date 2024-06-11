@@ -11,6 +11,7 @@ clock
 gell_mann
 gell_mann!
 partial_trace
+partial_transpose
 cleanup!
 ```
 
