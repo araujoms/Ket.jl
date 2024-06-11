@@ -128,26 +128,20 @@ function partial_transpose(X::AbstractMatrix{T}, transp::Vector{<:Integer}, dims
     tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row 
     tYj = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for column
 
-    @views tXikeep = tXi[keep]
-    @views tXitransp = tXi[transp]
-    @views tXjkeep = tXj[keep]
-    @views tXjtransp = tXj[transp]
-
-    @views tYikeep = tYi[keep]
-    @views tYitransp = tYi[transp]
-    @views tYjkeep = tYj[keep]
-    @views tYjtransp = tYj[transp]
-
     for i in 1:dY
         _tidx!(tXi, i, dims)
         for j in 1:i
             _tidx!(tXj, j, dims)
 
-            tYikeep .= tXikeep
-            tYitransp .= tXjtransp
-            
-            tYjkeep .= tXjkeep
-            tYjtransp .= tXitransp
+            for k in keep
+                tYi[k] = tXi[k]
+                tYj[k] = tXj[k]
+            end
+
+            for t in transp
+                tYi[t] = tXj[t]
+                tYj[t] = tXi[t]
+            end
 
             Yi, Yj = _idx(tYi, dims), _idx(tYj, dims)
             Y[Yi, Yj] = X[i, j]
