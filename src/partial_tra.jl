@@ -93,7 +93,7 @@ for (T, limit, wrapper) in
                     end
                 end
             end
-            if !isbits(Y[1]) #this is a workaround for a bug in JuMP
+            if !isbits(Y[1]) #this is a workaround for a bug in Julia <= 1.10
                 if $T == LA.Hermitian
                     LA.copytri!(Y, 'U', true)
                 elseif $T == LA.Symmetric
