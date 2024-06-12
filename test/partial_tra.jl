@@ -23,6 +23,12 @@
             @test partial_trace(abc, Int64[], [d1, d2, d3]) ≈ abc
         end
     end
+    for wrapper in [Symmetric, Hermitian]
+        M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
+        x = Matrix(M)
+        @test partial_trace(M, 2, [d1, d2, d3]) ≈ partial_trace(x, 2, [d1, d2, d3])
+        @test partial_trace(M, [1, 3], [d1, d2, d3]) ≈ partial_trace(x, [1, 3], [d1, d2, d3])
+    end
 end
 
 @testset "Partial Transpose" begin
