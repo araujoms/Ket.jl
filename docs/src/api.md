@@ -22,6 +22,7 @@ entropy
 binary_entropy
 relative_entropy
 binary_relative_entropy
+conditional_entropy
 ```
 
 ## Measurements
