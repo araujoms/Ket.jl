@@ -69,7 +69,7 @@ function _tr_ff(a::Nemo.FqFieldElem)
 end
 
 """
-    mub(d::Integer)
+    mub([T=ComplexF64,] d::Integer)
 
 Construction of the standard complete set of MUBs.
 The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
@@ -133,7 +133,7 @@ export test_mub
 # SIC POVMs
 
 """
-    sic_povm(d::Integer)
+    sic_povm([T=ComplexF64,] d::Integer)
 
 Constructs a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`. This construction is based on the Weyl-Heisenberg fiducial.
 
@@ -188,7 +188,7 @@ export test_sic
 
 Does the Naimark dilation of a rank-1 POVM given as a vector of vectors. This is the minimal dilation.
 """
-function dilate_povm(vecs::Vector{Vector{T}}) where {T<:Union{Real,Complex}}
+function dilate_povm(vecs::Vector{Vector{T}}) where {T<:Number}
     d = length(vecs[1])
     n = length(vecs)
     V = zeros(T, n, d)
@@ -212,7 +212,7 @@ function dilate_povm(E::Vector{<:AbstractMatrix})
 end
 
 """
-    _fiducial_WH(d::Integer)
+    _fiducial_WH([T=ComplexF64,] d::Integer)
 
 Computes the fiducial Weyl-Heisenberg vector of dimension `d`.
 
