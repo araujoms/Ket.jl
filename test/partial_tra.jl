@@ -31,7 +31,7 @@
     end
 end
 
-@testset "Partial Transpose" begin
+@testset "Partial transpose" begin
     d1, d2, d3 = 2, 3, 4
     for R in [Float64, Double64, Float128, BigFloat]
         for T in [R, Complex{R}]

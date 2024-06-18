@@ -118,8 +118,8 @@ export partial_trace
 Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`.
 """ partial_transpose
 
-for (T, symmetry, wrapper) in
-    [(:AbstractMatrix, :false, :identity), (:(LA.Hermitian), :true, :(LA.Hermitian)), (:(LA.Symmetric), :true, :(LA.Symmetric))]
+for (T, wrapper) in
+    [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
     @eval begin
         function partial_transpose(X::$T, transp::Vector{<:Integer}, dims::Vector{<:Integer})
             isempty(transp) && return X
@@ -161,7 +161,7 @@ for (T, symmetry, wrapper) in
 
                     Xi, Xj = _idx(tXi, dims), _idx(tXj, dims)
                     Y[i, j] = X[Xi, Xj]
-                    !($symmetry) && (Y[j, i] = X[Xj, Xi])
+                    i != j && (Y[j, i] = X[Xj, Xi])
                 end
             end
             return $wrapper(Y)
