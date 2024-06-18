@@ -56,6 +56,12 @@ end
             @test partial_transpose(abc, Int64[], [d1, d2, d3]) ≈ abc
         end
     end
+    for wrapper in [Symmetric, Hermitian]
+        M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
+        x = Matrix(M)
+        @test partial_transpose(M, 2, [d1, d2, d3]) ≈ partial_transpose(x, 2, [d1, d2, d3])
+        @test partial_transpose(M, [1, 3], [d1, d2, d3]) ≈ partial_transpose(x, [1, 3], [d1, d2, d3])
+    end
 end
 
 #TODO add test with JuMP variables

@@ -112,55 +112,61 @@ Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the 
 partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector{<:Integer}) = partial_trace(X, [remove], dims)
 export partial_trace
 
-"""
+@doc """
     partial_transpose(X::AbstractMatrix, transp::Vector, dims::Vector)
 
 Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`.
-"""
-function partial_transpose(X::AbstractMatrix{T}, transp::Vector{<:Integer}, dims::Vector{<:Integer}) where {T}
-    isempty(transp) && return X
-    length(transp) == length(dims) && return LA.transpose(X)
+""" partial_transpose
 
-    keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept 
-    counter = 0
-    for i = 1:length(dims)
-        if !(i in transp)
-            counter += 1
-            keep[counter] = i
-        end
-    end
+for (T, symmetry, wrapper) in
+    [(:AbstractMatrix, :false, :identity), (:(LA.Hermitian), :true, :(LA.Hermitian)), (:(LA.Symmetric), :true, :(LA.Symmetric))]
+    @eval begin
+        function partial_transpose(X::$T, transp::Vector{<:Integer}, dims::Vector{<:Integer})
+            isempty(transp) && return X
+            length(transp) == length(dims) && return LA.transpose(X)
 
-    dY = prod(dims)                             # Dimension of the final output Y    
-
-    Y = Matrix{T}(undef, (dY, dY))              # Final output Y
-
-    tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row 
-    tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
-
-    tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row 
-    tYj = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for column
-
-    for i in 1:dY
-        _tidx!(tXi, i, dims)
-        for j in 1:i
-            _tidx!(tXj, j, dims)
-
-            for k in keep
-                tYi[k] = tXi[k]
-                tYj[k] = tXj[k]
+            keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept 
+            counter = 0
+            for i = 1:length(dims)
+                if !(i in transp)
+                    counter += 1
+                    keep[counter] = i
+                end
             end
 
-            for t in transp
-                tYi[t] = tXj[t]
-                tYj[t] = tXi[t]
-            end
+            dY = prod(dims)                             # Dimension of the final output Y    
 
-            Yi, Yj = _idx(tYi, dims), _idx(tYj, dims)
-            Y[Yi, Yj] = X[i, j]
-            Y[Yj, Yi] = X[j, i]
+            Y = similar(X, (dY, dY))                    # Final output Y
+
+            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row 
+            tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
+
+            tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row 
+            tYj = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for column
+
+            for j in 1:dY
+                _tidx!(tYj, j, dims)
+                for i in 1:j
+                    _tidx!(tYi, i, dims)
+
+                    for k in keep
+                        tXi[k] = tYi[k]
+                        tXj[k] = tYj[k]
+                    end
+
+                    for t in transp
+                        tXi[t] = tYj[t]
+                        tXj[t] = tYi[t]
+                    end
+
+                    Xi, Xj = _idx(tXi, dims), _idx(tXj, dims)
+                    Y[i, j] = X[Xi, Xj]
+                    !($symmetry) && (Y[j, i] = X[Xj, Xi])
+                end
+            end
+            return $wrapper(Y)
         end
     end
-    return Y
 end
 """
     partial_transpose(X::AbstractMatrix, transp::Vector, dims::Vector)
