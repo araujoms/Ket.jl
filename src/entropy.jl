@@ -7,7 +7,7 @@ Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between p
 
 Reference: [Quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy).
 """
-function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{S}) where {T<:Real,S<:Real}
+function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{S}) where {T<:Number,S<:Number}
     R = real(promote_type(T, S))
     if size(ρ) != size(σ)
         throw(ArgumentError("ρ and σ have the same size."))
