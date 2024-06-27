@@ -18,7 +18,7 @@ export schatten_norm
 """
     trace_norm(X::AbstractMatrix)
 
-Computes trace norm of matrix `X`. 
+Computes trace norm of matrix `X`.
 """
 function trace_norm(X::AbstractMatrix)
     return schatten_norm(X, 1)

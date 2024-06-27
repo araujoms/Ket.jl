@@ -1,4 +1,4 @@
-_log(base::Real, x::Real) = x > 0 ? log(base, x) : zero(x)
+_log(base::Real, x) = x > 0 ? log(base, x) : zero(x)
 
 """
     relative_entropy([base=2,] ρ::AbstractMatrix, σ::AbstractMatrix)
@@ -7,7 +7,7 @@ Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between p
 
 Reference: [Quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy).
 """
-function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{S}) where {T,S<:Number}
+function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{S}) where {T,S}
     R = real(promote_type(T, S))
     if size(ρ) != size(σ)
         throw(ArgumentError("ρ and σ have the same size."))

@@ -1,6 +1,6 @@
 """
     phiplus([T=ComplexF64,] d::Integer = 2)
-    
+
 Produces the maximally entangled state Φ⁺ of local dimension `d`.
 """
 function phiplus(::Type{T}, d::Integer = 2) where {T<:Number}
@@ -15,7 +15,7 @@ export phiplus
 
 """
     psiminus([T=ComplexF64,] d::Integer = 2)
-    
+
 Produces the maximally entangled state ψ⁻ of local dimension `d`.
 """
 function psiminus(::Type{T}, d::Integer = 2) where {T<:Number}
@@ -40,7 +40,7 @@ export isotropic
 
 """
     anti_isotropic(v::Real, d::Integer = 2)
-    
+
 Produces the anti-isotropic state of local dimension `d` with visibility `v`.
 """
 function anti_isotropic(v::T, d::Integer = 2) where {T<:Real}

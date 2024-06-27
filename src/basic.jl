@@ -42,7 +42,7 @@ export Measurement
 
 Creates a set of (projective) measurements from a set of bases given as unitary matrices.
 """
-function povm(B::Vector{<:AbstractMatrix{T}}) where {T<:Number}
+function povm(B::Vector{<:AbstractMatrix})
     return [[ketbra(B[x][:, a]) for a in 1:size(B[x], 2)] for x in eachindex(B)]
 end
 export povm
@@ -53,7 +53,7 @@ export povm
 Converts a set of measurements in the common tensor format into a matrix of matrices.
 The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
-function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T<:Number}
+function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T}
     return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
 end
 
@@ -63,7 +63,7 @@ end
 Checks if the measurement defined by A is valid (hermitian, semi-definite positive, and normalized).
 """
 # SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
-function test_povm(A::Matrix{<:AbstractMatrix{T}}) where {T<:Number}
+function test_povm(A::Matrix{<:AbstractMatrix})
     # TODO
 end
 
