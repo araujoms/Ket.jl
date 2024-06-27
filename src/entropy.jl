@@ -40,7 +40,7 @@ Computes the relative entropy D(`p`||`q`) = Σᵢpᵢlog(pᵢ/qᵢ) between two 
 
 Reference: [Relative entropy](https://en.wikipedia.org/wiki/Relative_entropy).
 """
-function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{S}) where {T<Real,S<:Real}
+function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{S}) where {T<:Real,S<:Real}
     R = promote_type(T, S)
     if length(p) != length(q)
         throw(ArgumentError("`p` and q must have the same length."))
