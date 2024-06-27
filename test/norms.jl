@@ -1,4 +1,4 @@
-@testset "Norms" begin
+@testset "Norms              " begin
     @testset "Square operators" begin
         for T in [Float64, Double64, Float128, BigFloat]
             X = Complex{T}.([1.34 5im 2.6; 5.2 4+2.1im 0.1; -4.1 0.9-2.2im 1im])

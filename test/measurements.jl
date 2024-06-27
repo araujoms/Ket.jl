@@ -1,4 +1,4 @@
-@testset "Measurements" begin
+@testset "Measurements       " begin
     @testset "SIC POVMs" begin
         for T in [Float64, Double64, Float128, BigFloat], d in 1:7
             @test test_sic(sic_povm(Complex{T}, d))

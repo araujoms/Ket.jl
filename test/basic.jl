@@ -1,4 +1,4 @@
-@testset "Basic" begin
+@testset "Basic              " begin
     @testset "Kets" begin
         @test isa(ket(1, 3), Vector{ComplexF64})
         @test isa(proj(1, 3), Hermitian{ComplexF64})

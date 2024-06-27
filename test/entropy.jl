@@ -1,4 +1,4 @@
-@testset "Entropy" begin
+@testset "Entropy            " begin
     @testset "von Neumann" begin
         @test binary_entropy(0) == 0
         @test binary_entropy(1) == 0

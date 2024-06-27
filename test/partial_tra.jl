@@ -1,4 +1,4 @@
-@testset "Partial trace" begin
+@testset "Partial trace      " begin
     d1, d2, d3 = 2, 3, 4
     for R in [Float64, Double64, Float128, BigFloat]
         for T in [R, Complex{R}]
@@ -31,7 +31,7 @@
     end
 end
 
-@testset "Partial transpose" begin
+@testset "Partial transpose  " begin
     d1, d2, d3 = 2, 3, 4
     for R in [Float64, Double64, Float128, BigFloat]
         for T in [R, Complex{R}]

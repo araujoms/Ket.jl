@@ -1,4 +1,4 @@
-@testset "Nonlocal" begin
+@testset "Nonlocal           " begin
     @test isa(chsh()[1], Float64)
     @test isa(cglmp(3)[1], Float64)
     @test local_bound(chsh()) ≈ 0.75
