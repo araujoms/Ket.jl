@@ -8,7 +8,7 @@ function ket(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
     psi[i] = 1
     return psi
 end
-ket(i::Integer, d::Integer) = ket(ComplexF64, i, d)
+ket(i::Integer, d::Integer = 2) = ket(ComplexF64, i, d)
 export ket
 
 """
@@ -31,7 +31,7 @@ function proj(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
     p[i, i] = 1
     return p
 end
-proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
+proj(i::Integer, d::Integer = 2) = proj(ComplexF64, i, d)
 export proj
 
 const Measurement{T} = Vector{LA.Hermitian{T,Matrix{T}}}
