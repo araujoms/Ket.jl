@@ -1,9 +1,9 @@
 """
-    ket([T=ComplexF64,] i::Integer, d::Integer)
+    ket([T=ComplexF64,] i::Integer, d::Integer = 2)
 
 Produces a ket of dimension `d` with nonzero element `i`.
 """
-function ket(::Type{T}, i::Integer, d::Integer) where {T<:Number}
+function ket(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
     psi = zeros(T, d)
     psi[i] = 1
     return psi
@@ -22,11 +22,11 @@ end
 export ketbra
 
 """
-    proj([T=ComplexF64,] i::Integer, d::Integer)
+    proj([T=ComplexF64,] i::Integer, d::Integer = 2)
 
 Produces a projector onto the basis state `i` in dimension `d`.
 """
-function proj(::Type{T}, i::Integer, d::Integer) where {T<:Number}
+function proj(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
     p = LA.Hermitian(zeros(T, d, d))
     p[i, i] = 1
     return p
