@@ -131,15 +131,18 @@ end
 export fp2cg
 
 """
-    probability_tensor(Aax::Vector{Measurement{T}})
+    probability_tensor(rho::LA.Hermitian, all_Aax::Vector{Measurement}...)
 
 Applies N sets of measurements onto a state `rho` to form a probability array.
 """
 function probability_tensor(
     rho::LA.Hermitian{T1,Matrix{T1}},
-    all_Aax::Vararg{Vector{Measurement{T2}},N}
-) where {T1,T2,N}
+    first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
+    other_Aax::Vector{Measurement{T2}}...
+) where {T1,T2}
+    all_Aax = (first_Aax, other_Aax...)
     T = real(promote_type(T1, T2))
+    N = length(all_Aax)
     m = length.(all_Aax) # numbers of inputs per party
     o = broadcast(Aax -> maximum(length.(Aax)), all_Aax) # numbers of outputs per party
     p = zeros(T, o..., m...)
@@ -153,20 +156,18 @@ function probability_tensor(
     return p
 end
 # accepts a pure state
-function probability_tensor(psi::AbstractVector, all_Aax::Vararg{Vector{Measurement{T}},N}) where {T,N}
+function probability_tensor(psi::AbstractVector, all_Aax::Vector{<:AbstractVector}...)
     return probability_tensor(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
-function probability_tensor(
-    rho::LA.Hermitian{T1,Matrix{T1}},
-    all_φax::Vararg{Vector{<:AbstractMatrix{T2}},N}
-) where {T1,T2,N}
+function probability_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...)
     return probability_tensor(rho, povm.(all_φax)...)
 end
 # accepts pure states and projective measurements
-function probability_tensor(psi::AbstractVector, all_φax::Vararg{Vector{<:AbstractMatrix{T}},N}) where {T,N}
+function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
+probability_tensor(psi::AbstractVector, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
 export probability_tensor
 
 """
@@ -199,27 +200,18 @@ function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T}
 end
 # accepts directly the arguments of probability_tensor
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
-function correlation_tensor(
-    rho::LA.Hermitian{T1,Matrix{T1}},
-    all_Aax::Vararg{Vector{Measurement{T2}},N};
-    marg::Bool = true
-) where {T1,T2,N}
+function correlation_tensor(rho::LA.Hermitian, all_Aax::Vector{<:AbstractVector}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
-function correlation_tensor(
-    psi::AbstractVector,
-    all_Aax::Vararg{Vector{Measurement{T}},N};
-    marg::Bool = true
-) where {T,N}
+function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:AbstractVector}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
-function correlation_tensor(
-    rho::LA.Hermitian{T1,Matrix{T1}},
-    all_φax::Vararg{Vector{<:AbstractMatrix{T2}},N}
-) where {T1,T2,N}
-    return correlation_tensor(probability_tensor(rho, all_φax))
+function correlation_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...)
+    return correlation_tensor(probability_tensor(rho, all_φax...))
 end
-function correlation_tensor(psi::AbstractVector, all_φax::Vararg{Vector{<:AbstractMatrix{T}},N}) where {T,N}
-    return correlation_tensor(probability_tensor(psi, all_φax))
+function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
+    return correlation_tensor(probability_tensor(psi, all_φax...))
 end
+correlation_tensor(rho::LA.Hermitian, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
+correlation_tensor(psi::AbstractVector, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
 export correlation_tensor
