@@ -131,13 +131,13 @@ end
 export fp2cg
 
 """
-    probability_tensor(Aax::Vector{POVM{T}})
+    probability_tensor(Aax::Vector{Measurement{T}})
 
-Applies N sets of POVMs onto a state `rho` to form a probability array.
+Applies N sets of measurements onto a state `rho` to form a probability array.
 """
 function probability_tensor(
     rho::LA.Hermitian{T1,Matrix{T1}},
-    all_Aax::Vararg{Vector{POVM{T2}},N}
+    all_Aax::Vararg{Vector{Measurement{T2}},N}
 ) where {T1<:Number,T2<:Number,N}
     T = real(promote_type(T1, T2))
     m = length.(all_Aax) # numbers of inputs per party
@@ -153,7 +153,7 @@ function probability_tensor(
     return p
 end
 # accepts a pure state
-function probability_tensor(psi::AbstractVector, all_Aax::Vararg{Vector{POVM{T}},N}) where {T<:Number,N}
+function probability_tensor(psi::AbstractVector, all_Aax::Vararg{Vector{Measurement{T}},N}) where {T<:Number,N}
     return probability_tensor(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
@@ -172,7 +172,7 @@ export probability_tensor
 """
     correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true)
 
-Applies N sets of POVMs onto a state `rho` to form a probability array.
+Applies N sets of measurements onto a state `rho` to form a probability array.
 Convert a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
@@ -201,14 +201,14 @@ end
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
 function correlation_tensor(
     rho::LA.Hermitian{T1,Matrix{T1}},
-    all_Aax::Vararg{Vector{POVM{T2}},N};
+    all_Aax::Vararg{Vector{Measurement{T2}},N};
     marg::Bool = true
 ) where {T1<:Number,T2<:Number,N}
     return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
 function correlation_tensor(
     psi::AbstractVector,
-    all_Aax::Vararg{Vector{POVM{T}},N};
+    all_Aax::Vararg{Vector{Measurement{T}},N};
     marg::Bool = true
 ) where {T<:Number,N}
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)

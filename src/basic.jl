@@ -34,13 +34,13 @@ end
 proj(i::Integer, d::Integer) = proj(ComplexF64, i, d)
 export proj
 
-const POVM{T} = Vector{LA.Hermitian{T,Matrix{T}}}
-export POVM
+const Measurement{T} = Vector{LA.Hermitian{T,Matrix{T}}}
+export Measurement
 
 """
     povm(B::Vector{<:AbstractMatrix{T}})
 
-Creates a set of (projective) POVMs from a set of bases given as unitary matrices.
+Creates a set of (projective) measurements from a set of bases given as unitary matrices.
 """
 function povm(B::Vector{<:AbstractMatrix{T}}) where {T<:Number}
     return [[ketbra(B[x][:, a]) for a in 1:size(B[x], 2)] for x in eachindex(B)]
@@ -50,7 +50,7 @@ export povm
 """
     povm(A::Array{T, 4}, n::Vector{Int64})
 
-Converts a set of POVMs in the common tensor format into a matrix of matrices.
+Converts a set of measurements in the common tensor format into a matrix of matrices.
 The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
 function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T<:Number}
@@ -60,7 +60,7 @@ end
 """
     test_povm(A::Matrix{<:AbstractMatrix{T}})
 
-Checks if the POVM defined by A is valid (hermitian, semi-definite positive, and normalized).
+Checks if the measurement defined by A is valid (hermitian, semi-definite positive, and normalized).
 """
 # SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
 function test_povm(A::Matrix{<:AbstractMatrix{T}}) where {T<:Number}
