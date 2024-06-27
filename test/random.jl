@@ -10,14 +10,14 @@
             @test isa(ψ, Vector{R})
             ρ = random_state(R, 3)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 3
+            @test rank(ρ; rtol = Ket._rtol(R)) == 3
             ρ = random_state(R, 3, 2)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 2
+            @test rank(ρ; rtol = Ket._rtol(R)) == 2
             ρ = random_state(R, 3, 1)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 1
-            @test minimum(eigvals(ρ)) > -Base.rtoldefault(R)
+            @test rank(ρ; rtol = Ket._rtol(R)) == 1
+            @test minimum(eigvals(ρ)) > -Ket._rtol(R)
             @test isa(ρ, Hermitian{R})
             T = Complex{R}
             ψ = random_state_vector(T, 3)
@@ -25,14 +25,14 @@
             @test isa(ψ, Vector{T})
             ρ = random_state(R, 3)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 3
+            @test rank(ρ; rtol = Ket._rtol(R)) == 3
             ρ = random_state(T, 3, 2)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 2
+            @test rank(ρ; rtol = Ket._rtol(R)) == 2
             ρ = random_state(T, 3, 1)
             @test tr(ρ) ≈ 1
-            @test rank(ρ) == 1
-            @test minimum(eigvals(ρ)) > -Base.rtoldefault(R)
+            @test rank(ρ; rtol = Ket._rtol(R)) == 1
+            @test minimum(eigvals(ρ)) > -Ket._rtol(R)
             @test isa(ρ, Hermitian{T})
         end
     end
