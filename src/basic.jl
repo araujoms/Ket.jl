@@ -114,6 +114,49 @@ clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
 
 """
+    pauli([T=ComplexF64,], d::Integer = 3)
+
+Constructs the Pauli matrices: 0 or "I" for the identity,
+1 or "X" for the Pauli X operation, 2 or "Y" for the Pauli Y
+operator, and 3 or "Z" for the Pauli Z operator.
+Vectors of integers between 0 and 3 or strings of I, X, Y, Z
+automatically generate Kronecker products of the corresponding
+operators.
+"""
+function pauli(::Type{T}, i::Integer) where {T<:Number}
+    return gell_mann(T, i ÷ 2 + 1, i % 2 + 1, 2)
+end
+function pauli(::Type{T}, ind::Vector{<:Integer}) where {T<:Number}
+    if length(ind) == 1
+        return pauli(T, ind[1])
+    else
+        sigma = gell_mann(T, 2)
+        return kron([sigma[i+1] for i in ind]...)
+    end
+end
+function pauli(::Type{T}, str::String) where {T<:Number}
+    ind = Int[]
+    for c in str
+        if c in ['I', 'i', '1']
+            push!(ind, 0)
+        elseif c in ['X', 'x']
+            push!(ind, 1)
+        elseif c in ['Y', 'y']
+            push!(ind, 2)
+        elseif c in ['Z', 'z']
+            push!(ind, 3)
+        else
+            @warn "Unknown character"
+        end
+    end
+    return pauli(T, ind)
+end
+pauli(i::Integer) = pauli(ComplexF64, i)
+pauli(ind::Vector{<:Integer}) = pauli(ComplexF64, ind)
+pauli(str::String) = pauli(ComplexF64, str)
+export pauli
+
+"""
     gell_mann([T=ComplexF64,], d::Integer = 3)
 
 Constructs the set `G` of generalized Gell-Mann matrices in dimension `d` such that
