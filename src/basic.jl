@@ -130,8 +130,7 @@ function pauli(::Type{T}, ind::Vector{<:Integer}) where {T<:Number}
     if length(ind) == 1
         return pauli(T, ind[1])
     else
-        sigma = gell_mann(T, 2)
-        return kron([sigma[i+1] for i in ind]...)
+        return kron([pauli(T, i) for i in ind]...)
     end
 end
 function pauli(::Type{T}, str::String) where {T<:Number}
