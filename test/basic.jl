@@ -30,6 +30,30 @@
             @test clock(T, 3, 2) ≈ clock(T, 3)^2
         end
     end
+    @testset "Pauli" begin
+        for R in [Int64, Float64, Double64, Float128, BigFloat]
+            @test pauli(R, 0) == Matrix{R}(I, 2, 2)
+            @test pauli(R, "x") == [0 1; 1 0]
+            @test pauli(Complex{R}, 2) == [0 -im; im 0]
+            @test pauli(R, 'Z') == [1 0; 0 -1]
+            @test pauli(R, "II") == Matrix{R}(I, 4, 4)
+            @test pauli(Complex{R}, [3, 3]) == Diagonal([1, -1, -1, 1])
+        end
+    end
+    @testset "Gell-Mann" begin
+        for R in [Int64, Float64, Double64, Float128, BigFloat]
+            @test gell_mann(R, 1, 1) == Matrix{R}(I, 3, 3)
+            @test gell_mann(R, 1, 2) == [0 1 0; 1 0 0; 0 0 0]
+            @test gell_mann(R, 1, 3) == [0 0 1; 0 0 0; 1 0 0]
+            @test gell_mann(Complex{R}, 2, 1) == [0 -im 0; im 0 0; 0 0 0]
+            @test gell_mann(R, 2, 2) == [1 0 0; 0 -1 0; 0 0 0]
+            @test gell_mann(R, 2, 3) == [0 0 0; 0 0 1; 0 1 0]
+            @test gell_mann(Complex{R}, 3, 1) == [0 0 -im; 0 0 0; im 0 0]
+            @test gell_mann(Complex{R}, 3, 2) == [0 0 0; 0 0 -im; 0 im 0]
+        end
+        @test gell_mann(3, 3) == Diagonal([1/sqrt(3), 1/sqrt(3), -2/sqrt(3)])
+        @test gell_mann(1, 1, 4) == Matrix{Float64}(I, 4, 4)
+    end
     @testset "Cleanup" begin
         for R in [Float64, Double64, Float128, BigFloat]
             a = zeros(R, 2, 2)
