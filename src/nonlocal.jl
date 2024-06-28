@@ -140,8 +140,8 @@ function probability_tensor(
     first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
     other_Aax::Vector{Measurement{T2}}...
 ) where {T1,T2}
-    all_Aax = (first_Aax, other_Aax...)
     T = real(promote_type(T1, T2))
+    all_Aax = (first_Aax, other_Aax...)
     N = length(all_Aax)
     m = length.(all_Aax) # numbers of inputs per party
     o = broadcast(Aax -> maximum(length.(Aax)), all_Aax) # numbers of outputs per party
@@ -156,7 +156,7 @@ function probability_tensor(
     return p
 end
 # accepts a pure state
-function probability_tensor(psi::AbstractVector, all_Aax::Vector{<:AbstractVector}...)
+function probability_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...)
     return probability_tensor(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
@@ -167,7 +167,6 @@ end
 function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
-probability_tensor(psi::AbstractVector, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
 export probability_tensor
 
 """
@@ -200,10 +199,10 @@ function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T}
 end
 # accepts directly the arguments of probability_tensor
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
-function correlation_tensor(rho::LA.Hermitian, all_Aax::Vector{<:AbstractVector}...; marg::Bool = true)
+function correlation_tensor(rho::LA.Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
-function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:AbstractVector}...; marg::Bool = true)
+function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
 function correlation_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...)
@@ -212,6 +211,4 @@ end
 function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
     return correlation_tensor(probability_tensor(psi, all_φax...))
 end
-correlation_tensor(rho::LA.Hermitian, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
-correlation_tensor(psi::AbstractVector, ::Vararg{Vector{Union{}}}) = throw(ArgumentError("Measurements cannot be omitted."))
 export correlation_tensor
