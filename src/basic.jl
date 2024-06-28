@@ -150,9 +150,11 @@ function pauli(::Type{T}, str::String) where {T<:Number}
     end
     return pauli(T, ind)
 end
+pauli(::Type{T}, c::Char) where {T<:Number} = pauli(T, string(c))
 pauli(i::Integer) = pauli(ComplexF64, i)
 pauli(ind::Vector{<:Integer}) = pauli(ComplexF64, ind)
 pauli(str::String) = pauli(ComplexF64, str)
+pauli(c::Char) = pauli(ComplexF64, c)
 export pauli
 
 """
