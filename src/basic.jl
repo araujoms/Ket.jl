@@ -114,7 +114,7 @@ clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
 
 """
-    pauli([T=ComplexF64,], d::Integer = 3)
+    pauli([T=ComplexF64,], ind::Vector{<:Integer})
 
 Constructs the Pauli matrices: 0 or "I" for the identity,
 1 or "X" for the Pauli X operation, 2 or "Y" for the Pauli Y
