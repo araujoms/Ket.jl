@@ -8,6 +8,7 @@ ketbra
 proj
 shift
 clock
+pauli
 gell_mann
 gell_mann!
 partial_trace
