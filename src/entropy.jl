@@ -118,7 +118,7 @@ export binary_entropy
 """
     conditional_entropy([base=2,] pAB::AbstractMatrix)
 
-Computes the conditional (Shannon) entropy H(A|B) of the joint probability distribution `pAB` using a base `base` logarithm.
+Computes the conditional Shannon entropy H(A|B) of the joint probability distribution `pAB` using a base `base` logarithm.
 
 Reference: [Conditional entropy](https://en.wikipedia.org/wiki/Conditional_entropy).
 """
@@ -132,4 +132,38 @@ function conditional_entropy(base::Real, pAB::AbstractMatrix{T}) where {T<:Real}
     return h
 end
 conditional_entropy(pAB::AbstractMatrix) = conditional_entropy(2, pAB)
+
+"""
+    conditional_entropy([base=2,], rho::AbstractMatrix, csys::AbstractVector, dims::AbstractVector)
+
+Computes the conditional von Neumann entropy of `rho` with subsystem dimensions `dims` and conditioning systems `csys`, using a base `base` logarithm.
+
+Reference: [Conditional quantum entropy](https://en.wikipedia.org/wiki/Conditional_quantum_entropy).
+"""
+function conditional_entropy(
+    base::Real,
+    rho::AbstractMatrix,
+    csys::AbstractVector{<:Integer},
+    dims::AbstractVector{<:Integer}
+)
+    isempty(csys) && return entropy(base, rho)
+    length(csys) == length(dims) && return zero(real(eltype(rho)))
+
+    remove = Vector{eltype(csys)}(undef, length(dims) - length(csys))  # To condition on csys we trace out the rest
+    counter = 0
+    for i = 1:length(dims)
+        if !(i in csys)
+            counter += 1
+            remove[counter] = i
+        end
+    end
+    rho_cond = partial_trace(rho, remove, dims)
+    return entropy(base, rho) - entropy(base, rho_cond)
+end
+conditional_entropy(base::Real, rho::AbstractMatrix, csys::Integer, dims::AbstractVector{<:Integer}) =
+    conditional_entropy(base, rho, [csys], dims)
+conditional_entropy(rho::AbstractMatrix, csys::AbstractVector{<:Integer}, dims::AbstractVector{<:Integer}) =
+    conditional_entropy(2, rho, csys, dims)
+conditional_entropy(rho::AbstractMatrix, csys::Integer, dims::AbstractVector{<:Integer}) =
+    conditional_entropy(2, rho, [csys], dims)
 export conditional_entropy

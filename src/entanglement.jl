@@ -3,6 +3,8 @@
     
 Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that
 kron(U', V')*`ψ` is of Schmidt form.
+
+Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
 """
 function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer})
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
@@ -10,11 +12,13 @@ function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Intege
     U, λ, V = LA.svd(m)
     return λ, U, conj(V)
 end
+
 """
     schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer})
     
-Produces the Schmidt decomposition of `ψ` assuming equally-sized subsystems. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that
-kron(U', V')*`ψ` is of Schmidt form.
+Produces the Schmidt decomposition of `ψ` assuming equally-sized subsystems. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
+
+Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
 """
 function schmidt_decomposition(ψ::AbstractVector)
     n = length(ψ)
