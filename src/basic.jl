@@ -57,16 +57,22 @@ function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) wh
     return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
 end
 
+# SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
 """
-    test_povm(A::Matrix{<:AbstractMatrix{T}})
+    test_povm(A::Vector{<:AbstractMatrix{T}})
 
 Checks if the measurement defined by A is valid (hermitian, semi-definite positive, and normalized).
 """
-# SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
-function test_povm(A::Matrix{<:AbstractMatrix})
-    # TODO
+function test_povm(E::Vector{<:AbstractMatrix{T}}) where {T<:Number}
+    !all(LA.ishermitian.(E)) && return false
+    d = size(E[1], 1)
+    !(sum(E) ≈ LA.I(d)) && return false
+    for i = 1:length(E)
+        minimum(LA.eigvals(E[i])) < -_rtol(T) && return false
+    end
+    return true
 end
-
+export test_povm
 """
     shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 

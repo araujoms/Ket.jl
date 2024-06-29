@@ -61,7 +61,7 @@ function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T
         LA.mul!(E[i], G, G')
     end
     S = sum(LA.Hermitian.(E))
-    rootinvS = sqrt(inv(S)) #don't worry, the probability of getting a singular S is zero
+    rootinvS = S^-0.5 #don't worry, the probability of getting a singular S is zero
     mat = Matrix{T}(undef, (d, d))
     for i = 1:n
         LA.mul!(mat, rootinvS, E[i])

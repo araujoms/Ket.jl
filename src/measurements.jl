@@ -191,9 +191,11 @@ Does the Naimark dilation of a rank-1 POVM given as a vector of vectors. This is
 function dilate_povm(vecs::Vector{Vector{T}}) where {T<:Number}
     d = length(vecs[1])
     n = length(vecs)
-    V = zeros(T, n, d)
-    for i in 1:n
-        V[i, :] = vecs[i]'
+    V = Matrix{T}(undef, n, d)
+    for j = 1:d
+        for i in 1:n
+            V[i, j] = conj(vecs[i][j])
+        end
     end
     return V
 end
@@ -206,9 +208,8 @@ Does the Naimark dilation of a POVM given as a vector of matrices. This always w
 """
 function dilate_povm(E::Vector{<:AbstractMatrix})
     n = length(E)
-    d = size(E[1], 1)
     rtE = sqrt.(E)
-    return V = sum(kron(rtE[i], ket(i, n)) for i in 1:n)
+    return sum(kron(rtE[i], ket(i, n)) for i in 1:n)
 end
 
 """

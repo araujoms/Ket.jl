@@ -37,6 +37,7 @@ schmidt_decomposition
 ```@docs
 sic_povm
 test_sic
+test_povm
 dilate_povm
 povm
 mub

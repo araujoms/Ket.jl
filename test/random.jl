@@ -59,4 +59,29 @@
             @test isa(p, Vector{T})
         end
     end
+    @testset "POVM" begin
+        for R in [Float64, Double64, Float128, BigFloat]
+            E = random_povm(R, 2, 3)
+            @test test_povm(E)
+            for i = 1:length(E)
+                @test rank(E[i]; rtol = Ket._rtol(R)) == 2
+            end
+            E = random_povm(R, 2, 3, 1)
+            @test test_povm(E)
+            for i = 1:length(E)
+                @test rank(E[i]; rtol = Ket._rtol(R)) == 1
+            end
+            T = Complex{R}
+            E = random_povm(T, 2, 3)
+            @test test_povm(E)
+            for i = 1:length(E)
+                @test rank(E[i]; rtol = Ket._rtol(R)) == 2
+            end
+            E = random_povm(T, 2, 3, 1)
+            @test test_povm(E)
+            for i = 1:length(E)
+                @test rank(E[i]; rtol = Ket._rtol(R)) == 1
+            end
+        end
+    end
 end
