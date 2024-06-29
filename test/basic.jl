@@ -51,7 +51,7 @@
             @test gell_mann(Complex{R}, 3, 1) == [0 0 -im; 0 0 0; im 0 0]
             @test gell_mann(Complex{R}, 3, 2) == [0 0 0; 0 0 -im; 0 im 0]
         end
-        @test gell_mann(3, 3) == Diagonal([1/sqrt(3), 1/sqrt(3), -2/sqrt(3)])
+        @test gell_mann(3, 3) == Diagonal([1, 1, -2] / sqrt(3))
         @test gell_mann(1, 1, 4) == Matrix{Float64}(I, 4, 4)
     end
     @testset "Cleanup" begin

@@ -26,6 +26,12 @@ binary_relative_entropy
 conditional_entropy
 ```
 
+## Entanglement
+
+```@docs
+schmidt_decomposition
+```
+
 ## Measurements
 
 ```@docs

@@ -7,6 +7,7 @@ using Test
 
 include("basic.jl")
 include("entropy.jl")
+include("entanglement.jl")
 include("measurements.jl")
 include("nonlocal.jl")
 include("norms.jl")

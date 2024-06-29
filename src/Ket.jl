@@ -14,6 +14,7 @@ include("measurements.jl")
 include("entropy.jl")
 include("norms.jl")
 include("partial_tra.jl")
+include("entanglement.jl")
 
 import Requires
 function __init__()
