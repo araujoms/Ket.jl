@@ -46,7 +46,7 @@ function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     else
         z = randn(T, d, d)
     end
-    Q, R = LA.qr(z)
+    Q, R = LA.qr!(z)
     λ = Vector{real(T)}(undef, d)
     for i in eachindex(λ)
         @inbounds λ[i] = sign(real(R[i, i]))
