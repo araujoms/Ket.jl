@@ -38,10 +38,20 @@ If `T` is a real type the output is instead a Haar-random (real) orthogonal matr
 Reference: Mezzadri, [arXiv:math-ph/0609050](https://arxiv.org/abs/math-ph/0609050).
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
-    z = randn(T, (d, d))
+    if T <: Complex
+        z = Matrix{T}(undef, d, d)
+        for i in eachindex(z)
+            @inbounds z[i] = T(randn(real(T)), randn(real(T)))
+        end
+    else
+        z = randn(T, d, d)
+    end
     Q, R = LA.qr(z)
-    Λ = sign.(real(LA.Diagonal(R)))
-    return Q * Λ
+    λ = Vector{real(T)}(undef, d)
+    for i in eachindex(λ)
+        @inbounds λ[i] = sign(real(R[i, i]))
+    end
+    return Q * LA.Diagonal(λ)
 end
 random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
