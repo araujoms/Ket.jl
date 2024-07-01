@@ -1,7 +1,7 @@
 @testset "Basic              " begin
     @testset "Kets" begin
-        @test isa(ket(1, 3), Vector{ComplexF64})
-        @test isa(proj(1, 3), Hermitian{ComplexF64})
+        @test isa(ket(1, 3), Vector{Bool})
+        @test isa(proj(1, 3), Hermitian{Bool})
         for R in [Int64, Float64, Double64, Float128, BigFloat]
             ψ = ket(R, 2, 3)
             P = proj(R, 2, 3)
