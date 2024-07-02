@@ -1,3 +1,14 @@
+#often we don't actually need the variance of the normal variables to be 1, so we don't need to waste time diving everything by sqrt(2)
+_randn(::Type{Complex{T}}) where {T<:AbstractFloat} = Complex{T}(randn(T), randn(T))
+_randn(::Type{T}) where {T} = randn(T)
+_randn(::Type{T}, dim1::Integer, dims::Integer...) where {T} = _randn!(Array{T}(undef, dim1, dims...))
+function _randn!(A::AbstractArray{T}) where {T}
+    for i in eachindex(A)
+        @inbounds A[i] = _randn(T)
+    end
+    return A
+end
+
 """
     random_state([T=ComplexF64,] d::Integer, k::Integer = d)
 
@@ -6,7 +17,7 @@ Produces a uniformly distributed random quantum state in dimension `d` with rank
 Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
 """
 function random_state(::Type{T}, d::Integer, k::Integer = d) where {T}
-    x = randn(T, (d, k))
+    x = _randn(T, d, k)
     y = x * x'
     y ./= LA.tr(y)
     return LA.Hermitian(y)
@@ -22,7 +33,7 @@ Produces a Haar-random quantum state vector in dimension `d`.
 Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
 """
 function random_state_vector(::Type{T}, d::Integer) where {T}
-    psi = randn(T, d)
+    psi = _randn(T, d)
     LA.normalize!(psi)
     return psi
 end
@@ -35,23 +46,25 @@ export random_state_vector
 Produces a Haar-random unitary matrix in dimension `d`.
 If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
 
-Reference: Mezzadri, [arXiv:math-ph/0609050](https://arxiv.org/abs/math-ph/0609050).
+References: Mezzadri, [arXiv:math-ph/0609050](https://arxiv.org/abs/math-ph/0609050).
+Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034)
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
-    if T <: Complex
-        z = Matrix{T}(undef, d, d)
-        for i in eachindex(z)
-            @inbounds z[i] = T(randn(real(T)), randn(real(T)))
+    z = Matrix{T}(undef, d, d)
+    for j = 1:d
+        for i = j:d
+            z[i, j] = _randn(T)
         end
-    else
-        z = randn(T, d, d)
     end
-    Q, R = LA.qr!(z)
-    λ = Vector{real(T)}(undef, d)
-    for i in eachindex(λ)
-        @inbounds λ[i] = sign(real(R[i, i]))
+    τ = Vector{T}(undef, d)
+    s = Vector{real(T)}(undef, d)
+    for k = 1:d
+        x = view(z, k:d, k)
+        τ[k] = LA.reflector!(x)
+        s[k] = sign(real(x[1]))
     end
-    return Q * LA.Diagonal(λ)
+    D = LA.Diagonal(s)
+    return LA.QRPackedQ(z, τ) * D
 end
 random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
