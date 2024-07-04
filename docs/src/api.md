@@ -83,6 +83,8 @@ state_psiminus_ket
 state_psiminus
 state_ghz_ket
 state_ghz
+state_w_ket
+state_w
 white_noise
 white_noise!
 ```

@@ -35,7 +35,7 @@ Produces the vector of the maximally entangled state Φ⁺ of local dimension `d
 function state_phiplus_ket(::Type{T}, d::Integer = 2) where {T<:Number}
     psi = zeros(T, d^2)
     for i = 1:d
-        psi += kron(ket(T, i, d), ket(T, i, d))
+        psi += kron(ket(T, i, d), ket(T, i, d)) / _sqrt(T, d)
     end
     return psi
 end
@@ -61,7 +61,7 @@ Produces the vector of the maximally entangled state ψ⁻ of local dimension `d
 function state_psiminus_ket(::Type{T}, d::Integer = 2) where {T<:Number}
     psi = zeros(T, d^2)
     for i = 1:d
-        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d))
+        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d)) / _sqrt(T, d)
     end
     return psi
 end
@@ -106,3 +106,29 @@ function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwarg
 end
 state_ghz(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz(ComplexF64, d, N; kwargs...)
 export state_ghz
+
+"""
+    state_w_ket([T=ComplexF64,] N::Integer = 3; coeff)
+
+Produces the vector of the `N`-partite W state.
+By default, `coeff` contains 1/√N uniformly.
+"""
+function state_w_ket(::Type{T}, N::Integer = 3; coeff::Vector = fill(inv(_sqrt(T, N)), N)) where {T<:Number}
+    psi = zeros(T, 2^N)
+    psi[2 .^ (0:N-1) .+ 1] .= coeff
+    return psi
+end
+state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)
+export state_w_ket
+
+"""
+    state_w([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff)
+
+Produces the `N`-partite W state with visibility `v`.
+By default, `coeff` contains 1/√N uniformly.
+"""
+function state_w(::Type{T}, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
+    return white_noise!(ketbra(state_w_ket(T, N; kwargs...)), v)
+end
+state_w(N::Integer = 3; kwargs...) = state_w(ComplexF64, N; kwargs...)
+export state_w
