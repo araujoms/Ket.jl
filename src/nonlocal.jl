@@ -224,4 +224,17 @@ end
 function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_φax...); marg)
 end
+# shorthand syntax for identical measurements on all parties
+function correlation_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
+    return correlation_tensor(rho, fill(Aax, N)...; marg)
+end
+function correlation_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
+    return correlation_tensor(psi, fill(Aax, N)...; marg)
+end
+function correlation_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
+    return correlation_tensor(rho, fill(povm(φax), N)...; marg)
+end
+function correlation_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
+    return correlation_tensor(psi, fill(povm(φax), N)...; marg)
+end
 export correlation_tensor
