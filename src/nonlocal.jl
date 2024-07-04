@@ -205,10 +205,10 @@ end
 function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
-function correlation_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...)
-    return correlation_tensor(probability_tensor(rho, all_φax...))
+function correlation_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
+    return correlation_tensor(probability_tensor(rho, all_φax...); marg)
 end
-function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
-    return correlation_tensor(probability_tensor(psi, all_φax...))
+function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
+    return correlation_tensor(probability_tensor(psi, all_φax...); marg)
 end
 export correlation_tensor
