@@ -77,10 +77,12 @@ random_probability
 ## States
 
 ```@docs
-phiplus
-psiminus
-isotropic
-anti_isotropic
+state_phiplus_ket
+state_phiplus
+state_psiminus_ket
+state_psiminus
+white_noise
+white_noise!
 ```
 ## Internal functions
 
