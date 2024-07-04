@@ -2,7 +2,6 @@ _root_unity(::Type{T}, n::Integer) where {T<:Number} = exp(2 * im * real(T)(π) 
 _sqrt(::Type{T}, n::Integer) where {T<:Number} = sqrt(real(T)(n))
 
 # MUBs
-# SD: TODO add the link to Ket.jl on my MUB repo once public
 function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     γ = _root_unity(T, p)
     inv_sqrt_p = inv(_sqrt(T, p))
