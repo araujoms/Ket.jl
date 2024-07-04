@@ -3,7 +3,7 @@
 
 Returns `v * rho + (1 - v) * id`, where `id` is the maximally mixed state.
 """
-function white_noise(rho::AbstractMatrix, v::Real)
+function white_noise(rho::LA.Hermitian, v::Real)
     return white_noise!(copy(rho), v)
 end
 export white_noise
@@ -14,9 +14,9 @@ export white_noise
 Modifies `rho` in place to tranform in into `v * rho + (1 - v) * id`
 where `id` is the maximally mixed state.
 """
-function white_noise!(rho::AbstractMatrix, v::Real)
+function white_noise!(rho::LA.Hermitian, v::Real)
     if v != 1
-        rho .*= v
+        rho.data .*= v
         tmp = (1 - v) / size(rho, 1)
         # https://discourse.julialang.org/t/change-the-diagonal-of-an-abstractmatrix-in-place/67294/2
         for i in axes(rho, 1)
@@ -78,3 +78,31 @@ function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number
 end
 state_psiminus(d::Integer = 2; v::Real = 1) = state_psiminus(ComplexF64, d; v)
 export state_psiminus
+
+"""
+    state_ghz_ket([T=ComplexF64,] d::Integer = 2, N::Integer = 3; coeff)
+
+Produces the vector of the GHZ state local dimension `d`.
+By default, `coeff` contains 1/√d uniformly.
+"""
+function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3;
+        coeff::Vector = fill(inv(_sqrt(T, d)), d)) where {T<:Number}
+    psi = zeros(T, d^N)
+    spacing = (1 - d^N) ÷ (1 - d)
+    psi[1:spacing:d^N] .= coeff
+    return psi
+end
+state_ghz_ket(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz_ket(ComplexF64, d, N; kwargs...)
+export state_ghz_ket
+
+"""
+    state_ghz([T=ComplexF64,] d::Integer = 2, N::Integer = 3; v::Real = 1, coeff)
+
+Produces the GHZ state of local dimension `d` with visibility `v`.
+By default, `coeff` contains 1/√d uniformly.
+"""
+function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
+    return white_noise!(ketbra(state_ghz_ket(T, d, N; kwargs...)), v)
+end
+state_ghz(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz(ComplexF64, d, N; kwargs...)
+export state_ghz
