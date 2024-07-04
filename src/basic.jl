@@ -140,7 +140,7 @@ function pauli(::Type{T}, ind::Vector{<:Integer}) where {T<:Number}
     end
 end
 function pauli(::Type{T}, str::String) where {T<:Number}
-    ind = Int[]
+    ind = Int64[]
     for c in str
         if c in ['I', 'i', '1']
             push!(ind, 0)

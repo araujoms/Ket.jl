@@ -168,16 +168,16 @@ function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatr
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
 # shorthand syntax for identical measurements on all parties
-function probability_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Int)
+function probability_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Integer)
     return probability_tensor(rho, fill(Aax, N)...)
 end
-function probability_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Int)
+function probability_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer)
     return probability_tensor(psi, fill(Aax, N)...)
 end
-function probability_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Int)
+function probability_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer)
     return probability_tensor(rho, fill(povm(φax), N)...)
 end
-function probability_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Int)
+function probability_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer)
     return probability_tensor(psi, fill(povm(φax), N)...)
 end
 export probability_tensor
@@ -195,9 +195,9 @@ function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T}
     N = N2 ÷ 2
     m = size(p)[N+1:end] # numbers of inputs per party
     o = size(p)[1:N] # numbers of outputs per party
-    @assert collect(o) == 2ones(Int, N)
+    @assert collect(o) == 2ones(Int64, N)
     res = zeros(T, (marg ? m .+ 1 : m)...)
-    cia = CartesianIndices(Tuple(2ones(Int, N)))
+    cia = CartesianIndices(Tuple(2ones(Int64, N)))
     cix = CartesianIndices(Tuple(marg ? m .+ 1 : m))
     for x in cix
         x_colon = [x[n] ≤ m[n] ? x[n] : Colon() for n in 1:N]

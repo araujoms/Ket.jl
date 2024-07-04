@@ -26,11 +26,11 @@ end
 export trace_norm
 
 """
-    kyfan_norm(X::AbstractMatrix, k::Int, p::Real = 2)
+    kyfan_norm(X::AbstractMatrix, k::Integer, p::Real = 2)
 
 Computes Ky-Fan (`k`,`p`) norm of matrix `X`.
 """
-function kyfan_norm(X::AbstractMatrix, k::Int, p::Real = 2)
+function kyfan_norm(X::AbstractMatrix, k::Integer, p::Real = 2)
     sv = LA.svdvals(X)
     return LA.norm(sv[1:k], p)
 end
