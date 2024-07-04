@@ -48,7 +48,7 @@
             @test conditional_entropy(pAB) ≈ conditional_entropy(ℯ, pAB) / log(R(2))
             rhoAB = Diagonal(vec(pAB'))
             @test conditional_entropy(pAB) ≈ conditional_entropy(rhoAB, 2, [2, 3])
-            @test conditional_entropy(state_phiplus(), 2, [2, 2]) ≈ -1
+            @test conditional_entropy(state_phiplus(), 2, [2, 2]) == -1
             ρ = random_state(Complex{R}, 6)
             @test conditional_entropy(ρ, 2, [2, 3]) ≈ conditional_entropy(ℯ, ρ, 2, [2, 3]) / log(R(2))
             @test conditional_entropy(ρ, [1, 2], [2, 3]) == 0

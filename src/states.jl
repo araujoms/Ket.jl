@@ -48,7 +48,11 @@ export state_phiplus_ket
 Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
 """
 function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    return white_noise!(ketbra(state_phiplus_ket(T, d)), v)
+    psi = zeros(T, d^2)
+    for i = 1:d
+        psi += kron(ket(T, i, d), ket(T, i, d))
+    end
+    return white_noise!(ketbra(psi) / d, v)
 end
 state_phiplus(d::Integer = 2; v::Real = 1) = state_phiplus(ComplexF64, d; v)
 export state_phiplus
@@ -74,7 +78,11 @@ export state_psiminus_ket
 Produces the maximally entangled state ψ⁻ of local dimension `d` with visibility `v`.
 """
 function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    return white_noise!(ketbra(state_psiminus_ket(T, d)), v)
+    psi = zeros(T, d^2)
+    for i = 1:d
+        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d))
+    end
+    return white_noise!(ketbra(psi) / d, v)
 end
 state_psiminus(d::Integer = 2; v::Real = 1) = state_psiminus(ComplexF64, d; v)
 export state_psiminus
@@ -85,8 +93,12 @@ export state_psiminus
 Produces the vector of the GHZ state local dimension `d`.
 By default, `coeff` contains 1/√d uniformly.
 """
-function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3;
-        coeff::Vector = fill(inv(_sqrt(T, d)), d)) where {T<:Number}
+function state_ghz_ket(
+    ::Type{T},
+    d::Integer = 2,
+    N::Integer = 3;
+    coeff::Vector = fill(inv(_sqrt(T, d)), d)
+) where {T<:Number}
     psi = zeros(T, d^N)
     spacing = (1 - d^N) ÷ (1 - d)
     psi[1:spacing:d^N] .= coeff
@@ -115,7 +127,7 @@ By default, `coeff` contains 1/√N uniformly.
 """
 function state_w_ket(::Type{T}, N::Integer = 3; coeff::Vector = fill(inv(_sqrt(T, N)), N)) where {T<:Number}
     psi = zeros(T, 2^N)
-    psi[2 .^ (0:N-1) .+ 1] .= coeff
+    psi[2 .^ (0:N-1).+1] .= coeff
     return psi
 end
 state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)
@@ -132,3 +144,13 @@ function state_w(::Type{T}, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Nu
 end
 state_w(N::Integer = 3; kwargs...) = state_w(ComplexF64, N; kwargs...)
 export state_w
+
+"""
+    isotropic(v::Real, d::Integer = 2)
+
+Produces the isotropic state of local dimension `d` with visibility `v`.
+"""
+function isotropic(v::T, d::Integer = 2) where {T<:Real}
+    return state_phiplus(T, d; v)
+end
+export isotropic

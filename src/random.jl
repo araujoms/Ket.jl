@@ -57,7 +57,7 @@ function random_unitary(::Type{T}, d::Integer) where {T<:Number}
         end
     end
     τ = Vector{T}(undef, d)
-    s = Vector{real(T)}(undef, d)
+    s = Vector{T}(undef, d)
     for k = 1:d
         x = view(z, k:d, k)
         τ[k] = LA.reflector!(x)
