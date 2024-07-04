@@ -4,7 +4,7 @@ import CyclotomicNumbers as CN
 import Ket
 import LinearAlgebra as LA
 
-const TExact = Cyc{Rational{BigInt}}
+const TExact = CN.Cyc{Rational{BigInt}}
 export TExact
 
 Ket._root_unity(::Type{CN.Cyc{R}}, n::Integer) where {R<:Real} = CN.E(Int64(n))
