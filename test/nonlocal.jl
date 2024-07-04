@@ -12,6 +12,6 @@
 end
 @testset "FP and FC notations" begin
     Aax = povm(mub(2))
-    @test correlation_tensor(isotropic(1.0), Aax, Aax) ≈ Diagonal([1, 1, -1, 1])
-    @test correlation_tensor(isotropic(1.0), Aax, Aax; marg = false) ≈ Diagonal([1, 1, -1])
+    @test correlation_tensor(isotropic(1.0), Aax, 2) ≈ Diagonal([1, 1, -1, 1])
+    @test correlation_tensor(isotropic(1.0), Aax, 2; marg = false) ≈ Diagonal([1, 1, -1])
 end

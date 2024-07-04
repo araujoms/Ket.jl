@@ -167,6 +167,19 @@ end
 function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
+# shorthand syntax for identical measurements on all parties
+function probability_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Int)
+    return probability_tensor(rho, fill(Aax, N)...)
+end
+function probability_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Int)
+    return probability_tensor(psi, fill(Aax, N)...)
+end
+function probability_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Int)
+    return probability_tensor(rho, fill(povm(φax), N)...)
+end
+function probability_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Int)
+    return probability_tensor(psi, fill(povm(φax), N)...)
+end
 export probability_tensor
 
 """
