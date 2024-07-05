@@ -1,27 +1,26 @@
 """
-    white_noise(rho::LA.Hermitian, v::Real)
+    white_noise(rho::AbstractMatrix, v::Real)
 
 Returns `v * rho + (1 - v) * id`, where `id` is the maximally mixed state.
 """
-function white_noise(rho::LA.Hermitian, v::Real)
+function white_noise(rho::AbstractMatrix, v::Real)
     return white_noise!(copy(rho), v)
 end
 export white_noise
 
 """
-    white_noise!(rho::LA.Hermitian, v::Real)
+    white_noise!(rho::AbstractMatrix, v::Real)
 
 Modifies `rho` in place to tranform in into `v * rho + (1 - v) * id`
 where `id` is the maximally mixed state.
 """
-function white_noise!(rho::LA.Hermitian, v::Real)
-    if v != 1
-        rho.data .*= v
-        tmp = (1 - v) / size(rho, 1)
-        # https://discourse.julialang.org/t/change-the-diagonal-of-an-abstractmatrix-in-place/67294/2
-        for i in axes(rho, 1)
-            @inbounds rho[i, i] += tmp
-        end
+function white_noise!(rho::AbstractMatrix, v::Real)
+    v == 1 && return rho
+    parent(rho) .*= v
+    tmp = (1 - v) / size(rho, 1)
+    # https://discourse.julialang.org/t/change-the-diagonal-of-an-abstractmatrix-in-place/67294/2
+    for i in axes(rho, 1)
+        @inbounds rho[i, i] += tmp
     end
     return rho
 end
