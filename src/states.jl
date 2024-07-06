@@ -31,14 +31,18 @@ export white_noise!
 
 Produces the vector of the maximally entangled state Φ⁺ of local dimension `d`.
 """
-function state_phiplus_ket(::Type{T}, d::Integer = 2) where {T<:Number}
+function state_phiplus_ket(
+    ::Type{T},
+    d::Integer = 2;
+    coeff::Vector = fill(inv(_sqrt(T, d)), d)
+) where {T<:Number}
     psi = zeros(T, d^2)
     for i = 1:d
-        psi += kron(ket(T, i, d), ket(T, i, d)) / _sqrt(T, d)
+        psi .+= kron(ket(T, i, d), ket(T, i, d)) / coeff[i]
     end
     return psi
 end
-state_phiplus_ket(d::Integer = 2) = state_phiplus_ket(ComplexF64, d)
+state_phiplus_ket(d::Integer = 2; kwargs...) = state_phiplus_ket(ComplexF64, d; kwargs...)
 export state_phiplus_ket
 
 """
@@ -47,11 +51,9 @@ export state_phiplus_ket
 Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
 """
 function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    psi = zeros(T, d^2)
-    for i = 1:d
-        psi += kron(ket(T, i, d), ket(T, i, d))
-    end
-    return white_noise!(ketbra(psi) / d, v)
+    rho = ketbra(state_phiplus_ket(T, d; coeff = ones(T, d)))
+    parent(rho) ./= d
+    return white_noise!(rho, v)
 end
 state_phiplus(d::Integer = 2; v::Real = 1) = state_phiplus(ComplexF64, d; v)
 export state_phiplus
@@ -61,14 +63,18 @@ export state_phiplus
 
 Produces the vector of the maximally entangled state ψ⁻ of local dimension `d`.
 """
-function state_psiminus_ket(::Type{T}, d::Integer = 2) where {T<:Number}
+function state_psiminus_ket(
+    ::Type{T},
+    d::Integer = 2;
+    coeff::Vector = fill(inv(_sqrt(T, d)), d)
+) where {T<:Number}
     psi = zeros(T, d^2)
     for i = 1:d
-        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d)) / _sqrt(T, d)
+        psi .+= (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d)) / coeff[i]
     end
     return psi
 end
-state_psiminus_ket(d::Integer = 2) = state_psiminus_ket(ComplexF64, d)
+state_psiminus_ket(d::Integer = 2; kwargs...) = state_psiminus_ket(ComplexF64, d; kwargs...)
 export state_psiminus_ket
 
 """
@@ -77,11 +83,9 @@ export state_psiminus_ket
 Produces the maximally entangled state ψ⁻ of local dimension `d` with visibility `v`.
 """
 function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    psi = zeros(T, d^2)
-    for i = 1:d
-        psi += (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d))
-    end
-    return white_noise!(ketbra(psi) / d, v)
+    rho = ketbra(state_psiminus_ket(T, d; coeff = ones(T, d)))
+    parent(rho) ./= d
+    return white_noise!(rho, v)
 end
 state_psiminus(d::Integer = 2; v::Real = 1) = state_psiminus(ComplexF64, d; v)
 export state_psiminus
