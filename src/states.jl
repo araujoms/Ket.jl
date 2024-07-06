@@ -31,16 +31,8 @@ export white_noise!
 
 Produces the vector of the maximally entangled state Φ⁺ of local dimension `d`.
 """
-function state_phiplus_ket(
-    ::Type{T},
-    d::Integer = 2;
-    coeff::Vector = fill(inv(_sqrt(T, d)), d)
-) where {T<:Number}
-    psi = zeros(T, d^2)
-    for i = 1:d
-        psi .+= kron(ket(T, i, d), ket(T, i, d)) / coeff[i]
-    end
-    return psi
+function state_phiplus_ket(::Type{T}, d::Integer = 2; kwargs...) where {T<:Number}
+    return state_ghz_ket(T, d, 2; kwargs...)
 end
 state_phiplus_ket(d::Integer = 2; kwargs...) = state_phiplus_ket(ComplexF64, d; kwargs...)
 export state_phiplus_ket
@@ -69,9 +61,7 @@ function state_psiminus_ket(
     coeff::Vector = fill(inv(_sqrt(T, d)), d)
 ) where {T<:Number}
     psi = zeros(T, d^2)
-    for i = 1:d
-        psi .+= (-1)^(i + 1) * kron(ket(T, i, d), ket(T, d - i + 1, d)) / coeff[i]
-    end
+    psi[d.+(d-1)*(0:d-1)] .= (-1) .^ (0:d-1) .* coeff
     return psi
 end
 state_psiminus_ket(d::Integer = 2; kwargs...) = state_psiminus_ket(ComplexF64, d; kwargs...)
