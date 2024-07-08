@@ -46,8 +46,7 @@ export random_state_vector
 Produces a Haar-random unitary matrix in dimension `d`.
 If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
 
-References: Mezzadri, [arXiv:math-ph/0609050](https://arxiv.org/abs/math-ph/0609050).
-Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034)
+Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
@@ -58,7 +57,7 @@ function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
-    for k = 1:d
+    for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
         x = view(z, k:d, k)
         τ[k] = LA.reflector!(x)
         s[k] = sign(real(x[1]))

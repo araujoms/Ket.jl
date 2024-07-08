@@ -43,7 +43,7 @@ export state_phiplus_ket
 Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
 """
 function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    rho = ketbra(state_phiplus_ket(T, d; coeff = ones(T, d)))
+    rho = ketbra(state_phiplus_ket(T, d; coeff = one(1)))
     parent(rho) ./= d
     return white_noise!(rho, v)
 end
@@ -55,11 +55,7 @@ export state_phiplus
 
 Produces the vector of the maximally entangled state ψ⁻ of local dimension `d`.
 """
-function state_psiminus_ket(
-    ::Type{T},
-    d::Integer = 2;
-    coeff::Vector = fill(inv(_sqrt(T, d)), d)
-) where {T<:Number}
+function state_psiminus_ket(::Type{T}, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^2)
     psi[d.+(d-1)*(0:d-1)] .= (-1) .^ (0:d-1) .* coeff
     return psi
@@ -73,7 +69,7 @@ export state_psiminus_ket
 Produces the maximally entangled state ψ⁻ of local dimension `d` with visibility `v`.
 """
 function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    rho = ketbra(state_psiminus_ket(T, d; coeff = ones(T, d)))
+    rho = ketbra(state_psiminus_ket(T, d; coeff = one(T)))
     parent(rho) ./= d
     return white_noise!(rho, v)
 end
@@ -81,17 +77,11 @@ state_psiminus(d::Integer = 2; v::Real = 1) = state_psiminus(ComplexF64, d; v)
 export state_psiminus
 
 """
-    state_ghz_ket([T=ComplexF64,] d::Integer = 2, N::Integer = 3; coeff)
+    state_ghz_ket([T=ComplexF64,] d::Integer = 2, N::Integer = 3; coeff = 1/√d)
 
 Produces the vector of the GHZ state local dimension `d`.
-By default, `coeff` contains 1/√d uniformly.
 """
-function state_ghz_ket(
-    ::Type{T},
-    d::Integer = 2,
-    N::Integer = 3;
-    coeff::Vector = fill(inv(_sqrt(T, d)), d)
-) where {T<:Number}
+function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^N)
     spacing = (1 - d^N) ÷ (1 - d)
     psi[1:spacing:d^N] .= coeff
@@ -101,10 +91,9 @@ state_ghz_ket(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz_ket(Complex
 export state_ghz_ket
 
 """
-    state_ghz([T=ComplexF64,] d::Integer = 2, N::Integer = 3; v::Real = 1, coeff)
+    state_ghz([T=ComplexF64,] d::Integer = 2, N::Integer = 3; v::Real = 1, coeff = 1/√d)
 
 Produces the GHZ state of local dimension `d` with visibility `v`.
-By default, `coeff` contains 1/√d uniformly.
 """
 function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
     return white_noise!(ketbra(state_ghz_ket(T, d, N; kwargs...)), v)
@@ -113,12 +102,11 @@ state_ghz(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz(ComplexF64, d, 
 export state_ghz
 
 """
-    state_w_ket([T=ComplexF64,] N::Integer = 3; coeff)
+    state_w_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√d)
 
 Produces the vector of the `N`-partite W state.
-By default, `coeff` contains 1/√N uniformly.
 """
-function state_w_ket(::Type{T}, N::Integer = 3; coeff::Vector = fill(inv(_sqrt(T, N)), N)) where {T<:Number}
+function state_w_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, N))) where {T<:Number}
     psi = zeros(T, 2^N)
     psi[2 .^ (0:N-1).+1] .= coeff
     return psi
@@ -127,10 +115,9 @@ state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)
 export state_w_ket
 
 """
-    state_w([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff)
+    state_w([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
 
 Produces the `N`-partite W state with visibility `v`.
-By default, `coeff` contains 1/√N uniformly.
 """
 function state_w(::Type{T}, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
     return white_noise!(ketbra(state_w_ket(T, N; kwargs...)), v)
