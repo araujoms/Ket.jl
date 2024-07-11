@@ -3,6 +3,8 @@
 
 Computes the local bound of a bipartite Bell functional `G`, written in full probability notation
 as a 4-dimensional array.
+
+Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
 """
 function local_bound(G::Array{T,4}) where {T<:Real}
     oa, ob, ia, ib = size(G)
