@@ -14,6 +14,7 @@ include("measurements.jl")
 include("entropy.jl")
 include("norms.jl")
 include("partial_tra.jl")
+include("permute_sys.jl")
 include("entanglement.jl")
 
 import Requires
