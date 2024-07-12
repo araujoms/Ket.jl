@@ -70,7 +70,7 @@ diamond_norm
 
 ```@docs
 random_state
-random_state_vector
+random_state_ket
 random_unitary
 random_povm
 random_probability

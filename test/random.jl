@@ -2,10 +2,10 @@
     @testset "States" begin
         ρ = random_state(3)
         @test isa(ρ, Hermitian{ComplexF64})
-        ψ = random_state_vector(3)
+        ψ = random_state_ket(3)
         @test isa(ψ, Vector{ComplexF64})
         for R in [Float64, Double64, Float128, BigFloat]
-            ψ = random_state_vector(R, 3)
+            ψ = random_state_ket(R, 3)
             @test ψ' * ψ ≈ 1
             @test isa(ψ, Vector{R})
             ρ = random_state(R, 3)
@@ -20,7 +20,7 @@
             @test minimum(eigvals(ρ)) > -Ket._rtol(R)
             @test isa(ρ, Hermitian{R})
             T = Complex{R}
-            ψ = random_state_vector(T, 3)
+            ψ = random_state_ket(T, 3)
             @test ψ' * ψ ≈ 1
             @test isa(ψ, Vector{T})
             ρ = random_state(R, 3)

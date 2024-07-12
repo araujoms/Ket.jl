@@ -26,19 +26,19 @@ random_state(d::Integer, k::Integer = d) = random_state(ComplexF64, d, k)
 export random_state
 
 """
-    random_state_vector([T=ComplexF64,] d::Integer)
+    random_state_ket([T=ComplexF64,] d::Integer)
 
 Produces a Haar-random quantum state vector in dimension `d`.
 
 Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
 """
-function random_state_vector(::Type{T}, d::Integer) where {T}
+function random_state_ket(::Type{T}, d::Integer) where {T}
     psi = _randn(T, d)
     LA.normalize!(psi)
     return psi
 end
-random_state_vector(d::Integer) = random_state_vector(ComplexF64, d)
-export random_state_vector
+random_state_ket(d::Integer) = random_state_ket(ComplexF64, d)
+export random_state_ket
 
 """
     random_unitary([T=ComplexF64,] d::Integer)
