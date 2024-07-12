@@ -63,6 +63,7 @@ fp2cg
 trace_norm
 kyfan_norm
 schatten_norm
+diamond_norm
 ```
 
 ## Random
@@ -90,6 +91,13 @@ state_w
 white_noise
 white_noise!
 ```
+
+## Supermaps
+
+```@docs
+choi
+```
+
 ## Internal functions
 
 ```@docs

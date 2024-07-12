@@ -4,6 +4,8 @@ import Combinatorics
 import GenericLinearAlgebra
 import LinearAlgebra as LA
 import Nemo
+import JuMP
+import Hypatia
 
 include("basic.jl")
 include("states.jl")
@@ -15,6 +17,7 @@ include("entropy.jl")
 include("norms.jl")
 include("partial_tra.jl")
 include("permute_sys.jl")
+include("supermaps.jl")
 include("entanglement.jl")
 
 import Requires
