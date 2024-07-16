@@ -31,6 +31,7 @@ conditional_entropy
 
 ```@docs
 schmidt_decomposition
+entanglement_entropy
 ```
 
 ## Measurements

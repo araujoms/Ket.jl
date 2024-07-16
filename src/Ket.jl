@@ -5,7 +5,7 @@ import GenericLinearAlgebra
 import LinearAlgebra as LA
 import Nemo
 import JuMP
-import Hypatia
+import Hypatia, Hypatia.Cones
 
 include("basic.jl")
 include("states.jl")
