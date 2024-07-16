@@ -1,3 +1,8 @@
+#extract from T the kind of float to be used in the conic solver
+_solver_type(::Type{T}) where {T<:AbstractFloat} = T
+_solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
+_solver_type(::Type{T}) where {T<:Number} = Float64
+
 """
     choi(K::Vector{<:AbstractMatrix})
     
@@ -14,17 +19,12 @@ Computes the diamond norm of the supermap `J` given in the Choi-Jamiołkowski re
 
 Reference: [Diamond norm](https://en.wikipedia.org/wiki/Diamond_norm)
 """
-function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector) where {T}
+function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypatia.Optimizer{_solver_type(T)}) where {T}
     LA.ishermitian(J) || throw(ArgumentError("Supermap needs to be Hermitian"))
 
     is_complex = (T <: Complex)
-    R = real(T)
-    if R <: Integer
-        R = Float64
-    end
-
     din, dout = dims
-    model = JuMP.GenericModel{R}()
+    model = JuMP.GenericModel{_solver_type(T)}()
     if is_complex
         JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Hermitian)
         JuMP.@variable(model, σ[1:din, 1:din], Hermitian)
@@ -42,7 +42,7 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector) where {T}
     JuMP.@constraint(model, LA.tr(σ) == 1)
     JuMP.@objective(model, Max, real(LA.dot(J, Y)))
 
-    JuMP.set_optimizer(model, Hypatia.Optimizer{R})
+    JuMP.set_optimizer(model, solver)
     JuMP.set_attribute(model, "verbose", false)
     JuMP.optimize!(model)
     return JuMP.objective_value(model)
