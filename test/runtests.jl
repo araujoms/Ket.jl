@@ -4,6 +4,7 @@ using CyclotomicNumbers
 using DoubleFloats
 using Quadmath
 using Test
+import Random
 
 include("basic.jl")
 include("entropy.jl")
