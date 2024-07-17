@@ -1,6 +1,6 @@
 @testset "Multilinear algebra" begin
     @testset "Partial trace      " begin
-        d1, d2, d3 = 2, 3, 4
+        d1, d2, d3 = 2, 2, 3
         for R in [Float64, Double64, Float128, BigFloat]
             for T in [R, Complex{R}]
                 a = randn(T, d1, d1)
@@ -10,10 +10,10 @@
                 ac = kron(a, c)
                 bc = kron(b, c)
                 abc = kron(ab, c)
-                @test partial_trace(ab, [1, 2], [d1, d2])[1] ≈ tr(ab)
-                @test partial_trace(ab, 2, [d1, d2]) ≈ a * tr(b)
-                @test partial_trace(ab, 1, [d1, d2]) ≈ b * tr(a)
-                @test partial_trace(ab, Int64[], [d1, d2]) ≈ ab
+                @test partial_trace(ab, [1, 2])[1] ≈ tr(ab)
+                @test partial_trace(ab, 2) ≈ a * tr(b)
+                @test partial_trace(ab, 1) ≈ b * tr(a)
+                @test partial_trace(ab, Int64[]) ≈ ab
                 @test partial_trace(abc, [1, 2, 3], [d1, d2, d3])[1] ≈ tr(abc)
                 @test partial_trace(abc, [2, 3], [d1, d2, d3]) ≈ a * tr(b) * tr(c)
                 @test partial_trace(abc, [1, 3], [d1, d2, d3]) ≈ b * tr(a) * tr(c)
@@ -33,7 +33,7 @@
     end
 
     @testset "Partial transpose  " begin
-        d1, d2, d3 = 2, 3, 4
+        d1, d2, d3 = 2, 2, 3
         for R in [Float64, Double64, Float128, BigFloat]
             for T in [R, Complex{R}]
                 a = randn(T, d1, d1)
@@ -43,10 +43,10 @@
                 ac = kron(a, c)
                 bc = kron(b, c)
                 abc = kron(ab, c)
-                @test partial_transpose(ab, [1, 2], [d1, d2]) ≈ transpose(ab)
-                @test partial_transpose(ab, 2, [d1, d2]) ≈ kron(a, transpose(b))
-                @test partial_transpose(ab, 1, [d1, d2]) ≈ kron(transpose(a), b)
-                @test partial_transpose(ab, Int64[], [d1, d2]) ≈ ab
+                @test partial_transpose(ab, [1, 2]) ≈ transpose(ab)
+                @test partial_transpose(ab, 2) ≈ kron(a, transpose(b))
+                @test partial_transpose(ab, 1) ≈ kron(transpose(a), b)
+                @test partial_transpose(ab, Int64[]) ≈ ab
                 @test partial_transpose(abc, [1, 2, 3], [d1, d2, d3]) ≈ transpose(abc)
                 @test partial_transpose(abc, [2, 3], [d1, d2, d3]) ≈ kron(a, transpose(b), transpose(c))
                 @test partial_transpose(abc, [1, 3], [d1, d2, d3]) ≈ kron(transpose(a), b, transpose(c))
@@ -67,7 +67,7 @@
 
     @testset "Permute systems    " begin
         @testset "Vectors" begin
-            d1, d2, d3 = 2, 3, 4
+            d1, d2, d3 = 2, 2, 3
             for R in [Float64, Double64, Float128, BigFloat]
                 for T in [R, Complex{R}]
                     u = randn(T, d1)
@@ -77,8 +77,8 @@
                     uw = kron(u, w)
                     vw = kron(v, w)
                     uvw = kron(u, v, w)
-                    @test permute_systems(uv, [1, 2], [d1, d2]) ≈ kron(u, v)
-                    @test permute_systems(uv, [2, 1], [d1, d2]) ≈ kron(v, u)
+                    @test permute_systems(uv, [1, 2]) ≈ kron(u, v)
+                    @test permute_systems(uv, [2, 1]) ≈ kron(v, u)
                     @test permute_systems(uw, [2, 1], [d1, d3]) ≈ kron(w, u)
                     @test permute_systems(vw, [2, 1], [d2, d3]) ≈ kron(w, v)
                     @test permute_systems(uvw, [1, 2, 3], [d1, d2, d3]) ≈ kron(u, v, w)
@@ -92,7 +92,7 @@
         end
 
         @testset "Square matrices" begin
-            d1, d2, d3 = 2, 3, 4
+            d1, d2, d3 = 2, 2, 3
             for R in [Float64, Double64, Float128, BigFloat]
                 for T in [R, Complex{R}]
                     a = randn(T, d1, d1)
@@ -102,8 +102,8 @@
                     ac = kron(a, c)
                     bc = kron(b, c)
                     abc = kron(a, b, c)
-                    @test permute_systems(ab, [1, 2], [d1, d2]) ≈ kron(a, b)
-                    @test permute_systems(ab, [2, 1], [d1, d2]) ≈ kron(b, a)
+                    @test permute_systems(ab, [1, 2]) ≈ kron(a, b)
+                    @test permute_systems(ab, [2, 1]) ≈ kron(b, a)
                     @test permute_systems(ac, [2, 1], [d1, d3]) ≈ kron(c, a)
                     @test permute_systems(bc, [2, 1], [d2, d3]) ≈ kron(c, b)
                     @test permute_systems(abc, [1, 2, 3], [d1, d2, d3]) ≈ kron(a, b, c)

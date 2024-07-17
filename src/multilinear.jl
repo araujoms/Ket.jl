@@ -104,13 +104,21 @@ for (T, limit, wrapper) in
         end
     end
 end
+export partial_trace
+
 """
     partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector)
 
 Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`.
 """
 partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector{<:Integer}) = partial_trace(X, [remove], dims)
-export partial_trace
+
+"""
+    partial_trace(X::AbstractMatrix, remove::Integer)
+
+Takes the partial trace of matrix `X` over the subsystems `remove` assuming two equally-sized subsystems.
+"""
+partial_trace(X::AbstractMatrix, remove) = partial_trace(X, remove, _equal_sizes(X))
 
 @doc """
     partial_transpose(X::AbstractMatrix, transp::Vector, dims::Vector)
@@ -177,13 +185,21 @@ for (T, wrapper) in
         end
     end
 end
+export partial_transpose
+
 """
     partial_transpose(X::AbstractMatrix, transp::Integer, dims::Vector)
 
 Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`.
 """
 partial_transpose(X::AbstractMatrix, transp::Integer, dims::Vector{<:Integer}) = partial_transpose(X, [transp], dims)
-export partial_transpose
+
+"""
+    partial_transpose(X::AbstractMatrix, transp)
+
+Takes the partial transpose of matrix `X` on the subsystems in `transp` assuming two equally-sized subsystems.
+"""
+partial_transpose(X::AbstractMatrix, transp) = partial_transpose(X, transp, _equal_sizes(X))
 
 """
     permute_systems(X::AbstractVector, perm::Vector, dims::Vector)
@@ -220,6 +236,13 @@ function permute_systems(X::AbstractMatrix, perm::Vector{<:Integer}, dims::Vecto
     idxperm = permute_systems(axes(X, 1), perm, dims)
     return X[idxperm, idxperm]
 end
+
+"""
+    permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
+
+Permutes the order of the subsystems of the square matrix `X`, which is composed by two square subsystems of equal dimensions, according to the permutation `perm`.
+"""
+permute_systems(X::AbstractVecOrMat, perm::Vector{<:Integer}) = permute_systems(X, perm, _equal_sizes(X))
 
 """
     permute_systems(X::AbstractMatrix, perm::Vector, dims::Matrix)

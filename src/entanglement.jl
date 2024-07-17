@@ -1,8 +1,8 @@
-function _equal_sizes(f, arg)
+function _equal_sizes(arg::AbstractVecOrMat)
     n = size(arg, 1)
     d = isqrt(n)
     d^2 != n && throw(ArgumentError("Subsystems are not equally-sized, please specify sizes."))
-    return f(arg, [d, d])
+    return [d, d]
 end
 
 """
@@ -28,7 +28,7 @@ Produces the Schmidt decomposition of `ψ` assuming equally-sized subsystems. Re
 
 Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
 """
-schmidt_decomposition(ψ::AbstractVector) = _equal_sizes(schmidt_decomposition, ψ)
+schmidt_decomposition(ψ::AbstractVector) = schmidt_decomposition(ψ, _equal_sizes(ψ))
 
 """
     entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer})
@@ -48,7 +48,7 @@ export entanglement_entropy
 
 Computes the relative entropy of entanglement of a bipartite pure state `ψ` assuming equally-sized subsystems.
 """
-entanglement_entropy(ψ::AbstractVector) = _equal_sizes(entanglement_entropy, ψ)
+entanglement_entropy(ψ::AbstractVector) = entanglement_entropy(ψ, _equal_sizes(ψ))
 
 """
     entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector)
@@ -94,7 +94,7 @@ end
 
 Lower bounds the relative entropy of entanglement of a bipartite state `ρ` assuming equally-sized subsystems.
 """
-entanglement_entropy(ρ::AbstractMatrix) = _equal_sizes(entanglement_entropy, ρ)
+entanglement_entropy(ρ::AbstractMatrix) = entanglement_entropy(ρ, _equal_sizes(ρ))
 
 """
     _svec(M::AbstractMatrix, ::Type{R})
