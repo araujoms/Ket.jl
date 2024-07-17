@@ -86,7 +86,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector) where
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_attribute(model, "verbose", false)
     JuMP.optimize!(model)
-    return JuMP.objective_value(model), JuMP.value.(σ)
+    return JuMP.objective_value(model), LA.Hermitian(JuMP.value.(σ))
 end
 
 """
@@ -112,4 +112,39 @@ function _svec(M::AbstractMatrix, ::Type{R}) where {R} #the weird stuff here is 
         Cones._smat_to_svec_complex!(v, M, sqrt(T(2)))
     end
     return v
+end
+
+"""
+    _test_entanglement_entropy_qubit(h::Real, ρ::AbstractMatrix, σ::AbstractMatrix)
+
+Tests whether `ρ` is indeed a entangled state whose closest separable state is `σ`.
+
+Reference: Miranowicz and Ishizaka, [arXiv:0805.3134](https://arxiv.org/abs/0805.3134)
+"""
+function _test_entanglement_entropy_qubit(h, ρ, σ)
+    R = typeof(h)
+    λ, U = LA.eigen(σ)
+    g = zeros(R, 4, 4)
+    for j = 1:4
+        for i = 1:j-1
+            g[i, j] = (λ[i] - λ[j]) / log(λ[i] / λ[j])
+        end
+        g[j, j] = λ[j]
+    end
+    g = LA.Hermitian(g)
+    σT = partial_transpose(σ, 2, [2, 2])
+    λ2, U2 = LA.eigen(σT)
+    phi = partial_transpose(ketbra(U2[:, 1]), 2, [2, 2])
+    G = zero(U)
+    for i = 1:4
+        for j = 1:4
+            G += g[i, j] * ketbra(U[:, i]) * phi * ketbra(U[:, j])
+        end
+    end
+    G = LA.Hermitian(G)
+    x = real(LA.pinv(vec(G)) * vec(σ - ρ))
+    ρ2 = σ - x * G
+    ρ_matches = isapprox(ρ2, ρ; rtol = sqrt(Base.rtoldefault(R)))
+    h_matches = isapprox(h, relative_entropy(ρ2, σ); rtol = sqrt(Base.rtoldefault(R)))
+    return ρ_matches && h_matches
 end
