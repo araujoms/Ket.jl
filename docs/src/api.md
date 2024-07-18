@@ -13,6 +13,7 @@ gell_mann
 gell_mann!
 partial_trace
 partial_transpose
+permute_systems!
 permute_systems
 cleanup!
 ```
@@ -106,4 +107,5 @@ Ket._partition
 Ket._fiducial_WH
 Ket._idx
 Ket._tidx
+Ket._idxperm
 ```

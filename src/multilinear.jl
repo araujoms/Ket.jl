@@ -202,47 +202,75 @@ Takes the partial transpose of matrix `X` on the subsystems in `transp` assuming
 partial_transpose(X::AbstractMatrix, transp) = partial_transpose(X, transp, _equal_sizes(X))
 
 """
-    permute_systems(X::AbstractVector, perm::Vector, dims::Vector)
+    _idxperm(perm::Vector, dims::Vector)
 
-Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` according to the permutation `perm`.
+Computes the index permutation associated with permuting the subsystems of a vector with subsystem dimensions `dims` according to `perm`.
 """
-function permute_systems(X::AbstractVector{T}, perm::Vector{<:Integer}, dims::Vector{<:Integer}) where {T}
-    perm == 1:length(perm) && return X
+function _idxperm(perm::Vector{<:Integer}, dims::Vector{<:Integer})
+    p = Vector{Int64}(undef, prod(dims))
+    _idxperm!(p, perm, dims)
+    return p
+end
 
-    dX = length(X)
-    dimsY = dims[perm]
-
-    Y = Vector{T}(undef, dX)
+function _idxperm!(p::Vector{<:Integer}, perm::Vector{<:Integer}, dims::Vector{<:Integer})
+    pdims = dims[perm]
 
     ti = Vector{Int64}(undef, length(dims))
 
-    for i in 1:dX
+    for i in eachindex(p)
         _tidx!(ti, i, dims)
         permute!(ti, perm)
-        Yi = _idx(ti, dimsY)
-        Y[Yi] = X[i]
+        j = _idx(ti, pdims)
+        p[j] = i
     end
-    return Y
+    return p
 end
 
 """
+    permute_systems!(X::AbstractVector, perm::Vector, dims::Vector)
+
+Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`.
+"""
+function permute_systems!(X::AbstractVector{T}, perm::Vector{<:Integer}, dims::Vector{<:Integer}) where {T}
+    perm == 1:length(perm) && return X
+    X == 1:length(X) && return _idxperm!(X, perm, dims)
+
+    p = _idxperm(perm, dims)
+    permute!(X, p)
+    return X 
+end
+export permute_systems!
+
+"""
+    permute_systems!(X::AbstractVector, perm::Vector)
+
+Permutes the order of the subsystems of vector `X`, which is composed by two subsystems of equal dimensions, in-place according to the permutation `perm`.
+"""
+permute_systems!(X::AbstractVector, perm::Vector{<:Integer}) = permute_systems!(X, perm, _equal_sizes(X))
+
+@doc"""
     permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
 
 Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`.
-"""
-function permute_systems(X::AbstractMatrix, perm::Vector{<:Integer}, dims::Vector{<:Integer})
-    perm == 1:length(perm) && return X
+""" permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
+for (T, wrapper) in
+    [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
+    @eval begin
+        function permute_systems(X::$T, perm::Vector{<:Integer}, dims::Vector{<:Integer})
+            perm == 1:length(perm) && return X
 
-    idxperm = permute_systems(axes(X, 1), perm, dims)
-    return X[idxperm, idxperm]
+	        p = _idxperm(perm, dims)
+	        return $wrapper(X[p, p])
+	    end
+    end
 end
 
 """
-    permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
+    permute_systems(X::AbstractMatrix, perm::Vector)
 
 Permutes the order of the subsystems of the square matrix `X`, which is composed by two square subsystems of equal dimensions, according to the permutation `perm`.
 """
-permute_systems(X::AbstractVecOrMat, perm::Vector{<:Integer}) = permute_systems(X, perm, _equal_sizes(X))
+permute_systems(X::AbstractMatrix, perm::Vector{<:Integer}) = permute_systems(X, perm, _equal_sizes(X))
 
 """
     permute_systems(X::AbstractMatrix, perm::Vector, dims::Matrix)
@@ -253,9 +281,8 @@ Permutes the order of the subsystems of the matrix `X`, which is composed by sub
 function permute_systems(X::AbstractMatrix, perm::Vector{<:Integer}, dims::Matrix{<:Integer})
     perm == 1:length(perm) && return X
 
-    rowperm = permute_systems(axes(X, 1), perm, dims[:, 1])
-    colperm = permute_systems(axes(X, 2), perm, dims[:, 2])
-
-    return X[rowperm, colperm]
+    rowp = _idxperm(perm, dims[:, 1])
+    colp = _idxperm(perm, dims[:, 2])
+    return X[rowp, colp]
 end
 export permute_systems
