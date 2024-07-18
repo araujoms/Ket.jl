@@ -258,10 +258,10 @@ for (T, wrapper) in
     @eval begin
         function permute_systems(X::$T, perm::Vector{<:Integer}, dims::Vector{<:Integer})
             perm == 1:length(perm) && return X
-
-	        p = _idxperm(perm, dims)
-	        return $wrapper(X[p, p])
-	    end
+        
+            p = _idxperm(perm, dims)
+            return $wrapper(X[p, p])
+        end
     end
 end
 

@@ -76,16 +76,16 @@
                     uv = kron(u, v)
                     uw = kron(u, w)
                     vw = kron(v, w)
-		            @test permute_systems!(kron(u,v), [1, 2]) ≈ kron(u, v)
-		            @test permute_systems!(kron(u,v), [2, 1]) ≈ kron(v, u)
+                    @test permute_systems!(kron(u,v), [1, 2]) ≈ kron(u, v)
                     @test permute_systems!(kron(u,v), [2, 1]) ≈ kron(v, u)
-		            @test permute_systems!(kron(v, w), [2, 1], [d2, d3]) ≈ kron(w, v)
-		            @test permute_systems!(kron(u,v,w), [1, 2, 3], [d1, d2, d3]) ≈ kron(u, v, w)
+                    @test permute_systems!(kron(u,v), [2, 1]) ≈ kron(v, u)
+                    @test permute_systems!(kron(v, w), [2, 1], [d2, d3]) ≈ kron(w, v)
+                    @test permute_systems!(kron(u,v,w), [1, 2, 3], [d1, d2, d3]) ≈ kron(u, v, w)
                     @test permute_systems!(kron(u,v,w),[2, 3, 1], [d1, d2, d3]) ≈ kron(v, w, u)
                     @test permute_systems!(kron(u,v,w), [3, 1, 2], [d1, d2, d3]) ≈ kron(w, u, v)
-		            @test permute_systems!(kron(u,v,w), [1, 3, 2], [d1, d2, d3]) ≈ kron(u, w, v)
-		            @test permute_systems!(kron(u,v,w), [2, 1, 3], [d1, d2, d3]) ≈ kron(v, u, w)
-		            @test permute_systems!(kron(u,v,w), [3, 2, 1], [d1, d2, d3]) ≈ kron(w, v, u)
+                    @test permute_systems!(kron(u,v,w), [1, 3, 2], [d1, d2, d3]) ≈ kron(u, w, v)
+                    @test permute_systems!(kron(u,v,w), [2, 1, 3], [d1, d2, d3]) ≈ kron(v, u, w)
+                    @test permute_systems!(kron(u,v,w), [3, 2, 1], [d1, d2, d3]) ≈ kron(w, v, u)
                 end
             end
         end
@@ -113,12 +113,12 @@
                     @test permute_systems(abc, [3, 2, 1], [d1, d2, d3]) ≈ kron(c, b, a)
                 end
             end
-	        for wrapper in [Symmetric, Hermitian]
-		        M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
-		        x = Matrix(M)
-		        @test permute_systems(M, [3, 1, 2], [d1, d2, d3]) ≈ permute_systems(x, [3, 1, 2], [d1, d2, d3])
-		        @test permute_systems(M, [1, 3, 2], [d1, d2, d3]) ≈ permute_systems(x, [1, 3, 2], [d1, d2, d3])
-	        end
+            for wrapper in [Symmetric, Hermitian]
+                M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
+                x = Matrix(M)
+                @test permute_systems(M, [3, 1, 2], [d1, d2, d3]) ≈ permute_systems(x, [3, 1, 2], [d1, d2, d3])
+                @test permute_systems(M, [1, 3, 2], [d1, d2, d3]) ≈ permute_systems(x, [1, 3, 2], [d1, d2, d3])
+            end
         end
 
         @testset "Rectangular matrices" begin
