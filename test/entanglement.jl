@@ -26,4 +26,14 @@
             @test Ket._test_entanglement_entropy_qubit(h, ρ, σ)
         end
     end
+    @testset "DPS hierarchy" begin
+        for d in 2:4
+            ρ = state_ghz(d, 2)
+            o, w = entanglement_dps(ρ)
+            @test o == false && isapprox(tr(w * ρ), -1, atol = 1e-4, rtol = 1e-4)
+            @test isapprox(entanglement_dps(ρ, witness=false), 1 / (d + 1), atol = 1e-4, rtol = 1e-4)
+        end
+        # This is slightly long (but smallest case) and requires SCS otherwise it will run out of memory
+        @test isapprox(entanglement_dps(state_ghz(3, 2); sn=2, witness=false, solver=SCS.Optimizer), 0.625, atol = 1e-3, rtol=1e-3)
+    end
 end

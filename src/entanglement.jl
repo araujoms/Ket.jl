@@ -148,3 +148,112 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     h_matches = isapprox(h, relative_entropy(ρ2, σ); rtol = sqrt(Base.rtoldefault(R)))
     return ρ_matches && h_matches
 end
+
+# Helper to get dimension of a bipartite state and each local dimension
+function _bipartite_dims(ρ::AbstractMatrix, d1::Union{Integer,Nothing} = nothing)
+    d = size(ρ, 1)
+    d2 = nothing
+    if isnothing(d1)
+        d1 = Int(sqrt(d))
+        d2 = d1
+    else
+        d2 = Int(d / d1)
+    end
+    d, d1, d2
+end
+
+"""
+    entanglement_dps(ρ::AbstractMatrix{T}, n::Integer = 2, d1::Union{Integer,Nothing} = nothing; sn::Integer = 1, ppt::Bool = true, verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}, witness::Bool = true, noise::Union{AbstractMatrix,Nothing} = nothing) where {T<:Number}
+
+Test whether `ρ` has a symmetric extension with `n` copies of the second subsystem. If yes, returns `true` and
+the extension found. Otherwise, returns `false` and a witness `W` such that `tr(W * ρ) = -1` and `tr(W * σ)` is
+nonnegative in any symmetrically-extendable `σ`.
+
+When `witness = false`, it returns the maximum visibility of `ρ` such that it has a symmetric extension when mixed
+with `noise` (default is white noise). If this visibility is < 1, then the state is entangled, otherwise the test
+is inconclusive. No witness is returned in this case.
+
+For `sn > 1`, it tests whether the state has a Schmidt number greater than `sn`. For example, if `sn = 1` (default)
+and the state does not have an extension, then it has Schmidt number > 1 (is entangled). Likewise, if `sn = 2` and
+it does not have an extension, then `ρ` has Schidt number at least 3. The `witness` parameter works as above.
+No witness is returned in this case.
+
+References:
+    Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
+    Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+    Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
+"""
+function entanglement_dps(
+    ρ::AbstractMatrix{T},
+    n::Integer = 2,
+    d1::Union{Integer,Nothing} = nothing;
+    sn::Integer = 1,
+    ppt::Bool = true,
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)},
+    witness::Bool = true,
+    noise::Union{AbstractMatrix,Nothing} = nothing,
+) where {T<:Number}
+
+    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+    sn >= 1 || throw(ArgumentError("Schmidt number must be larger of equal to 1"))
+
+    d, d1, d2 = _bipartite_dims(ρ, d1)
+    # Entangling projector and stuff for detecting Schmidt number:
+    entangling = sn == 1 ? 1 : SA.sparse(state_ghz_ket(sn, 2; coeff = 1))
+    entangling = kron(LA.I(d1), entangling, LA.I(d2))
+
+    # With the ancilla spaces A'B'
+    d1, d2 = d1 * sn, d2 * sn
+    dims = [d1; repeat([d2], n)]
+
+    # Dimension of the extension space w/ bosonic symmetries: AA' dim. + `n` copies of BB'
+    sym_dim = d1 * binomial(n + d2 - 1, d2 - 1)
+    P = kron(LA.I(d1), symmetric_projection(d2, n; partial=true)) # Bosonic subspace projector
+
+    model = JuMP.GenericModel{_solver_type(T)}()
+    JuMP.@variable(model, Q[1:sym_dim, 1:sym_dim] in JuMP.HermitianPSDCone())
+    JuMP.@expression(model, lifted, P * Q * P')
+    JuMP.@expression(model, reduced, partial_trace(lifted, collect(3:n+1), dims))
+
+    if !witness
+        JuMP.@variable(model, 0 <= vis <= 1)
+        noise = isnothing(noise) ? LA.I(d) / d : noise
+        noisy_state = vis * ρ + (1 - vis) * noise
+        JuMP.@constraint(model, noisy_state .== entangling' * reduced * entangling)
+        JuMP.@objective(model, Max, vis)
+    else
+        JuMP.@constraint(model, wit_ctr, ρ .== entangling' * reduced * entangling)
+    end
+
+    if sn != 1
+        JuMP.@constraint(model, LA.tr(reduced) == sn)
+    end
+    if ppt
+        ssys = Int.(1:ceil(n / 2) + 1)
+        JuMP.@constraint(model, LA.Hermitian(partial_transpose(lifted, ssys, dims)) in JuMP.HermitianPSDCone())
+    end
+
+    JuMP.set_optimizer(model, solver)
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+
+    status = JuMP.termination_status(model)
+    if status != MOI.OPTIMAL && status != MOI.INFEASIBLE
+        @warn "Solver status is $status, please validate the solution"
+    end
+
+    obj = JuMP.objective_value(model)
+    if witness 
+        if sn == 1
+            wit = JuMP.dual.(wit_ctr)
+            wit = status == MOI.INFEASIBLE ? -wit / LA.tr(wit * ρ) : JuMP.value.(lifted)
+            return status == MOI.OPTIMAL, wit
+        else
+            return status == MOI.OPTIMAL
+        end
+    end
+    return obj
+end
+export entanglement_dps
