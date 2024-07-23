@@ -1,5 +1,4 @@
 MA - Permute systems (LP)
-MA - DPS hierarchy (CG)
 MA - See-saw
 MA - translations between FP, CG, and FC (SD)
 MA - multipartite Bell stuff (SD)
@@ -9,3 +8,5 @@ SD - KetSparse
 MT - Random Channels, Random Isometries, Random Random
 MT - Section for Channels/Superoperators (add Choi map, etc etc)
 SD - Properly add measurements/states from https://gitlab.com/tqo/sqma/
+CG - GME entanglement SDP
+CG - DPS with arbitrary data types?
