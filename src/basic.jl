@@ -291,13 +291,13 @@ function _orthonormal_range_qr(
 end
 
 """
-    orthonormal_range!(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
+    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
 
 Orthonormal basis for the range of `A`. When `A` is sparse (or `mode = 0`), uses a QR factorization and returns a sparse result,
 otherwise uses an SVD and returns a dense matrix (`mode = 1`). Input `A` will be overwritten during the factorization.
 Tolerance `tol` is used to compute the rank and is automatically set if not provided.
 """
-function orthonormal_range!(
+function orthonormal_range(
     A::SA.AbstractMatrix{T};
     mode::Integer = -1,
     tol::Union{Real, Nothing} = nothing,
@@ -305,16 +305,8 @@ function orthonormal_range!(
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
     mode == -1 && (mode = SA.issparse(A) ? 0 : 1)
 
-    return (mode == 0 ? _orthonormal_range_qr(A; tol=tol) : _orthonormal_range_svd!(A; tol=tol))
+    return (mode == 0 ? _orthonormal_range_qr(A; tol=tol) : _orthonormal_range_svd(A; tol=tol))
 end
-export orthonormal_range!
-
-"""
-    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
-
-Non-in-place version of `orthonormal_range!`.
-"""
-orthonormal_range(A::AbstractMatrix; mode::Integer = -1, tol::Union{Real, Nothing} = nothing) = orthonormal_range!(deepcopy(A); mode = mode, tol = tol)
 export orthonormal_range
 
 """
