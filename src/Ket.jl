@@ -3,8 +3,10 @@ module Ket
 import Combinatorics
 import GenericLinearAlgebra
 import LinearAlgebra as LA
+import SparseArrays as SA
 import Nemo
 import JuMP
+import MathOptInterface as MOI
 import Hypatia, Hypatia.Cones
 
 include("basic.jl")
