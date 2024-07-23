@@ -264,3 +264,79 @@ function applykraus(K, M)
     return sum(LA.Hermitian(Ki * M * Ki') for Ki in K)
 end
 export applykraus
+
+LA.I(dim::Integer, sp::Bool) = sp ? SA.sparse(LA.I(dim)) : LA.I(dim)
+
+function _orthonormal_range_svd!(
+    A::AbstractMatrix{T};
+    tol::Union{Real,Nothing} = nothing,
+    alg = LA.default_svd_alg(A)
+) where {T<:Number}
+    dec = LA.svd!(A, alg=alg)
+    tol = isnothing(tol) ? maximum(dec.S) * _eps(T) * minimum(size(A)) : tol
+    rank = sum(dec.S .> tol)
+    dec.U[:, 1:rank]
+end
+
+_orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real,Nothing} = nothing) = _orthonormal_range_svd!(deepcopy(A); tol = tol)
+
+function _orthonormal_range_qr(
+    A::SA.AbstractSparseMatrix{T, M};
+    tol::Union{Real,Nothing} = nothing,
+) where {T<:Number, M}
+    dec = LA.qr(A)
+    tol = isnothing(tol) ? maximum(abs.(dec.R)) * _eps(T) : tol
+    rank = sum(abs.(LA.Diagonal(dec.R)) .> tol)
+    SA.sparse(@view dec.Q[dec.rpivinv, 1:rank])
+end
+
+"""
+    orthonormal_range!(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
+
+Orthonormal basis for the range of `A`. When `A` is sparse (or `mode = 0`), uses a QR factorization and returns a sparse result,
+otherwise uses an SVD and returns a dense matrix (`mode = 1`). Input `A` will be overwritten during the factorization.
+Tolerance `tol` is used to compute the rank and is automatically set if not provided.
+"""
+function orthonormal_range!(
+    A::SA.AbstractMatrix{T};
+    mode::Integer = -1,
+    tol::Union{Real, Nothing} = nothing,
+) where {T<:Number}
+    mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
+    mode == -1 && (mode = SA.issparse(A) ? 0 : 1)
+
+    return (mode == 0 ? _orthonormal_range_qr(A; tol=tol) : _orthonormal_range_svd!(A; tol=tol))
+end
+export orthonormal_range!
+
+"""
+    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
+
+Non-in-place version of `orthonormal_range!`.
+"""
+orthonormal_range(A::AbstractMatrix; mode::Integer = -1, tol::Union{Real, Nothing} = nothing) = orthonormal_range!(deepcopy(A); mode = mode, tol = tol)
+export orthonormal_range
+
+"""
+    symmetric_projection(dim::Integer, n::Integer; partial::Bool=true)
+
+Orthogonal projection onto the symmetric subspace of `n` copies of a `dim`-dimensional space. By default (`partial=true`)
+it returns amatrix (say, `P`) with columns forming an orthogonal basis for the symmetric subspace. If `partial=false`, then it
+returns the actual projection `P * P'`.
+
+Reference: [Watrous' book](https://cs.uwaterloo.ca/~watrous/TQI/), Sec. 7.1.1
+"""
+function symmetric_projection(dim::Integer, n::Integer; partial::Bool = true)
+    P = SA.spzeros(dim^n, dim^n)
+    perms = Combinatorics.permutations(1:n)
+    for perm in perms
+        P += permutation_matrix(dim, perm; sp=true)
+    end
+    P /= length(perms)
+    if partial
+        P = orthonormal_range(P)
+        size(P, 2) != binomial(n + dim - 1, dim - 1) && throw(AssertionError("Rank computation failed"))
+    end
+    P
+end
+export symmetric_projection

@@ -88,4 +88,21 @@
             @test d == [im 0; 0 1]
         end
     end
+    @testset "Orthonormal range" begin
+        for R in [Float64, Double64, Float128, BigFloat, ComplexF64]
+            for _ in 1:10
+                d1 = rand(5:20)
+                d2 = rand(5:20)
+                a = rand(R, d1, d2)
+                s = orthonormal_range(a; mode = 1)
+                @test size(s, 2) == rank(a)
+                @test rank(hcat(s, a)) == size(s, 2)
+                if R == Float64 || R == ComplexF64
+                    q = orthonormal_range(SparseArrays.sparse(a); mode = 0)
+                    @test size(s, 2) == size(q, 2)
+                    @test rank(hcat(q, a)) == size(q, 2)
+                end
+            end
+        end
+    end
 end
