@@ -111,6 +111,23 @@
                     @test permute_systems(abc, [1, 3, 2], [d1, d2, d3]) ≈ kron(a, c, b)
                     @test permute_systems(abc, [2, 1, 3], [d1, d2, d3]) ≈ kron(b, a, c)
                     @test permute_systems(abc, [3, 2, 1], [d1, d2, d3]) ≈ kron(c, b, a)
+
+                    p = permutation_matrix(d1, [1, 2])
+                    @test permute_systems(ab, [1, 2]) ≈ p * ab * p'
+                    p = permutation_matrix([d1, d2], [2, 1])
+                    @test permute_systems(ab, [2, 1]) ≈ p * ab * p'
+                    p = permutation_matrix([d1, d2, d3], [1, 2, 3])
+                    @test permute_systems(abc, [1, 2, 3], [d1, d2, d3]) ≈ p * abc * p'
+                    p = permutation_matrix([d1, d2, d3], [2, 3, 1])
+                    @test permute_systems(abc, [2, 3, 1], [d1, d2, d3]) ≈ p * abc * p'
+                    p = permutation_matrix([d1, d2, d3], [3, 1, 2])
+                    @test permute_systems(abc, [3, 1, 2], [d1, d2, d3]) ≈ p * abc * p'
+                    p = permutation_matrix([d1, d2, d3], [1, 3, 2])
+                    @test permute_systems(abc, [1, 3, 2], [d1, d2, d3]) ≈ p * abc * p'
+                    p = permutation_matrix([d1, d2, d3], [2, 1, 3])
+                    @test permute_systems(abc, [2, 1, 3], [d1, d2, d3]) ≈ p * abc * p'
+                    p = permutation_matrix([d1, d2, d3], [3, 2, 1])
+                    @test permute_systems(abc, [3, 2, 1], [d1, d2, d3]) ≈ p * abc * p'
                 end
             end
             for wrapper in [Symmetric, Hermitian]
