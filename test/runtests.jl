@@ -1,10 +1,12 @@
 using Ket
 using LinearAlgebra
+using SparseArrays
 using CyclotomicNumbers
 using DoubleFloats
 using Quadmath
 using Test
 import Random
+import SCS
 
 include("basic.jl")
 include("entropy.jl")

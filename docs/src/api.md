@@ -16,6 +16,9 @@ partial_transpose
 permute_systems!
 permute_systems
 cleanup!
+symmetric_projection
+orthonormal_range
+permutation_matrix
 ```
 
 ## Entropy
@@ -33,6 +36,7 @@ conditional_entropy
 ```@docs
 schmidt_decomposition
 entanglement_entropy
+entanglement_dps
 ```
 
 ## Measurements
