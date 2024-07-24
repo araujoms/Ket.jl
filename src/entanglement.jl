@@ -210,11 +210,11 @@ function entanglement_dps(
 
     # Dimension of the extension space w/ bosonic symmetries: AA' dim. + `n` copies of BB'
     sym_dim = d1 * binomial(n + d2 - 1, d2 - 1)
-    P = kron(LA.I(d1), symmetric_projection(d2, n; partial=true)) # Bosonic subspace projector
+    V = kron(LA.I(d1), symmetric_projection(T, d2, n; partial=true)) # Bosonic subspace isometry
 
     model = JuMP.GenericModel{_solver_type(T)}()
     JuMP.@variable(model, Q[1:sym_dim, 1:sym_dim] in JuMP.HermitianPSDCone())
-    JuMP.@expression(model, lifted, P * Q * P')
+    JuMP.@expression(model, lifted, V * Q * V')
     JuMP.@expression(model, reduced, partial_trace(lifted, collect(3:n+1), dims))
 
     if !witness

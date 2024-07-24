@@ -6,7 +6,7 @@ import LinearAlgebra as LA
 import SparseArrays as SA
 import Nemo
 import JuMP
-import MathOptInterface as MOI
+const MOI = JuMP.MOI
 import Hypatia, Hypatia.Cones
 
 include("basic.jl")

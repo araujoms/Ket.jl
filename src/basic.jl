@@ -313,22 +313,28 @@ export orthonormal_range
     symmetric_projection(dim::Integer, n::Integer; partial::Bool=true)
 
 Orthogonal projection onto the symmetric subspace of `n` copies of a `dim`-dimensional space. By default (`partial=true`)
-it returns amatrix (say, `P`) with columns forming an orthogonal basis for the symmetric subspace. If `partial=false`, then it
-returns the actual projection `P * P'`.
+it returns an isometry (say, `V`) encoding the symmetric subspace. If `partial=false`, then it
+returns the actual projection `V * V'`.
 
 Reference: [Watrous' book](https://cs.uwaterloo.ca/~watrous/TQI/), Sec. 7.1.1
 """
-function symmetric_projection(dim::Integer, n::Integer; partial::Bool = true)
-    P = SA.spzeros(dim^n, dim^n)
+function symmetric_projection(::Type{T}, dim::Integer, n::Integer; partial::Bool = true) where {T}
+    if T <: SA.CHOLMOD.VTypes #sparse qr decomposition fails for anything other than Float64 or ComplexF64
+        P = SA.spzeros(T, dim^n, dim^n)
+    else
+        P = zeros(T, dim^n, dim^n)
+    end
     perms = Combinatorics.permutations(1:n)
     for perm in perms
-        P += permutation_matrix(dim, perm; sp=true)
+        P .+= permutation_matrix(dim, perm; sp=true)
     end
-    P /= length(perms)
+    P ./= length(perms)
     if partial
-        P = orthonormal_range(P)
-        size(P, 2) != binomial(n + dim - 1, dim - 1) && throw(AssertionError("Rank computation failed"))
+        V = orthonormal_range(P)
+        size(V, 2) != binomial(n + dim - 1, dim - 1) && throw(AssertionError("Rank computation failed"))
+        return V
     end
-    P
+    return P
 end
 export symmetric_projection
+symmetric_projection(dim::Integer, n::Integer; partial::Bool = true) = symmetric_projection(Float64, dim, n; partial)
