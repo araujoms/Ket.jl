@@ -215,7 +215,7 @@ function entanglement_dps(
     model = JuMP.GenericModel{_solver_type(T)}()
     JuMP.@variable(model, Q[1:sym_dim, 1:sym_dim] in JuMP.HermitianPSDCone())
     JuMP.@expression(model, lifted, V * Q * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, collect(3:n+1), dims))
+    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, dims))
 
     if !witness
         JuMP.@variable(model, 0 <= vis <= 1)
