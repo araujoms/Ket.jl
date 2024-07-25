@@ -231,12 +231,9 @@ function entanglement_dps(
         JuMP.@constraint(model, LA.tr(reduced) == sn)
     end
     if ppt
-
-        ssys = Int.(1:ceil(n / 2) + 1)
-        JuMP.@constraint(model, LA.Hermitian(partial_transpose(lifted, ssys, dims)) in JuMP.HermitianPSDCone())
-        # for i in 2:n+1
-            # JuMP.@constraint(model, LA.Hermitian(partial_transpose(lifted, 2:i, dims)) in JuMP.HermitianPSDCone())
-        # end
+        for i in 2:n+1
+            JuMP.@constraint(model, LA.Hermitian(partial_transpose(lifted, 2:i, dims)) in JuMP.HermitianPSDCone())
+        end
     end
 
     JuMP.set_optimizer(model, solver)
