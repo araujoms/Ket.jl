@@ -36,6 +36,7 @@ conditional_entropy
 ```@docs
 schmidt_decomposition
 entanglement_entropy
+random_robustness
 entanglement_dps
 ```
 

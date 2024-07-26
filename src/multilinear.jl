@@ -237,7 +237,7 @@ function permute_systems!(X::AbstractVector{T}, perm::AbstractVector{<:Integer},
 
     p = _idxperm(perm, dims)
     permute!(X, p)
-    return X 
+    return X
 end
 export permute_systems!
 
@@ -248,17 +248,17 @@ Permutes the order of the subsystems of vector `X`, which is composed by two sub
 """
 permute_systems!(X::AbstractVector, perm::AbstractVector{<:Integer}) = permute_systems!(X, perm, _equal_sizes(X))
 
-@doc"""
-    permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
+@doc """
+     permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
 
-Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`.
-""" permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::Vector; rows_only::Bool=false)
+ Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`.
+ """ permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::Vector; rows_only::Bool = false)
 for (T, wrapper) in
     [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
     @eval begin
-        function permute_systems(X::$T, perm::Vector{<:Integer}, dims::Vector{<:Integer}; rows_only::Bool=false)
+        function permute_systems(X::$T, perm::Vector{<:Integer}, dims::Vector{<:Integer}; rows_only::Bool = false)
             perm == 1:length(perm) && return X
-        
+
             p = _idxperm(perm, dims)
             return rows_only ? $wrapper(X[p, 1:end]) : $wrapper(X[p, p])
         end
@@ -293,8 +293,8 @@ export permute_systems
 Unitary that permutes subsystems of dimension `dims` according to the permutation `perm`.
 If `dims` is an Integer, assumes there are `length(perm)` subsystems of equal dimensions `dims`.
 """
-function permutation_matrix(dims::Union{Integer,Vector{<:Integer}}, perm::AbstractVector{<:Integer}; sp::Bool=true)
-    dims = dims isa Integer ? [dims for _=1:length(perm)] : dims
-    permute_systems(LA.I(prod(dims), sp), perm, dims; rows_only=true)
+function permutation_matrix(dims::Union{Integer,Vector{<:Integer}}, perm::AbstractVector{<:Integer}; sp::Bool = true)
+    dims = dims isa Integer ? [dims for _ = 1:length(perm)] : dims
+    permute_systems(LA.I(prod(dims), sp), perm, dims; rows_only = true)
 end
 export permutation_matrix

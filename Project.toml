@@ -26,7 +26,7 @@ GenericLinearAlgebra = "0.3"
 Hypatia = "0.8.1"
 JuMP = "1.22"
 LinearAlgebra = "1"
-Nemo = "0.39 - 0.45, 0.46"
+Nemo = "0.39 - 0.46"
 Quadmath = "0.5.10"
 Random = "1"
 Requires = "1"
@@ -37,8 +37,8 @@ julia = "1.9"
 DoubleFloats = "497a8b3b-efae-58df-a0af-a86822472b78"
 Quadmath = "be4d8f0f-7fa4-5f49-b795-2f01399ab2dd"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["CyclotomicNumbers", "DoubleFloats", "Quadmath", "Random", "Test", "SCS"]

@@ -6,14 +6,13 @@ function _equal_sizes(arg::AbstractVecOrMat)
 end
 
 """
-    schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer})
+    schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     
-Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that
-kron(U', V')*`ψ` is of Schmidt form.
+Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`. If the argument `dims` is omitted equally-sized subsystems are assumed. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
 
 Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
 """
-function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer})
+function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
     m = transpose(reshape(ψ, dims[2], dims[1])) #necessary because the natural reshaping would be row-major, but Julia does it col-major
     U, λ, V = LA.svd(m)
@@ -22,20 +21,11 @@ end
 export schmidt_decomposition
 
 """
-    schmidt_decomposition(ψ::AbstractVector)
-    
-Produces the Schmidt decomposition of `ψ` assuming equally-sized subsystems. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
+    entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
 
-Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
+Computes the relative entropy of entanglement of a bipartite pure state `ψ` with subsystem dimensions `dims`. If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
-schmidt_decomposition(ψ::AbstractVector) = schmidt_decomposition(ψ, _equal_sizes(ψ))
-
-"""
-    entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer})
-
-Computes the relative entropy of entanglement of a bipartite pure state `ψ` with subsystem dimensions `dims`.
-"""
-function entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer})
+function entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
     max_sys = argmax(dims)
     ρ = partial_trace(ketbra(ψ), max_sys, dims)
@@ -44,18 +34,11 @@ end
 export entanglement_entropy
 
 """
-    entanglement_entropy(ψ::AbstractVector)
+    entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1)
 
-Computes the relative entropy of entanglement of a bipartite pure state `ψ` assuming equally-sized subsystems.
+Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
-entanglement_entropy(ψ::AbstractVector) = entanglement_entropy(ψ, _equal_sizes(ψ))
-
-"""
-    entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector)
-
-Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims`.
-"""
-function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector) where {T}
+function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1) where {T}
     LA.ishermitian(ρ) || throw(ArgumentError("State needs to be Hermitian"))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
 
@@ -67,13 +50,10 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector) where
 
     if is_complex
         JuMP.@variable(model, σ[1:d, 1:d], Hermitian)
-        σT = partial_transpose(σ, 2, dims)
-        JuMP.@constraint(model, σT in JuMP.HermitianPSDCone())
     else
         JuMP.@variable(model, σ[1:d, 1:d], Symmetric)
-        σT = partial_transpose(σ, 2, dims)
-        JuMP.@constraint(model, σT in JuMP.PSDCone())
     end
+    _dps_constraints!(model, σ, dims, n; is_complex)
     JuMP.@constraint(model, LA.tr(σ) == 1)
 
     vec_dim = Cones.svec_length(Ts, d)
@@ -88,13 +68,6 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector) where
     JuMP.optimize!(model)
     return JuMP.objective_value(model), LA.Hermitian(JuMP.value.(σ))
 end
-
-"""
-    entanglement_entropy(ρ::AbstractMatrix)
-
-Lower bounds the relative entropy of entanglement of a bipartite state `ρ` assuming equally-sized subsystems.
-"""
-entanglement_entropy(ρ::AbstractMatrix) = entanglement_entropy(ρ, _equal_sizes(ρ))
 
 """
     _svec(M::AbstractMatrix, ::Type{R})
@@ -193,9 +166,8 @@ function entanglement_dps(
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)},
     witness::Bool = true,
-    noise::Union{AbstractMatrix,Nothing} = nothing,
+    noise::Union{AbstractMatrix,Nothing} = nothing
 ) where {T<:Number}
-
     LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     sn >= 1 || throw(ArgumentError("Schmidt number must be larger of equal to 1"))
 
@@ -210,7 +182,7 @@ function entanglement_dps(
 
     # Dimension of the extension space w/ bosonic symmetries: AA' dim. + `n` copies of BB'
     sym_dim = d1 * binomial(n + d2 - 1, d2 - 1)
-    V = kron(LA.I(d1), symmetric_projection(T, d2, n; partial=true)) # Bosonic subspace isometry
+    V = kron(LA.I(d1), symmetric_projection(T, d2, n; partial = true)) # Bosonic subspace isometry
 
     model = JuMP.GenericModel{_solver_type(T)}()
     JuMP.@variable(model, Q[1:sym_dim, 1:sym_dim] in JuMP.HermitianPSDCone())
@@ -246,7 +218,7 @@ function entanglement_dps(
     end
 
     obj = JuMP.objective_value(model)
-    if witness 
+    if witness
         if sn == 1
             wit = JuMP.dual.(wit_ctr)
             wit = status == MOI.INFEASIBLE ? -wit / LA.tr(wit * ρ) : JuMP.value.(lifted)
@@ -258,3 +230,92 @@ function entanglement_dps(
     return obj
 end
 export entanglement_dps
+
+"""
+    random_robustness(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+    n::Integer = 1;
+    ppt::Bool = true,
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)})
+
+Lower bounds the random robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `ppt` indicates whether to include the partial transposition constraints.
+"""
+function random_robustness(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+    n::Integer = 1;
+    ppt::Bool = true,
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
+    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+
+    is_complex = (T <: Complex)
+    wrapper = is_complex ? LA.Hermitian : LA.Symmetric
+
+    model = JuMP.GenericModel{_solver_type(T)}()
+
+    JuMP.@variable(model, λ)
+    noisy_state = wrapper(ρ + λ * LA.I(size(ρ, 1)))
+    _dps_constraints!(model, noisy_state, dims, n; ppt, is_complex)
+    JuMP.@objective(model, Min, λ)
+
+    JuMP.set_optimizer(model, solver)
+    #    JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+
+    if JuMP.is_solved_and_feasible(model)
+        W = JuMP.dual(model[:witness_constraint])
+        W = wrapper(LA.Diagonal(W) + 0.5(W - LA.Diagonal(W))) #this is a workaround for a bug in JuMP
+        return JuMP.objective_value(model), W
+    else
+        return "Something went wrong: $(raw_status(model))"
+    end
+end
+export random_robustness
+
+"""
+    _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
+
+Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
+"""
+function _dps_constraints!(
+    model::JuMP.GenericModel{T},
+    ρ::AbstractMatrix,
+    dims::AbstractVector{<:Integer},
+    n::Integer;
+    ppt::Bool = true,
+    is_complex::Bool = true
+) where {T}
+    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+
+    dA, dB = dims
+    ext_dims = [dA; repeat([dB], n)]
+
+    # Dimension of the extension space w/ bosonic symmetries: A dim. + `n` copies of B
+    d = dA * binomial(n + dB - 1, n)
+    V = kron(LA.I(dA), symmetric_projection(T, dB, n; partial = true)) # Bosonic subspace isometry
+
+    if is_complex
+        psd_cone = JuMP.HermitianPSDCone()
+        wrapper = LA.Hermitian
+    else
+        psd_cone = JuMP.PSDCone()
+        wrapper = LA.Symmetric
+    end
+
+    JuMP.@variable(model, s[1:d, 1:d] in psd_cone)
+    lifted = wrapper(V * s * V')
+    reduced = partial_trace(lifted, 3:n+1, ext_dims)
+
+    JuMP.@constraint(model, witness_constraint, ρ == reduced)
+
+    if ppt
+        for i in 2:n+1
+            JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) in psd_cone)
+        end
+    end
+end

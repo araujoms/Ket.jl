@@ -272,18 +272,16 @@ function _orthonormal_range_svd!(
     tol::Union{Real,Nothing} = nothing,
     alg = LA.default_svd_alg(A)
 ) where {T<:Number}
-    dec = LA.svd!(A, alg=alg)
+    dec = LA.svd!(A; alg = alg)
     tol = isnothing(tol) ? maximum(dec.S) * _eps(T) * minimum(size(A)) : tol
     rank = sum(dec.S .> tol)
     dec.U[:, 1:rank]
 end
 
-_orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real,Nothing} = nothing) = _orthonormal_range_svd!(deepcopy(A); tol = tol)
+_orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real,Nothing} = nothing) =
+    _orthonormal_range_svd!(deepcopy(A); tol = tol)
 
-function _orthonormal_range_qr(
-    A::SA.AbstractSparseMatrix{T, M};
-    tol::Union{Real,Nothing} = nothing,
-) where {T<:Number, M}
+function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,Nothing} = nothing) where {T<:Number,M}
     dec = LA.qr(A)
     tol = isnothing(tol) ? maximum(abs.(dec.R)) * _eps(T) : tol
     rank = sum(abs.(LA.Diagonal(dec.R)) .> tol)
@@ -300,12 +298,12 @@ Tolerance `tol` is used to compute the rank and is automatically set if not prov
 function orthonormal_range(
     A::SA.AbstractMatrix{T};
     mode::Integer = -1,
-    tol::Union{Real, Nothing} = nothing,
+    tol::Union{Real,Nothing} = nothing
 ) where {T<:Number}
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
     mode == -1 && (mode = SA.issparse(A) ? 0 : 1)
 
-    return (mode == 0 ? _orthonormal_range_qr(A; tol=tol) : _orthonormal_range_svd(A; tol=tol))
+    return (mode == 0 ? _orthonormal_range_qr(A; tol = tol) : _orthonormal_range_svd(A; tol = tol))
 end
 export orthonormal_range
 
@@ -326,7 +324,7 @@ function symmetric_projection(::Type{T}, dim::Integer, n::Integer; partial::Bool
     end
     perms = Combinatorics.permutations(1:n)
     for perm in perms
-        P .+= permutation_matrix(dim, perm; sp=true)
+        P .+= permutation_matrix(dim, perm; sp = true)
     end
     P ./= length(perms)
     if partial
