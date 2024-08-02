@@ -37,7 +37,7 @@ conditional_entropy
 schmidt_decomposition
 entanglement_entropy
 random_robustness
-entanglement_dps
+schmidt_number
 ```
 
 ## Measurements
