@@ -7,5 +7,5 @@ SD - KetSparse
 MT - Random Channels, Random Isometries, Random Random
 MT - Section for Channels/Superoperators (add Choi map, etc etc)
 SD - Properly add measurements/states from https://gitlab.com/tqo/sqma/
-CG - GME entanglement SDP
-CG - DPS with arbitrary data types?
+CG - PPT mixer/GME witness optimization
+CG - CCNR criterion

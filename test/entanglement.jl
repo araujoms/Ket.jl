@@ -40,10 +40,21 @@
             @test s ≈ 0.5 atol = 1e-5 rtol = 1e-5
             @test dot(ρ, W) ≈ -s atol = 1e-5 rtol = 1e-5
         end
-        # This is slightly long (but smallest case) and requires SCS otherwise it will run out of memory
         @test isapprox(
-            entanglement_dps(state_ghz(3, 2); sn = 2, witness = false, solver = SCS.Optimizer),
+            schmidt_number(state_ghz(ComplexF64, 3, 2), 2),
             0.625,
+            atol = 1e-3,
+            rtol = 1e-3
+        )
+        @test isapprox(
+            schmidt_number(state_ghz(Float64, 3, 2), 2, [3, 3], 2; solver = SCS.Optimizer),
+            0.625,
+            atol = 1e-3,
+            rtol = 1e-3
+        )
+        @test isapprox(
+            schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer),
+            1.0,
             atol = 1e-3,
             rtol = 1e-3
         )

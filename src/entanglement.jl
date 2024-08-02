@@ -122,114 +122,71 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     return ρ_matches && h_matches
 end
 
-# Helper to get dimension of a bipartite state and each local dimension
-function _bipartite_dims(ρ::AbstractMatrix, d1::Union{Integer,Nothing} = nothing)
-    d = size(ρ, 1)
-    d2 = nothing
-    if isnothing(d1)
-        d1 = Int(sqrt(d))
-        d2 = d1
-    else
-        d2 = Int(d / d1)
-    end
-    d, d1, d2
-end
-
 """
-    entanglement_dps(ρ::AbstractMatrix{T}, n::Integer = 2, d1::Union{Integer,Nothing} = nothing; sn::Integer = 1, ppt::Bool = true, verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}, witness::Bool = true, noise::Union{AbstractMatrix,Nothing} = nothing) where {T<:Number}
+    schmidt_number(
+        ρ::AbstractMatrix{T},
+        s::Integer = 2,
+        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+        n::Integer = 1;
+        ppt::Bool = true,
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
-Test whether `ρ` has a symmetric extension with `n` copies of the second subsystem. If yes, returns `true` and
-the extension found. Otherwise, returns `false` and a witness `W` such that `tr(W * ρ) = -1` and `tr(W * σ)` is
-nonnegative in any symmetrically-extendable `σ`.
+Upper bound on the white noise robustness of `ρ` such that it has a Schmidt number `s`.
 
-When `witness = false`, it returns the maximum visibility of `ρ` such that it has a symmetric extension when mixed
-with `noise` (default is white noise). If this visibility is < 1, then the state is entangled, otherwise the test
-is inconclusive. No witness is returned in this case.
-
-For `sn > 1`, it tests whether the state has a Schmidt number greater than `sn`. For example, if `sn = 1` (default)
-and the state does not have an extension, then it has Schmidt number > 1 (is entangled). Likewise, if `sn = 2` and
-it does not have an extension, then `ρ` has Schidt number at least 3. The `witness` parameter works as above.
-No witness is returned in this case.
+If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number ``s``, then there is
+a PSD matrix ``ω`` in the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
+such that ``ω / s`` is separable  against ``AA′|B′B`` and ``Π† ω Π = ρ``, where ``Π = 1_A ⊗ s ψ^+ ⊗ 1_B``,
+and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is tested with the DPS hierarchy,
+with `n` controlling the how many copies of the ``B′B`` subsystem are used. If the returned value ``λ < 1``,
+then ``ρ`` has a Schmidt number larger than ``s`` for any visibility above ``λ``, otherwise the result is only
+as upper bound on the visibility with which ``ρ`` becomes Schmidt number ``s``.
 
 References:
-    Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
-    Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+    Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)\
     Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
 """
-function entanglement_dps(
+function schmidt_number(
     ρ::AbstractMatrix{T},
-    n::Integer = 2,
-    d1::Union{Integer,Nothing} = nothing;
-    sn::Integer = 1,
+    s::Integer = 2,
+    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+    n::Integer = 1;
     ppt::Bool = true,
     verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)},
-    witness::Bool = true,
-    noise::Union{AbstractMatrix,Nothing} = nothing
-) where {T<:Number}
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T <: Number}
     LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
-    sn >= 1 || throw(ArgumentError("Schmidt number must be larger of equal to 1"))
+    s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
+    if s == 1
+        return random_robustness(ρ, dims, n; ppt, verbose, solver)
+    end
 
-    d, d1, d2 = _bipartite_dims(ρ, d1)
-    # Entangling projector and stuff for detecting Schmidt number:
-    entangling = sn == 1 ? 1 : SA.sparse(state_ghz_ket(sn, 2; coeff = 1))
-    entangling = kron(LA.I(d1), entangling, LA.I(d2))
+    is_complex = (T <: Complex)
+    wrapper = is_complex ? LA.Hermitian : LA.Symmetric
 
-    # With the ancilla spaces A'B'
-    d1, d2 = d1 * sn, d2 * sn
-    dims = [d1; repeat([d2], n)]
-
-    # Dimension of the extension space w/ bosonic symmetries: AA' dim. + `n` copies of BB'
-    sym_dim = d1 * binomial(n + d2 - 1, d2 - 1)
-    V = kron(LA.I(d1), symmetric_projection(T, d2, n; partial = true)) # Bosonic subspace isometry
+    Π = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2]))'
+    lifted_dims = [dims[1] * s, dims[2] * s] # with the ancilla spaces A'B'...
 
     model = JuMP.GenericModel{_solver_type(T)}()
-    JuMP.@variable(model, Q[1:sym_dim, 1:sym_dim] in JuMP.HermitianPSDCone())
-    JuMP.@expression(model, lifted, V * Q * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, dims))
 
-    if !witness
-        JuMP.@variable(model, 0 <= vis <= 1)
-        noise = isnothing(noise) ? LA.I(d) / d : noise
-        noisy_state = vis * ρ + (1 - vis) * noise
-        JuMP.@constraint(model, noisy_state .== entangling' * reduced * entangling)
-        JuMP.@objective(model, Max, vis)
-    else
-        JuMP.@constraint(model, wit_ctr, ρ .== entangling' * reduced * entangling)
-    end
+    JuMP.@variable(model, 0 <= λ <= 1)
+    noisy_state = wrapper(λ * ρ + (1 - λ) * LA.I(size(ρ, 1)) / size(ρ, 1))
+    JuMP.@objective(model, Max, λ)
 
-    if sn != 1
-        JuMP.@constraint(model, LA.tr(reduced) == sn)
-    end
-    if ppt
-        for i in 2:n+1
-            JuMP.@constraint(model, LA.Hermitian(partial_transpose(lifted, 2:i, dims)) in JuMP.HermitianPSDCone())
-        end
-    end
+    _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, projection = Π)
+    JuMP.@constraint(model, LA.tr(model[:reduced]) == s)
 
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
 
-    status = JuMP.termination_status(model)
-    if status != MOI.OPTIMAL && status != MOI.INFEASIBLE
-        @warn "Solver status is $status, please validate the solution"
+    if JuMP.is_solved_and_feasible(model)
+        return JuMP.objective_value(model)
+    else
+        return "Something went wrong: $(JuMP.raw_status(model))"
     end
-
-    obj = JuMP.objective_value(model)
-    if witness
-        if sn == 1
-            wit = JuMP.dual.(wit_ctr)
-            wit = status == MOI.INFEASIBLE ? -wit / LA.tr(wit * ρ) : JuMP.value.(lifted)
-            return status == MOI.OPTIMAL, wit
-        else
-            return status == MOI.OPTIMAL
-        end
-    end
-    return obj
 end
-export entanglement_dps
+export schmidt_number
 
 """
     random_robustness(
@@ -272,7 +229,7 @@ function random_robustness(
         W = wrapper(LA.Diagonal(W) + 0.5(W - LA.Diagonal(W))) #this is a workaround for a bug in JuMP
         return JuMP.objective_value(model), W
     else
-        return "Something went wrong: $(raw_status(model))"
+        return "Something went wrong: $(JuMP.raw_status(model))"
     end
 end
 export random_robustness
@@ -281,6 +238,9 @@ export random_robustness
     _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
 
 Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
+
+References:
+    Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
 """
 function _dps_constraints!(
     model::JuMP.GenericModel{T},
@@ -288,7 +248,8 @@ function _dps_constraints!(
     dims::AbstractVector{<:Integer},
     n::Integer;
     ppt::Bool = true,
-    is_complex::Bool = true
+    is_complex::Bool = true,
+    projection::AbstractMatrix = LA.I(size(ρ, 1))
 ) where {T}
     LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
@@ -309,9 +270,9 @@ function _dps_constraints!(
 
     JuMP.@variable(model, s[1:d, 1:d] in psd_cone)
     lifted = wrapper(V * s * V')
-    reduced = partial_trace(lifted, 3:n+1, ext_dims)
+    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
 
-    JuMP.@constraint(model, witness_constraint, ρ == reduced)
+    JuMP.@constraint(model, witness_constraint, ρ == wrapper(projection * reduced * projection'))
 
     if ppt
         for i in 2:n+1
