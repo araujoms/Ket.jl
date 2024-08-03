@@ -154,27 +154,27 @@ function schmidt_number(
     ppt::Bool = true,
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T <: Number}
+) where {T<:Number}
     LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
-        return random_robustness(ρ, dims, n; ppt, verbose, solver)
+        return random_robustness(ρ, dims, n; ppt, verbose, solver)[1]
     end
 
     is_complex = (T <: Complex)
     wrapper = is_complex ? LA.Hermitian : LA.Symmetric
 
-    V = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2]))
+    V = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2])) #this is an isometry up to normalization
     lifted_dims = [dims[1] * s, dims[2] * s] # with the ancilla spaces A'B'...
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
-    JuMP.@variable(model, 0 <= λ <= 1)
-    noisy_state = wrapper(λ * ρ + (1 - λ) * LA.I(size(ρ, 1)) / size(ρ, 1))
-    JuMP.@objective(model, Max, λ)
+    JuMP.@variable(model, λ)
+    noisy_state = wrapper(ρ + λ * LA.I(size(ρ, 1)))
+    JuMP.@objective(model, Min, λ)
 
     _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, isometry = V)
-    JuMP.@constraint(model, LA.tr(model[:reduced]) == s)
+    JuMP.@constraint(model, LA.tr(model[:symmetric_meat]) == s * (LA.tr(ρ) + λ * size(ρ, 1)))
 
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
@@ -220,13 +220,13 @@ function random_robustness(
     JuMP.@objective(model, Min, λ)
 
     JuMP.set_optimizer(model, solver)
-    #    JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
+    #JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
 
     if JuMP.is_solved_and_feasible(model)
         W = JuMP.dual(model[:witness_constraint])
-        W = wrapper(LA.Diagonal(W) + 0.5(W - LA.Diagonal(W))) #this is a workaround for a bug in JuMP
+        W = wrapper(0.5 * (W + LA.Diagonal(W))) #this is a workaround for a bug in JuMP
         return JuMP.objective_value(model), W
     else
         return "Something went wrong: $(JuMP.raw_status(model))"
@@ -268,10 +268,9 @@ function _dps_constraints!(
         wrapper = LA.Symmetric
     end
 
-    JuMP.@variable(model, s[1:d, 1:d] in psd_cone)
-    lifted = wrapper(V * s * V')
+    JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
+    lifted = wrapper(V * symmetric_meat * V')
     JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
-
     JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt

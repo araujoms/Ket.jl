@@ -40,23 +40,14 @@
             @test s ≈ 0.5 atol = 1e-5 rtol = 1e-5
             @test dot(ρ, W) ≈ -s atol = 1e-5 rtol = 1e-5
         end
+        d = 3
+        @test isapprox(schmidt_number(state_ghz(ComplexF64, d, 2), 2), 1 / 15, atol = 1e-3, rtol = 1e-3)
         @test isapprox(
-            schmidt_number(state_ghz(ComplexF64, 3, 2), 2),
-            0.625,
+            schmidt_number(state_ghz(Float64, d, 2), 2, [d, d], 2; solver = SCS.Optimizer),
+            1 / 15,
             atol = 1e-3,
             rtol = 1e-3
         )
-        @test isapprox(
-            schmidt_number(state_ghz(Float64, 3, 2), 2, [3, 3], 2; solver = SCS.Optimizer),
-            0.625,
-            atol = 1e-3,
-            rtol = 1e-3
-        )
-        @test isapprox(
-            schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer),
-            1.0,
-            atol = 1e-3,
-            rtol = 1e-3
-        )
+        @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) <= 0
     end
 end
