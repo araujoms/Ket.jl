@@ -39,15 +39,19 @@ function _idx(tidx::Vector{<:Integer}, dims::Vector{<:Integer})
 end
 
 @doc """
-    partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::Vector)
+    partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems in `remove`.
-""" partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::Vector)
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems in `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+""" partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, limit, wrapper) in
     [(:AbstractMatrix, :dY, :identity), (:(LA.Hermitian), :j, :(LA.Hermitian)), (:(LA.Symmetric), :j, :(LA.Symmetric))]
     @eval begin
-        function partial_trace(X::$T, remove::AbstractVector{<:Integer}, dims::Vector{<:Integer})
+        function partial_trace(
+            X::$T,
+            remove::AbstractVector{<:Integer},
+            dims::AbstractVector{<:Integer} = _equal_sizes(X)
+        )
             isempty(remove) && return X
             length(remove) == length(dims) && return fill(LA.tr(X), 1, 1)
 
@@ -107,29 +111,27 @@ end
 export partial_trace
 
 """
-    partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector)
+    partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector = _equal_sizes(X)))
 
-Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`.
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
-partial_trace(X::AbstractMatrix, remove::Integer, dims::Vector{<:Integer}) = partial_trace(X, [remove], dims)
-
-"""
-    partial_trace(X::AbstractMatrix, remove::Integer)
-
-Takes the partial trace of matrix `X` over the subsystems `remove` assuming two equally-sized subsystems.
-"""
-partial_trace(X::AbstractMatrix, remove) = partial_trace(X, remove, _equal_sizes(X))
+partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector{<:Integer} = _equal_sizes(X)) =
+    partial_trace(X, [remove], dims)
 
 @doc """
-    partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::Vector)
+    partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`.
-""" partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::Vector)
+Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+""" partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, wrapper) in
     [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
     @eval begin
-        function partial_transpose(X::$T, transp::AbstractVector{<:Integer}, dims::Vector{<:Integer})
+        function partial_transpose(
+            X::$T,
+            transp::AbstractVector{<:Integer},
+            dims::AbstractVector{<:Integer} = _equal_sizes(X)
+        )
             isempty(transp) && return X
             length(transp) == length(dims) && return LA.transpose(X)
 
@@ -188,18 +190,12 @@ end
 export partial_transpose
 
 """
-    partial_transpose(X::AbstractMatrix, transp::Integer, dims::Vector)
+    partial_transpose(X::AbstractMatrix, transp::Integer, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`.
+Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
-partial_transpose(X::AbstractMatrix, transp::Integer, dims::Vector{<:Integer}) = partial_transpose(X, [transp], dims)
-
-"""
-    partial_transpose(X::AbstractMatrix, transp)
-
-Takes the partial transpose of matrix `X` on the subsystems in `transp` assuming two equally-sized subsystems.
-"""
-partial_transpose(X::AbstractMatrix, transp) = partial_transpose(X, transp, _equal_sizes(X))
+partial_transpose(X::AbstractMatrix, transp::Integer, dims::AbstractVector{<:Integer} = _equal_sizes(X)) =
+    partial_transpose(X, [transp], dims)
 
 """
     _idxperm(perm::Vector, dims::Vector)
@@ -227,11 +223,15 @@ function _idxperm!(p::Vector{<:Integer}, perm::Vector{<:Integer}, dims::Vector{<
 end
 
 """
-    permute_systems!(X::AbstractVector, perm::Vector, dims::Vector)
+    permute_systems!(X::AbstractVector, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`.
+Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
-function permute_systems!(X::AbstractVector{T}, perm::AbstractVector{<:Integer}, dims::Vector{<:Integer}) where {T}
+function permute_systems!(
+    X::AbstractVector{T},
+    perm::AbstractVector{<:Integer},
+    dims::AbstractVector{<:Integer} = _equal_sizes(X)
+) where {T}
     perm == 1:length(perm) && return X
     X == 1:length(X) && return _idxperm!(X, perm, dims)
 
@@ -241,22 +241,25 @@ function permute_systems!(X::AbstractVector{T}, perm::AbstractVector{<:Integer},
 end
 export permute_systems!
 
-"""
-    permute_systems!(X::AbstractVector, perm::Vector)
-
-Permutes the order of the subsystems of vector `X`, which is composed by two subsystems of equal dimensions, in-place according to the permutation `perm`.
-"""
-permute_systems!(X::AbstractVector, perm::AbstractVector{<:Integer}) = permute_systems!(X, perm, _equal_sizes(X))
-
 @doc """
-     permute_systems(X::AbstractMatrix, perm::Vector, dims::Vector)
+     permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
- Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`.
- """ permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::Vector; rows_only::Bool = false)
+ Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+ """ permute_systems(
+    X::AbstractMatrix,
+    perm::AbstractVector,
+    dims::AbstractVector = _equal_sizes(X);
+    rows_only::Bool = false
+)
 for (T, wrapper) in
     [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
     @eval begin
-        function permute_systems(X::$T, perm::Vector{<:Integer}, dims::Vector{<:Integer}; rows_only::Bool = false)
+        function permute_systems(
+            X::$T,
+            perm::AbstractVector{<:Integer},
+            dims::AbstractVector{<:Integer} = _equal_sizes(X);
+            rows_only::Bool = false
+        )
             perm == 1:length(perm) && return X
 
             p = _idxperm(perm, dims)
@@ -264,13 +267,6 @@ for (T, wrapper) in
         end
     end
 end
-
-"""
-    permute_systems(X::AbstractMatrix, perm::Vector)
-
-Permutes the order of the subsystems of the square matrix `X`, which is composed by two square subsystems of equal dimensions, according to the permutation `perm`.
-"""
-permute_systems(X::AbstractMatrix, perm::AbstractVector{<:Integer}) = permute_systems(X, perm, _equal_sizes(X))
 
 """
     permute_systems(X::AbstractMatrix, perm::Vector, dims::Matrix)
@@ -288,13 +284,17 @@ end
 export permute_systems
 
 """
-    permutation_matrix(dims::Union{Integer,Vector{<:Integer}}, perm::Vector{<:Integer})
+    permutation_matrix(dims::Union{Integer,AbstractVector}, perm::AbstractVector)
 
 Unitary that permutes subsystems of dimension `dims` according to the permutation `perm`.
 If `dims` is an Integer, assumes there are `length(perm)` subsystems of equal dimensions `dims`.
 """
-function permutation_matrix(dims::Union{Integer,Vector{<:Integer}}, perm::AbstractVector{<:Integer}; sp::Bool = true)
-    dims = dims isa Integer ? [dims for _ = 1:length(perm)] : dims
+function permutation_matrix(
+    dims::Union{Integer,AbstractVector{<:Integer}},
+    perm::AbstractVector{<:Integer};
+    sp::Bool = true
+)
+    dims = dims isa Integer ? fill(dims, length(perm)) : dims
     permute_systems(LA.I(prod(dims), sp), perm, dims; rows_only = true)
 end
 export permutation_matrix
