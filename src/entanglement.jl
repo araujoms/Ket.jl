@@ -164,7 +164,7 @@ function schmidt_number(
     is_complex = (T <: Complex)
     wrapper = is_complex ? LA.Hermitian : LA.Symmetric
 
-    Π = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2]))'
+    V = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2]))
     lifted_dims = [dims[1] * s, dims[2] * s] # with the ancilla spaces A'B'...
 
     model = JuMP.GenericModel{_solver_type(T)}()
@@ -173,7 +173,7 @@ function schmidt_number(
     noisy_state = wrapper(λ * ρ + (1 - λ) * LA.I(size(ρ, 1)) / size(ρ, 1))
     JuMP.@objective(model, Max, λ)
 
-    _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, projection = Π)
+    _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, isometry = V)
     JuMP.@constraint(model, LA.tr(model[:reduced]) == s)
 
     JuMP.set_optimizer(model, solver)
@@ -249,7 +249,7 @@ function _dps_constraints!(
     n::Integer;
     ppt::Bool = true,
     is_complex::Bool = true,
-    projection::AbstractMatrix = LA.I(size(ρ, 1))
+    isometry::AbstractMatrix = LA.I(size(ρ, 1))
 ) where {T}
     LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
@@ -272,7 +272,7 @@ function _dps_constraints!(
     lifted = wrapper(V * s * V')
     JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
 
-    JuMP.@constraint(model, witness_constraint, ρ == wrapper(projection * reduced * projection'))
+    JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt
         for i in 2:n+1
