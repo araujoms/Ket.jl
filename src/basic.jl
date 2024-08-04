@@ -265,8 +265,6 @@ function applykraus(K, M)
 end
 export applykraus
 
-LA.I(dim::Integer, sp::Bool) = sp ? SA.sparse(LA.I(dim)) : LA.I(dim)
-
 function _orthonormal_range_svd!(
     A::AbstractMatrix{T};
     tol::Union{Real,Nothing} = nothing,
@@ -317,14 +315,11 @@ returns the actual projection `V * V'`.
 Reference: [Watrous' book](https://cs.uwaterloo.ca/~watrous/TQI/), Sec. 7.1.1
 """
 function symmetric_projection(::Type{T}, dim::Integer, n::Integer; partial::Bool = true) where {T}
-    if T <: SA.CHOLMOD.VTypes #sparse qr decomposition fails for anything other than Float64 or ComplexF64
-        P = SA.spzeros(T, dim^n, dim^n)
-    else
-        P = zeros(T, dim^n, dim^n)
-    end
+    is_sparse = T <: SA.CHOLMOD.VTypes #sparse qr decomposition fails for anything other than Float64 or ComplexF64
+    P = is_sparse ? SA.spzeros(T, dim^n, dim^n) : zeros(T, dim^n, dim^n)
     perms = Combinatorics.permutations(1:n)
     for perm in perms
-        P .+= permutation_matrix(dim, perm; sp = true)
+        P .+= permutation_matrix(dim, perm; is_sparse)
     end
     P ./= length(perms)
     if partial

@@ -292,9 +292,11 @@ If `dims` is an Integer, assumes there are `length(perm)` subsystems of equal di
 function permutation_matrix(
     dims::Union{Integer,AbstractVector{<:Integer}},
     perm::AbstractVector{<:Integer};
-    sp::Bool = true
+    is_sparse::Bool = true
 )
     dims = dims isa Integer ? fill(dims, length(perm)) : dims
-    permute_systems(LA.I(prod(dims), sp), perm, dims; rows_only = true)
+    d = prod(dims)
+    id = is_sparse ? SA.sparse(LA.I, (d, d)) : LA.I(d)
+    permute_systems(id, perm, dims; rows_only = true)
 end
 export permutation_matrix
