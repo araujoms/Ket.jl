@@ -331,3 +331,43 @@ function symmetric_projection(::Type{T}, dim::Integer, n::Integer; partial::Bool
 end
 export symmetric_projection
 symmetric_projection(dim::Integer, n::Integer; partial::Bool = true) = symmetric_projection(Float64, dim, n; partial)
+
+"""
+    n_body_basis(
+    n::Integer,
+    n_parties::Integer;
+    sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
+    sparse::Bool = true,
+    eye::AbstractMatrix = LA.I(size(sb[1], 1))
+
+Return the basis of `n` nontrivial operators acting on `n_parties`, by default using Pauli matrices.
+
+For example, `n_body_basis(2, 3)` generate all products of two Paulis and one identity, so
+``{ X ⊗ X ⊗ 1, X ⊗ 1 ⊗ X, ..., X ⊗ Y ⊗ 1, ..., 1 ⊗ Z ⊗ Z}``.
+
+Instead of Paulis, a basis can be provided by the parameter `sb`, and the identity can be changed with `eye`.
+If `sparse` is true, the resulting basis will use sparse matrices, otherwise it will agree with `sb`.
+
+This function returns a generator, which can then be used e.g. in for loops without fully allocating the
+entire basis at once. If you need a vector, call `collect` on it.
+"""
+function n_body_basis(
+    n::Integer,
+    n_parties::Integer;
+    sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
+    sparse::Bool = true,
+    eye::AbstractMatrix = LA.I(size(sb[1], 1))
+)
+    (n >= 0 && n_parties >= 2) || throw(ArgumentError("Number of parties must be ≥ 2 and n ≥ 0."))
+    n <= n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))
+
+    sb = sparse ? [SA.sparse.(sb); [eye]] : [sb; [eye]]
+    nb = length(sb) - 1
+    idx_eye = length(sb)
+    (
+        Base.kron(sb[t]...)
+        for p in Combinatorics.with_replacement_combinations(1:nb, n)
+        for t in Combinatorics.multiset_permutations([p; repeat([idx_eye], n_parties - n)], n_parties)
+    )
+end
+export n_body_basis

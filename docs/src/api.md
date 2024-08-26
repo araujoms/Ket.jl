@@ -19,6 +19,7 @@ cleanup!
 symmetric_projection
 orthonormal_range
 permutation_matrix
+n_body_basis
 ```
 
 ## Entropy
