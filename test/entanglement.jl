@@ -50,4 +50,20 @@
         )
         @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) <= 0
     end
+    @testset "GME entanglement" begin
+        for R in [Float64, Double64]
+            ρ = state_ghz(R, 2, 3)
+
+            v, W = ppt_mixture(ρ, [2, 2, 2])
+            @test isapprox(v, 0.4285, atol = 1e-3)
+            full_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:3))
+            v, w = ppt_mixture(ρ, [2, 2, 2], full_body_basis)
+            @test isapprox(v, 0.4285, atol = 1e-3)
+            @test isapprox(sum(w[i] * full_body_basis[i] for i in eachindex(w)), W, atol = 1e-3)
+
+            two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:2))
+            v, w = ppt_mixture(state_w(3), [2, 2, 2], two_body_basis)
+            @test isapprox(v, 0.6960, atol = 1e-3)
+        end
+    end
 end

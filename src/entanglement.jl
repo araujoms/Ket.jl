@@ -132,15 +132,13 @@ end
         verbose::Bool = false,
         solver = Hypatia.Optimizer{_solver_type(T)})
 
-Upper bound on the white noise robustness of `ρ` such that it has a Schmidt number `s`.
+Upper bound on the random robustness of `ρ` such that it has a Schmidt number `s`.
 
 If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number ``s``, then there is
 a PSD matrix ``ω`` in the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
 such that ``ω / s`` is separable  against ``AA′|B′B`` and ``Π† ω Π = ρ``, where ``Π = 1_A ⊗ s ψ^+ ⊗ 1_B``,
 and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is tested with the DPS hierarchy,
-with `n` controlling the how many copies of the ``B′B`` subsystem are used. If the returned value ``λ < 1``,
-then ``ρ`` has a Schmidt number larger than ``s`` for any visibility above ``λ``, otherwise the result is only
-as upper bound on the visibility with which ``ρ`` becomes Schmidt number ``s``.
+with `n` controlling the how many copies of the ``B′B`` subsystem are used. 
 
 References:
     Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)\
@@ -278,3 +276,118 @@ function _dps_constraints!(
         end
     end
 end
+
+function _fully_decomposable_witness_constraints!(model, dims, W)
+    nparties = length(dims)
+    biparts = Combinatorics.partitions(1:nparties, 2)
+    dim = prod(dims)
+
+    Ps = [JuMP.@variable(model, [1:dim,1:dim] in JuMP.HermitianPSDCone()) for _ in 1:length(biparts)]
+
+    JuMP.@constraint(model, LA.tr(W) == 1)
+    # this can be used instead of tr(W) = 1 if we want a GME entanglement quantifier (see ref.)
+    # [JuMP.@constraint(model, (LA.I(dim) - (W - Ps[i])) in JuMP.HermitianPSDCone()) for i in 1:length(biparts)]
+
+    # constraints for W = Q^{T_M} + P^M:
+    for (i, part) in enumerate(biparts)
+        JuMP.@constraint(model, LA.Hermitian(partial_transpose(W - Ps[i], part[1], dims)) in JuMP.HermitianPSDCone())
+    end
+end
+
+function _min_dotprod!(model, ρ, W, solver, verbose)
+    JuMP.@variable(model, λ)
+    JuMP.@constraint(model, real(LA.dot(ρ, W)) <= λ)
+    JuMP.@objective(model, Min, λ)
+
+    JuMP.set_optimizer(model, solver)
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+end
+
+"""
+    function ppt_mixture(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer};
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)})
+
+Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state and a GME witness that detects ρ.
+
+The set of GME states is approximated by the set of PPT mixtures, so the entanglement across the bipartitions is decided
+with the PPT criterion. If the state is a PPT mixture, returns a 0 matrix instead of a witness.
+
+Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+"""
+function ppt_mixture(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer};
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T <: Number}
+    dim = size(ρ, 1)
+    prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
+
+    model = JuMP.GenericModel{_solver_type(T)}()
+
+    JuMP.@variable(model, W[1:dim,1:dim], Hermitian)
+
+    _fully_decomposable_witness_constraints!(model, dims, W)
+    _min_dotprod!(model, ρ, W, solver, verbose)
+
+    if JuMP.is_solved_and_feasible(model)
+        JuMP.objective_value(model) ≤ 0 ? W = JuMP.value.(W) : W = zeros(T, size(W))
+        return 1 / (1 - dim * JuMP.value.(model[:λ])), LA.Hermitian(W)
+    else
+        return "Something went wrong: $(JuMP.raw_status(model))"
+    end
+end
+
+"""
+    function ppt_mixture(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer},
+    obs::AbstractVector{<:AbstractMatrix} = Vector{Matrix}();
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)})
+
+Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state that
+can be detected with a witness using only the operators provided in `obs`, and the values of the coefficients
+defining such a witness.
+
+More precisely, if a list of observables ``O_i`` is provided in the parameter `obs`, the witness will be of the form
+``∑_i α_i O_i`` and detects ρ only using these observables. For example, using only two-body operators (and lower order)
+one can call 
+
+```julia-repl
+julia> two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:2))
+julia> ppt_mixture(state_ghz(2, 3), [2, 2, 2], two_body_basis)
+```
+
+Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+"""
+function ppt_mixture(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer},
+    obs::AbstractVector{<:AbstractMatrix};
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T <: Number}
+    dim = size(ρ, 1)
+    prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
+
+    model = JuMP.GenericModel{_solver_type(T)}()
+
+    JuMP.@variable(model, w_coeffs[1:length(obs)]) 
+    W = sum(w_coeffs[i] * obs[i] for i in eachindex(w_coeffs))
+
+    _fully_decomposable_witness_constraints!(model, dims, W)
+    _min_dotprod!(model, ρ, W, solver, verbose)
+
+    if JuMP.is_solved_and_feasible(model)
+        JuMP.objective_value(model) ≤ 0 ? w_coeffs = JuMP.value.(w_coeffs) : w_coeffs = zeros(T, size(w_coeffs))
+        return 1 / (1 - dim * JuMP.value.(model[:λ])), w_coeffs
+    else
+        return "Something went wrong: $(JuMP.raw_status(model))"
+    end
+end
+export ppt_mixture

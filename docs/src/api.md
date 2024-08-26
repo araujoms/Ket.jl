@@ -39,6 +39,7 @@ schmidt_decomposition
 entanglement_entropy
 random_robustness
 schmidt_number
+ppt_mixture
 ```
 
 ## Measurements
