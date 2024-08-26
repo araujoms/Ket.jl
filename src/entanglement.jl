@@ -226,7 +226,6 @@ function random_robustness(
 
     if JuMP.is_solved_and_feasible(model)
         W = JuMP.dual(model[:witness_constraint])
-        W = wrapper(0.5 * (W + LA.Diagonal(W))) #this is a workaround for a bug in JuMP
         return JuMP.objective_value(model), W
     else
         return "Something went wrong: $(JuMP.raw_status(model))"
