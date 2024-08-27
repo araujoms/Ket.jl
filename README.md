@@ -1,8 +1,8 @@
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: light)" srcset="./src/assets/ket-jl-logo-dark-wide.svg">
-  <source media="(prefers-color-scheme: dark)" srcset="./src/assets/ket-jl-logo-light-wide.svg">
-  <img alt="Ket.jl logo." src="./src/assets/ket-jl-logo-wide-bg.svg" width="280">
+  <source media="(prefers-color-scheme: light)" srcset="./assets/ket-jl-logo-dark-wide.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/ket-jl-logo-light-wide.svg">
+  <img alt="Ket.jl logo." src="./assets/ket-jl-logo-wide-bg.svg" width="280">
 </picture>
 </p>
 
