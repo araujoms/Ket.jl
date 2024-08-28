@@ -33,7 +33,8 @@ makedocs(;
         prettyurls = get(ENV, "CI", "false") == "true",
         canonical = "https://araujoms.github.io/Ket.jl",
         edit_link = "master",
-        assets = String[]
+        assets = String[],
+        sidebar_sitename = false
     ),
     pages = ["Home" => "index.md", "List of functions" => "api.md"],
     checkdocs = :exports
