@@ -111,8 +111,8 @@ Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, writte
 
 This function requires [Moment](https://github.com/ajpgarner/moment). It is only available if you first do "import MATLAB" or "using MATLAB".
 """
-function tsirelson_bound(CG, scenario, level)
-    error("This function requires MATLAB. Do `import matlab` or `using MATLAB` in order to enable it.")
+function tsirelson_bound(CG::Matrix{<:Real}, scenario::Vector{<:Integer}, level)
+    error("This function requires MATLAB. Do `import MATLAB` or `using MATLAB` in order to enable it.")
 end
 export tsirelson_bound
 
