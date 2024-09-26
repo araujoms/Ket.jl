@@ -66,7 +66,7 @@ Checks if the measurement defined by A is valid (hermitian, semi-definite positi
 function test_povm(E::Vector{<:AbstractMatrix{T}}) where {T<:Number}
     !all(LA.ishermitian.(E)) && return false
     d = size(E[1], 1)
-    !(Matrix(sum(E)) ≈ LA.I(d)) && return false #workaround for julia bug #55590
+    !(sum(E) ≈ LA.I(d)) && return false
     for i = 1:length(E)
         minimum(LA.eigvals(E[i])) < -_rtol(T) && return false
     end
