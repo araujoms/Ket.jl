@@ -11,3 +11,4 @@ CG - In _dps_constraints! bypass new variables when n = 1, as then only PPT is n
 CG - GME detection with DPS?
 CG - Basic state discrimination stuff?
 CG - state_dicke
+SD - Check useful functions by Felix Huber (https://bitbucket.org/huberfe/qgeo/src/master/README.txt)
