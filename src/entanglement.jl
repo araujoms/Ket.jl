@@ -64,7 +64,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
     JuMP.@objective(model, Min, h / log(Rs(2)))
     JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs,Ts}(1 + 2 * vec_dim))
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
-    JuMP.set_attribute(model, "verbose", false)
+    JuMP.set_silent(model)
     JuMP.optimize!(model)
     return JuMP.objective_value(model), LA.Hermitian(JuMP.value.(σ))
 end

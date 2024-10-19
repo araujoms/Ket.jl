@@ -54,6 +54,12 @@ mub
 test_mub
 ```
 
+## Incompatibility
+
+```@docs
+incompatibility_robustness_depolarizing
+```
+
 ## Nonlocality
 
 ```@docs

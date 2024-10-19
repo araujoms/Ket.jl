@@ -5,7 +5,7 @@ _solver_type(::Type{T}) where {T<:Number} = Float64
 
 """
     choi(K::Vector{<:AbstractMatrix})
-    
+
 Constructs the Choi-Jamiołkowski representation of the CP map given by the Kraus operators `K`.
 The convention used is that choi(K) = ∑ᵢⱼ |i⟩⟨j|⊗K|i⟩⟨j|K'
 """
@@ -14,7 +14,7 @@ export choi
 
 """
     diamond_norm(J::AbstractMatrix, dims::AbstractVector)
-    
+
 Computes the diamond norm of the supermap `J` given in the Choi-Jamiołkowski representation, with subsystem dimensions `dims`.
 
 Reference: [Diamond norm](https://en.wikipedia.org/wiki/Diamond_norm)
@@ -43,7 +43,7 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypat
     JuMP.@objective(model, Max, real(LA.dot(J, Y)))
 
     JuMP.set_optimizer(model, solver)
-    JuMP.set_attribute(model, "verbose", false)
+    JuMP.set_silent(model)
     JuMP.optimize!(model)
     return JuMP.objective_value(model)
 end
@@ -51,7 +51,7 @@ export diamond_norm
 
 """
     diamond_norm(K::Vector{<:AbstractMatrix})
-    
+
 Computes the diamond norm of the CP map given by the Kraus operators `K`.
 """
 function diamond_norm(K::Vector{<:AbstractMatrix})

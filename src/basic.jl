@@ -53,8 +53,19 @@ export povm
 Converts a set of measurements in the common tensor format into a matrix of matrices.
 The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
-function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) where {T}
-    return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
+function povm(Aax::Array{T,4}, n::Vector{Int64} = fill(size(Aax, 3), size(Aax, 4))) where {T}
+    return [[LA.Hermitian(Aax[:, :, a, x]) for a in 1:n[x]] for x in 1:size(Aax, 4)]
+end
+
+function _measurements_parameters(Axa::Vector{Measurement{T}}) where {T<:Number}
+    @assert !isempty(Axa)
+    # dimension on which the measurements act
+    d = size(Axa[1][1], 1)
+    # tuple of outcome numbers
+    o = Tuple(length.(Axa))
+    # number of inputs, i.e., of mesurements
+    m = length(Axa)
+    return d, o, m
 end
 
 """
