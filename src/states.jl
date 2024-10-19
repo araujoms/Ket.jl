@@ -136,7 +136,7 @@ end
 export isotropic
 
 """
-    state_super_singlet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√d)
+    state_super_singlet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√N!)
 
 Produces the vector of the `N`-partite `N`-level singlet state.
 

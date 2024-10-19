@@ -90,7 +90,7 @@ end
 """
     _test_entanglement_entropy_qubit(h::Real, ρ::AbstractMatrix, σ::AbstractMatrix)
 
-Tests whether `ρ` is indeed a entangled state whose closest separable state is `σ`.
+Checks if `ρ` is indeed a entangled state whose closest separable state is `σ`.
 
 Reference: Miranowicz and Ishizaka, [arXiv:0805.3134](https://arxiv.org/abs/0805.3134)
 """
