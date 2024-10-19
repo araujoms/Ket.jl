@@ -11,10 +11,17 @@ function incompatibility_robustness_depolarizing(
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     d, o, m = _measurements_parameters(A)
-    model = JuMP.GenericModel{_solver_type(T)}()
-    X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a in 1:o[x]] for x in 1:m]
-    obj = zero(JuMP.GenericAffExpr{_solver_type(T),JuMP.GenericVariableRef{_solver_type(T)}})
-    low = zero(JuMP.GenericAffExpr{_solver_type(T),JuMP.GenericVariableRef{_solver_type(T)}})
+    stT = _solver_type(T)
+    model = JuMP.GenericModel{stT}()
+    if T <: Complex
+        X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a in 1:o[x]] for x in 1:m]
+        JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.HermitianPSDCone())
+    else
+        X = [[JuMP.@variable(model, [1:d, 1:d], Symmetric) for a in 1:o[x]] for x in 1:m]
+        JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.PSDCone())
+    end
+    obj = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
+    low = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
     JuMP.add_to_expression!(obj, 1)
     for x in 1:m
         for a in 1:o[x]
@@ -23,7 +30,6 @@ function incompatibility_robustness_depolarizing(
         end
     end
     JuMP.@objective(model, Min, obj)
-    JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.HermitianPSDCone())
     JuMP.@constraint(model, obj ≥ low)
 
     JuMP.set_optimizer(model, solver)
