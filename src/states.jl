@@ -138,7 +138,9 @@ export isotropic
 """
     state_super_singlet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√d)
 
-Produces the vector of the `N`-partite `N`-level singlet state with visibility `v` (arXiv:quant-ph/0203119).
+Produces the vector of the `N`-partite `N`-level singlet state.
+
+Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
 function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T<:Number}
     psi = zeros(T, N^N)
@@ -162,7 +164,9 @@ export state_super_singlet_ket
 """
     state_super_singlet([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
 
-Produces the `N`-partite `N`-level singlet state with visibility `v` (arXiv:quant-ph/0203119).
+Produces the `N`-partite `N`-level singlet state with visibility `v`.
+
+Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
 function state_super_singlet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Number}
     rho = ketbra(state_super_singlet_ket(T, N; coeff = one(T)))

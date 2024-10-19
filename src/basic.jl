@@ -57,7 +57,6 @@ function povm(A::Array{T,4}, n::Vector{Int64} = fill(size(A, 3), size(A, 4))) wh
     return [[LA.Hermitian(A[:, :, a, x]) for a in 1:n[x]] for x in 1:size(A, 4)]
 end
 
-# SD: maybe check_povm instead, but then check_mub and check_sic also I'd say
 """
     test_povm(A::Vector{<:AbstractMatrix{T}})
 
@@ -73,6 +72,7 @@ function test_povm(E::Vector{<:AbstractMatrix{T}}) where {T<:Number}
     return true
 end
 export test_povm
+
 """
     shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 

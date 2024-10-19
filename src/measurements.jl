@@ -108,7 +108,11 @@ function mub(::Type{T}, d::Integer, k::Integer, s::Integer = 1) where {T<:Number
 end
 mub(d::Integer, k::Integer, s::Integer = 1) = mub(ComplexF64, d, k, s)
 
-""" Check whether the input is indeed mutually unbiased"""
+"""
+    test_mub(B::Vector{Matrix{<:Number}})
+
+Checks if the input bases are mutually unbiased.
+"""
 function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
     d = size(B[1], 1)
     k = length(B)
@@ -160,7 +164,7 @@ export sic_povm
 """
     test_sic(vecs)
 
-Tests whether `vecs` is a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
+Checks if `vecs` is a vector of `d²` vectors |vᵢ⟩ such that |vᵢ⟩⟨vᵢ| forms a SIC-POVM of dimension `d`.
 """
 function test_sic(vecs::Vector{Vector{T}}) where {T<:Number}
     d = length(vecs[1])
