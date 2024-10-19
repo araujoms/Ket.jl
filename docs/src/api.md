@@ -93,6 +93,8 @@ state_phiplus
 isotropic
 state_psiminus_ket
 state_psiminus
+state_super_singlet_ket
+state_super_singlet
 state_ghz_ket
 state_ghz
 state_w_ket

@@ -43,7 +43,7 @@ export state_phiplus_ket
 Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
 """
 function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
-    rho = ketbra(state_phiplus_ket(T, d; coeff = one(1)))
+    rho = ketbra(state_phiplus_ket(T, d; coeff = one(T)))
     parent(rho) ./= d
     return white_noise!(rho, v)
 end
@@ -134,3 +134,41 @@ function isotropic(v::T, d::Integer = 2) where {T<:Real}
     return state_phiplus(T, d; v)
 end
 export isotropic
+
+"""
+    state_super_singlet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√d)
+
+Produces the vector of the `N`-partite `N`-level singlet state with visibility `v` (arXiv:quant-ph/0203119).
+"""
+function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T<:Number}
+    psi = zeros(T, N^N)
+    for per in Combinatorics.permutations(1:N)
+        tmp = kron(ket.((T,), per, (N,))...)
+        if Combinatorics.parity(per) == 0
+            # SD: this syntax allocates quite a bit
+            # SD: we could go for an explicit one like for GHZ
+            psi .+= tmp
+        else
+            # SD: this creates -0.0 in the output
+            psi .-= tmp
+        end
+    end
+    psi .*= coeff
+    return psi
+end
+state_super_singlet_ket(N::Integer = 3; kwargs...) = state_super_singlet_ket(ComplexF64, N; kwargs...)
+export state_super_singlet_ket
+
+"""
+    state_super_singlet([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
+
+Produces the `N`-partite `N`-level singlet state with visibility `v` (arXiv:quant-ph/0203119).
+"""
+function state_super_singlet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Number}
+    rho = ketbra(state_super_singlet_ket(T, N; coeff = one(T)))
+    parent(rho) ./= factorial(N)
+    return white_noise!(rho, v)
+end
+state_super_singlet(N::Integer = 3; kwargs...) = state_super_singlet(ComplexF64, N; kwargs...)
+export state_super_singlet
+
