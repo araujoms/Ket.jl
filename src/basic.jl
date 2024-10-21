@@ -48,14 +48,33 @@ end
 export povm
 
 """
-    povm(A::Array{T, 4}, n::Vector{Int64})
+    tensor_to_povm(A::Array{T,4}, o::Vector{Int64})
 
-Converts a set of measurements in the common tensor format into a matrix of matrices.
-The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
+Converts a set of measurements in the common tensor format into a matrix of (hermitian) matrices.
+By default, the second argument is fixed by the size of `A`.
+It can also contain custom number of outcomes if there are measurements with less outcomes.
 """
-function povm(Aax::Array{T,4}, n::Vector{Int64} = fill(size(Aax, 3), size(Aax, 4))) where {T}
-    return [[LA.Hermitian(Aax[:, :, a, x]) for a in 1:n[x]] for x in 1:size(Aax, 4)]
+function tensor_to_povm(Aax::Array{T,4}, o::Vector{Int64} = fill(size(Aax, 3), size(Aax, 4))) where {T}
+    return [[LA.Hermitian(Aax[:, :, a, x]) for a in 1:o[x]] for x in axes(Aax, 4)]
 end
+export tensor_to_povm
+
+"""
+    povm_to_tensor(Axa::Vector{<:Measurement})
+
+Converts a matrix of (hermitian) matrices into a set of measurements in the common tensor format.
+"""
+function povm_to_tensor(Axa::Vector{Measurement{T}}) where {T<:Number}
+    d, o, m = _measurements_parameters(Axa)
+    Aax = zeros(T, d, d, maximum(o), m)
+    for x in eachindex(Axa)
+        for a in eachindex(Axa[x])
+            Aax[:, :, a, x] .= Axa[x][a]
+        end
+    end
+    return Aax
+end
+export povm_to_tensor
 
 function _measurements_parameters(Axa::Vector{Measurement{T}}) where {T<:Number}
     @assert !isempty(Axa)
@@ -67,6 +86,7 @@ function _measurements_parameters(Axa::Vector{Measurement{T}}) where {T<:Number}
     m = length(Axa)
     return d, o, m
 end
+_measurements_parameters(Aa::Measurement) = _measurements_parameters([Aa])
 
 """
     test_povm(A::Vector{<:AbstractMatrix{T}})
