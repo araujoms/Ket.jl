@@ -57,7 +57,12 @@ test_mub
 ## Incompatibility
 
 ```@docs
+incompatibility_robustness
 incompatibility_robustness_depolarizing
+incompatibility_robustness_random
+incompatibility_robustness_probabilistic
+incompatibility_robustness_jointly_measurable
+incompatibility_robustness_generalized
 ```
 
 ## Nonlocality
