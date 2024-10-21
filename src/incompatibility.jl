@@ -8,6 +8,7 @@ Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/a
 function incompatibility_robustness_depolarizing(
     A::Vector{Measurement{T}};
     verbose = false,
+    return_parent = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     d, o, m = _measurements_parameters(A)
@@ -15,10 +16,10 @@ function incompatibility_robustness_depolarizing(
     model = JuMP.GenericModel{stT}()
     if T <: Complex
         X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a in 1:o[x]] for x in 1:m]
-        JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.HermitianPSDCone())
+        con = JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.HermitianPSDCone())
     else
         X = [[JuMP.@variable(model, [1:d, 1:d], Symmetric) for a in 1:o[x]] for x in 1:m]
-        JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.PSDCone())
+        con = JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in JuMP.PSDCone())
     end
     obj = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
     low = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
@@ -36,7 +37,17 @@ function incompatibility_robustness_depolarizing(
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     if JuMP.is_solved_and_feasible(model)
-        return JuMP.objective_value(model)#, [[JuMP.value.(X[x][a]) for a in 1:o[x]] for x in 1:m]
+        η = JuMP.objective_value(model)
+        if return_parent && JuMP.has_duals(model)
+            # the parent povm is best represented in the tensor format as it has many outcomes
+            G = zeros(T, d, d, o...)
+            for (j, c) in zip(CartesianIndices(o), con)
+                G[:, :, j] .= JuMP.dual(c)
+            end
+            return η, G
+        else
+            return η #, [[JuMP.value.(X[x][a]) for a in 1:o[x]] for x in 1:m]
+        end
     else
         return "Something went wrong: $(JuMP.raw_status(model))"
     end
