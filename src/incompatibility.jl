@@ -25,7 +25,7 @@ function incompatibility_robustness_depolarizing(
     JuMP.add_to_expression!(obj, 1)
     for x in 1:m
         for a in 1:o[x]
-            JuMP.add_to_expression!(obj, LA.tr(X[x][a] * A[x][a]))
+            JuMP.add_to_expression!(obj, LA.dot(X[x][a], A[x][a]))
             JuMP.add_to_expression!(low, (LA.tr(A[x][a]) / d) * LA.tr(X[x][a]))
         end
     end
