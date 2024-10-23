@@ -58,7 +58,7 @@ function incompatibility_robustness(
     end
     for x in 1:m
         for a in 1:o[x]
-            JuMP.add_to_expression!(lhs, LA.tr(X[x][a] * A[x][a]))
+            JuMP.add_to_expression!(lhs, LA.dot(X[x][a], A[x][a]))
             if measure == "d"
                 JuMP.add_to_expression!(rhs, (LA.tr(A[x][a]) / d) * LA.tr(X[x][a]))
             elseif measure == "r"
