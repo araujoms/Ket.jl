@@ -70,19 +70,19 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
 end
 
 """
-    _svec(M::AbstractMatrix, ::Type{R})
+    _svec(M::AbstractMatrix, ::Type{T})
 
-Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `R`. The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,R),svec(N,R)⟩.
+Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `T`. The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,T),svec(N,T)⟩.
 """
-function _svec(M::AbstractMatrix, ::Type{R}) where {R} #the weird stuff here is to make it work with JuMP variables
+function _svec(M::AbstractMatrix, ::Type{T}) where {T} #the weird stuff here is to make it work with JuMP variables
     d = size(M, 1)
-    T = real(R)
-    vec_dim = Cones.svec_length(R, d)
+    R = real(T)
+    vec_dim = Cones.svec_length(T, d)
     v = Vector{real(eltype(1 * M))}(undef, vec_dim)
     if R <: Real
-        Cones.smat_to_svec!(v, 1 * M, sqrt(T(2)))
+        Cones.smat_to_svec!(v, 1 * M, sqrt(R(2)))
     else
-        Cones._smat_to_svec_complex!(v, M, sqrt(T(2)))
+        Cones._smat_to_svec_complex!(v, M, sqrt(R(2)))
     end
     return v
 end
