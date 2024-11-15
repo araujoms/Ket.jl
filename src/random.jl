@@ -50,15 +50,15 @@ Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
-    for j = 1:d
+    @inbounds for j = 1:d
         for i = j:d
             z[i, j] = _randn(T)
         end
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
-    for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
-        x = view(z, k:d, k)
+    @inbounds for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
+        @views x = z[k:d, k]
         τ[k] = LinearAlgebra.reflector!(x)
         s[k] = sign(real(x[1]))
     end
@@ -82,8 +82,8 @@ function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T
         G = randn(T, (d, k))
         mul!(E[i], G, G')
     end
-    S = sum(Hermitian.(E))
-    rootinvS = S^-0.5 #don't worry, the probability of getting a singular S is zero
+    S = sum(E)
+    rootinvS = Hermitian(S)^-0.5 #don't worry, the probability of getting a singular S is zero
     mat = Matrix{T}(undef, (d, d))
     for i = 1:n
         mul!(mat, rootinvS, E[i])
