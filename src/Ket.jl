@@ -1,8 +1,8 @@
 module Ket
 
+using LinearAlgebra
 import Combinatorics
 import GenericLinearAlgebra
-import LinearAlgebra as LA
 import SparseArrays as SA
 import Nemo
 import JuMP

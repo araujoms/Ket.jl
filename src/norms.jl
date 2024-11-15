@@ -5,12 +5,12 @@ Computes Schatten `p`-norm of matrix `X`.
 """
 function schatten_norm(X::AbstractMatrix, p::Real)
     if p == 2
-        return LA.norm(X)
+        return norm(X)
     elseif p == Inf
-        return LA.opnorm(X)
+        return opnorm(X)
     else
-        sv = LA.svdvals(X)
-        return LA.norm(sv, p)
+        sv = svdvals(X)
+        return norm(sv, p)
     end
 end
 export schatten_norm
@@ -31,7 +31,7 @@ export trace_norm
 Computes Ky-Fan (`k`,`p`) norm of matrix `X`.
 """
 function kyfan_norm(X::AbstractMatrix, k::Integer, p::Real = 2)
-    sv = LA.svdvals(X)
-    return LA.norm(sv[1:k], p)
+    sv = svdvals(X)
+    return norm(sv[1:k], p)
 end
 export kyfan_norm

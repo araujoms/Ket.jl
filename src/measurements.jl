@@ -6,7 +6,7 @@ function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     γ = _root_unity(T, p)
     inv_sqrt_p = inv(_sqrt(T, p))
     B = [Matrix{T}(undef, p, p) for _ in 1:p+1]
-    B[1] .= LA.I(p)
+    B[1] .= I(p)
     if p == 2
         B[2] .= [1 1; 1 -1] .* inv_sqrt_p
         B[3] .= [1 1; im -im] .* inv_sqrt_p
@@ -38,7 +38,7 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
     γ = _root_unity(T, p)
     inv_sqrt_d = inv(_sqrt(T, d))
     B = [zeros(T, d, d) for _ in 1:d+1]
-    B[1] .= LA.I(d)
+    B[1] .= I(d)
     f, x = Nemo.finite_field(p, r, "x")
     pow = [x^i for i in 0:r-1]
     el = [sum(digits(i; base = p, pad = r) .* pow) for i in 0:d-1]
@@ -124,7 +124,7 @@ function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
         else
             sc2_exp = inv_d
         end
-        sc2 = abs2(LA.dot(B[x][:, a], B[y][:, b]))
+        sc2 = abs2(dot(B[x][:, a], B[y][:, b]))
         if abs2(sc2 - sc2_exp) > _eps(T)
             return false
         end
@@ -154,7 +154,7 @@ function sic_povm(::Type{T}, d::Integer) where {T}
     end
     sqrt_d = _sqrt(T, d)
     for vi in vecs
-        vi ./= sqrt_d * LA.norm(vi)
+        vi ./= sqrt_d * norm(vi)
     end
     return vecs
 end
@@ -172,7 +172,7 @@ function test_sic(vecs::Vector{Vector{T}}) where {T<:Number}
     normalization = inv(T(d^2))
     symmetry = inv(T(d^2 * (d + 1)))
     for j in 1:d^2, i in 1:j
-        inner_product = abs2(LA.dot(vecs[i], vecs[j]))
+        inner_product = abs2(dot(vecs[i], vecs[j]))
         if i == j
             deviation = abs2(inner_product - normalization)
         else

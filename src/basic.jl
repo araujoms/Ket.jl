@@ -17,7 +17,7 @@ export ket
 Produces a ketbra of vector `v`.
 """
 function ketbra(v::AbstractVector)
-    return LA.Hermitian(v * v')
+    return Hermitian(v * v')
 end
 export ketbra
 
@@ -27,14 +27,14 @@ export ketbra
 Produces a projector onto the basis state `i` in dimension `d`.
 """
 function proj(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
-    p = LA.Hermitian(zeros(T, d, d))
+    p = Hermitian(zeros(T, d, d))
     p[i, i] = 1
     return p
 end
 proj(i::Integer, d::Integer = 2) = proj(Bool, i, d)
 export proj
 
-const Measurement{T} = Vector{LA.Hermitian{T,Matrix{T}}}
+const Measurement{T} = Vector{Hermitian{T,Matrix{T}}}
 export Measurement
 
 """
@@ -54,7 +54,7 @@ Converts a set of measurements in the common tensor format into a matrix of matr
 The second argument is fixed by the size of `A` but can also contain custom number of outcomes.
 """
 function povm(Aax::Array{T,4}, n::Vector{Int64} = fill(size(Aax, 3), size(Aax, 4))) where {T}
-    return [[LA.Hermitian(Aax[:, :, a, x]) for a in 1:n[x]] for x in 1:size(Aax, 4)]
+    return [[Hermitian(Aax[:, :, a, x]) for a in 1:n[x]] for x in 1:size(Aax, 4)]
 end
 
 function _measurements_parameters(Axa::Vector{Measurement{T}}) where {T<:Number}
@@ -74,11 +74,11 @@ end
 Checks if the measurement defined by A is valid (hermitian, semi-definite positive, and normalized).
 """
 function test_povm(E::Vector{<:AbstractMatrix{T}}) where {T<:Number}
-    !all(LA.ishermitian.(E)) && return false
+    !all(ishermitian.(E)) && return false
     d = size(E[1], 1)
-    !(sum(E) ≈ LA.I(d)) && return false
+    !(sum(E) ≈ I(d)) && return false
     for i = 1:length(E)
-        minimum(LA.eigvals(E[i])) < -_rtol(T) && return false
+        minimum(eigvals(E[i])) < -_rtol(T) && return false
     end
     return true
 end
@@ -125,7 +125,7 @@ function clock(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
             z[i+1] = ω^exponent
         end
     end
-    return LA.Diagonal(z)
+    return Diagonal(z)
 end
 clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
@@ -272,16 +272,16 @@ function _cleanup!(M; tol)
 end
 
 function applykraus(K, M)
-    return sum(LA.Hermitian(Ki * M * Ki') for Ki in K)
+    return sum(Hermitian(Ki * M * Ki') for Ki in K)
 end
 export applykraus
 
 function _orthonormal_range_svd!(
     A::AbstractMatrix{T};
     tol::Union{Real,Nothing} = nothing,
-    alg = LA.default_svd_alg(A)
+    alg = LinearAlgebra.default_svd_alg(A)
 ) where {T<:Number}
-    dec = LA.svd!(A; alg = alg)
+    dec = svd!(A; alg = alg)
     tol = isnothing(tol) ? maximum(dec.S) * _eps(T) * minimum(size(A)) : tol
     rank = sum(dec.S .> tol)
     dec.U[:, 1:rank]
@@ -291,9 +291,9 @@ _orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real,Nothing} = nothing) =
     _orthonormal_range_svd!(deepcopy(A); tol = tol)
 
 function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,Nothing} = nothing) where {T<:Number,M}
-    dec = LA.qr(A)
+    dec = qr(A)
     tol = isnothing(tol) ? maximum(abs.(dec.R)) * _eps(T) : tol
-    rank = sum(abs.(LA.Diagonal(dec.R)) .> tol)
+    rank = sum(abs.(Diagonal(dec.R)) .> tol)
     SA.sparse(@view dec.Q[dec.rpivinv, 1:rank])
 end
 
@@ -349,7 +349,7 @@ symmetric_projection(dim::Integer, n::Integer; partial::Bool = true) = symmetric
     n_parties::Integer;
     sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
     sparse::Bool = true,
-    eye::AbstractMatrix = LA.I(size(sb[1], 1))
+    eye::AbstractMatrix = I(size(sb[1], 1))
 
 Return the basis of `n` nontrivial operators acting on `n_parties`, by default using Pauli matrices.
 
@@ -367,7 +367,7 @@ function n_body_basis(
     n_parties::Integer;
     sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
     sparse::Bool = true,
-    eye::AbstractMatrix = LA.I(size(sb[1], 1))
+    eye::AbstractMatrix = I(size(sb[1], 1))
 )
     (n >= 0 && n_parties >= 2) || throw(ArgumentError("Number of parties must be ≥ 2 and n ≥ 0."))
     n <= n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))

@@ -15,8 +15,8 @@ function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ and σ must be square."))
     end
-    ρ_λ, ρ_U = LA.eigen(ρ)
-    σ_λ, σ_U = LA.eigen(σ)
+    ρ_λ, ρ_U = eigen(ρ)
+    σ_λ, σ_U = eigen(σ)
     if any(ρ_λ .< -Base.rtoldefault(R)) || any(σ_λ .< -Base.rtoldefault(R))
         throw(ArgumentError("ρ and σ must be positive semidefinite."))
     end
@@ -77,7 +77,7 @@ function entropy(base::Real, ρ::AbstractMatrix)
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ must be square."))
     end
-    λ = LA.eigvals(ρ)
+    λ = eigvals(ρ)
     if any(λ .< -Base.rtoldefault(eltype(λ)))
         throw(ArgumentError("ρ must be positive semidefinite."))
     end
