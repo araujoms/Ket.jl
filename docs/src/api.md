@@ -65,6 +65,7 @@ incompatibility_robustness_depolarizing
 ```@docs
 chsh
 cglmp
+inn22
 local_bound
 tsirelson_bound
 correlation_tensor
