@@ -57,7 +57,7 @@ export cglmp
 
 inn22 Bell functional in Collins-Gisin notation. Local bound 1.
 
-Reference: Śliwa [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
+Reference: Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
 """
 function inn22(::Type{T}, n) where {T}
 	C = zeros(T, n+1,n+1)

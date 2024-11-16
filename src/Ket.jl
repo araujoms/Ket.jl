@@ -21,5 +21,6 @@ include("norms.jl")
 include("multilinear.jl")
 include("supermaps.jl")
 include("entanglement.jl")
+include("seesaw.jl")
 
 end # module Ket
