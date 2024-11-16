@@ -32,7 +32,7 @@ CGLMP nonlocal game in full probability notation. If `T` is an integer type the 
 
 References: [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) for the original game, and [arXiv:2005.13418](https://arxiv.org/abs/2005.13418) for the form presented here.
 """
-function cglmp(::Type{T}, d::Integer) where {T}
+function cglmp(::Type{T}, d::Integer = 3) where {T}
     G = zeros(T, d, d, 2, 2)
 
     if T <: Integer
@@ -49,7 +49,7 @@ function cglmp(::Type{T}, d::Integer) where {T}
 
     return G
 end
-cglmp(d::Integer) = cglmp(Float64, d)
+cglmp(d::Integer = 3) = cglmp(Float64, d)
 export cglmp
 
 """
