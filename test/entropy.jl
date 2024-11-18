@@ -2,8 +2,8 @@
     @testset "von Neumann" begin
         @test binary_entropy(0) == 0
         @test binary_entropy(1) == 0
-        @test entropy([0.0, 1]) == 0
-        @test entropy([1.0, 0]) == 0
+        @test entropy([0.0, 1.0]) == 0
+        @test entropy([1.0, 0.0]) == 0
         for R in [Float64, Double64, Float128, BigFloat]
             ρ = random_state(Complex{R}, 3, 2)
             @test isa(entropy(ρ), R)
@@ -24,16 +24,16 @@
             ρ = random_state(Complex{R}, 3, 2)
             σ = random_state(Complex{R}, 3)
             @test relative_entropy(ρ, σ) ≈ relative_entropy(ℯ, ρ, σ) / log(R(2))
-            id = Hermitian(Matrix(I(3)))
+            id = Hermitian(Complex{R}.(I(3)))
             @test relative_entropy(ρ, id) ≈ -entropy(ρ)
-            U = random_unitary(4)
+            U = random_unitary(Complex{R}, 4)
             ρ2 = Hermitian(U * [ρ zeros(3, 1); zeros(1, 3) 0] * U')
             σ2 = Hermitian(U * [σ zeros(3, 1); zeros(1, 3) 0] * U')
             @test relative_entropy(ρ, σ) ≈ relative_entropy(ρ2, σ2) atol = 1e-8 rtol = sqrt(Base.rtoldefault(R))
             p = rand(R)
             q = rand(R)
             @test binary_relative_entropy(p, q) ≈ binary_relative_entropy(ℯ, p, q) / log(R(2))
-            @test binary_relative_entropy(1, q) ≈ -log(2, q)
+            @test binary_relative_entropy(R(1), q) ≈ -log(2, q)
         end
     end
 
