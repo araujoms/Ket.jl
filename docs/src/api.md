@@ -72,6 +72,7 @@ seesaw
 correlation_tensor
 probability_tensor
 fp2cg
+cg2fp
 ```
 
 ## Norms
