@@ -19,4 +19,8 @@ end
     Aax = povm(mub(2))
     @test correlation_tensor(state_phiplus(), Aax, 2) ≈ Diagonal([1, 1, -1, 1])
     @test correlation_tensor(state_phiplus(), Aax, 2; marg = false) ≈ Diagonal([1, 1, -1])
+    scenario = [2,3,4,5]
+    cg = randn(scenario[3]*(scenario[1]-1) + 1, scenario[4]*(scenario[2]-1) + 1)
+    @test fp2cg(cg2fp(cg,scenario)) ≈ cg
+    @test fp2cg(cg2fp(cg,scenario,true),true) ≈ cg
 end
