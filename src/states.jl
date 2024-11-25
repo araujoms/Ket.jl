@@ -31,7 +31,7 @@ export white_noise!
 
 Produces the vector of the maximally entangled state Φ⁺ of local dimension `d`.
 """
-function state_phiplus_ket(::Type{T}, d::Integer = 2; kwargs...) where {T<:Number}
+function state_phiplus_ket(::Type{T}, d::Integer = 2; kwargs...) where {T <: Number}
     return state_ghz_ket(T, d, 2; kwargs...)
 end
 state_phiplus_ket(d::Integer = 2; kwargs...) = state_phiplus_ket(ComplexF64, d; kwargs...)
@@ -42,7 +42,7 @@ export state_phiplus_ket
 
 Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
 """
-function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
+function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T <: Number}
     rho = ketbra(state_phiplus_ket(T, d; coeff = one(T)))
     parent(rho) ./= d
     return white_noise!(rho, v)
@@ -55,9 +55,9 @@ export state_phiplus
 
 Produces the vector of the maximally entangled state ψ⁻ of local dimension `d`.
 """
-function state_psiminus_ket(::Type{T}, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T<:Number}
+function state_psiminus_ket(::Type{T}, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T <: Number}
     psi = zeros(T, d^2)
-    psi[d.+(d-1)*(0:d-1)] .= (-1) .^ (0:d-1) .* coeff
+    psi[d .+ (d - 1) * (0:(d - 1))] .= (-1) .^ (0:(d - 1)) .* coeff
     return psi
 end
 state_psiminus_ket(d::Integer = 2; kwargs...) = state_psiminus_ket(ComplexF64, d; kwargs...)
@@ -68,7 +68,7 @@ export state_psiminus_ket
 
 Produces the maximally entangled state ψ⁻ of local dimension `d` with visibility `v`.
 """
-function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
+function state_psiminus(::Type{T}, d::Integer = 2; v::Real = 1) where {T <: Number}
     rho = ketbra(state_psiminus_ket(T, d; coeff = one(T)))
     parent(rho) ./= d
     return white_noise!(rho, v)
@@ -81,10 +81,10 @@ export state_psiminus
 
 Produces the vector of the GHZ state local dimension `d`.
 """
-function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3; coeff = inv(_sqrt(T, d))) where {T<:Number}
+function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3; coeff = inv(_sqrt(T, d))) where {T <: Number}
     psi = zeros(T, d^N)
     spacing = (1 - d^N) ÷ (1 - d)
-    psi[1:spacing:d^N] .= coeff
+    psi[1:spacing:(d^N)] .= coeff
     return psi
 end
 state_ghz_ket(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz_ket(ComplexF64, d, N; kwargs...)
@@ -95,7 +95,7 @@ export state_ghz_ket
 
 Produces the GHZ state of local dimension `d` with visibility `v`.
 """
-function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
+function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwargs...) where {T <: Number}
     return white_noise!(ketbra(state_ghz_ket(T, d, N; kwargs...)), v)
 end
 state_ghz(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz(ComplexF64, d, N; kwargs...)
@@ -106,9 +106,9 @@ export state_ghz
 
 Produces the vector of the `N`-partite W state.
 """
-function state_w_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, N))) where {T<:Number}
+function state_w_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, N))) where {T <: Number}
     psi = zeros(T, 2^N)
-    psi[2 .^ (0:N-1).+1] .= coeff
+    psi[2 .^ (0:(N - 1)) .+ 1] .= coeff
     return psi
 end
 state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)
@@ -119,7 +119,7 @@ export state_w_ket
 
 Produces the `N`-partite W state with visibility `v`.
 """
-function state_w(::Type{T}, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
+function state_w(::Type{T}, N::Integer = 3; v::Real = 1, kwargs...) where {T <: Number}
     return white_noise!(ketbra(state_w_ket(T, N; kwargs...)), v)
 end
 state_w(N::Integer = 3; kwargs...) = state_w(ComplexF64, N; kwargs...)
@@ -130,7 +130,7 @@ export state_w
 
 Produces the isotropic state of local dimension `d` with visibility `v`.
 """
-function isotropic(v::T, d::Integer = 2) where {T<:Real}
+function isotropic(v::T, d::Integer = 2) where {T <: Real}
     return state_phiplus(T, d; v)
 end
 export isotropic
@@ -142,7 +142,7 @@ Produces the vector of the `N`-partite `N`-level singlet state.
 
 Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
-function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T<:Number}
+function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T <: Number}
     psi = zeros(T, N^N)
     for per in Combinatorics.permutations(1:N)
         tmp = kron(ket.((T,), per, (N,))...)
@@ -169,11 +169,10 @@ This state is invariant under simultaneous rotations on all parties: `(U⊗…�
 
 Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
-function state_super_singlet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Number}
+function state_super_singlet(::Type{T}, N::Integer = 3; v::Real = 1) where {T <: Number}
     rho = ketbra(state_super_singlet_ket(T, N; coeff = one(T)))
     parent(rho) ./= factorial(N)
     return white_noise!(rho, v)
 end
 state_super_singlet(N::Integer = 3; kwargs...) = state_super_singlet(ComplexF64, N; kwargs...)
 export state_super_singlet
-

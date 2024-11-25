@@ -29,7 +29,7 @@
             U = random_unitary(Complex{R}, 4)
             ρ2 = Hermitian(U * [ρ zeros(3, 1); zeros(1, 3) 0] * U')
             σ2 = Hermitian(U * [σ zeros(3, 1); zeros(1, 3) 0] * U')
-            @test relative_entropy(ρ, σ) ≈ relative_entropy(ρ2, σ2) atol = 1e-8 rtol = sqrt(Base.rtoldefault(R))
+            @test relative_entropy(ρ, σ) ≈ relative_entropy(ρ2, σ2) atol = 1.0e-8 rtol = sqrt(Base.rtoldefault(R))
             p = rand(R)
             q = rand(R)
             @test binary_relative_entropy(p, q) ≈ binary_relative_entropy(ℯ, p, q) / log(R(2))

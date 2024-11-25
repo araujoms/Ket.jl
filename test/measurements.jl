@@ -3,10 +3,10 @@
         for T in [Float64, Double64, Float128, BigFloat]
             E = random_povm(Complex{T}, 2, 3)
             V = dilate_povm(E)
-            @test [V' * kron(I(2), proj(i, 3)) * V for i = 1:3] ≈ E
+            @test [V' * kron(I(2), proj(i, 3)) * V for i in 1:3] ≈ E
             e = sic_povm(Complex{T}, 2)
             V = dilate_povm(e)
-            @test [V' * proj(i, 4) * V for i = 1:4] ≈ [ketbra(e[i]) for i = 1:4]
+            @test [V' * proj(i, 4) * V for i in 1:4] ≈ [ketbra(e[i]) for i in 1:4]
         end
     end
     @testset "SIC POVMs" begin
