@@ -5,6 +5,7 @@
         ψ = random_state_ket(3)
         @test isa(ψ, Vector{ComplexF64})
         for R in [Float64, Double64, Float128, BigFloat]
+            Random.seed!(1337) #make ranks behave
             ψ = random_state_ket(R, 3)
             @test ψ' * ψ ≈ 1
             @test isa(ψ, Vector{R})
@@ -23,7 +24,7 @@
             ψ = random_state_ket(T, 3)
             @test ψ' * ψ ≈ 1
             @test isa(ψ, Vector{T})
-            ρ = random_state(R, 3)
+            ρ = random_state(T, 3)
             @test tr(ρ) ≈ 1
             @test rank(ρ; rtol = Ket._rtol(R)) == 3
             ρ = random_state(T, 3, 2)
