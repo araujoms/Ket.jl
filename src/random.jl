@@ -1,5 +1,5 @@
 #often we don't actually need the variance of the normal variables to be 1, so we don't need to waste time diving everything by sqrt(2)
-_randn(::Type{Complex{T}}) where {T<:AbstractFloat} = Complex{T}(randn(T), randn(T))
+_randn(::Type{Complex{T}}) where {T <: AbstractFloat} = Complex{T}(randn(T), randn(T))
 _randn(::Type{T}) where {T} = randn(T)
 _randn(::Type{T}, dim1::Integer, dims::Integer...) where {T} = _randn!(Array{T}(undef, dim1, dims...))
 function _randn!(A::AbstractArray{T}) where {T}
@@ -48,16 +48,16 @@ If `T` is a real type the output is instead a Haar-random (real) orthogonal matr
 
 Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
 """
-function random_unitary(::Type{T}, d::Integer) where {T<:Number}
+function random_unitary(::Type{T}, d::Integer) where {T <: Number}
     z = Matrix{T}(undef, d, d)
-    @inbounds for j = 1:d
-        for i = j:d
+    @inbounds for j in 1:d
+        for i in j:d
             z[i, j] = _randn(T)
         end
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
-    @inbounds for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
+    @inbounds for k in 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
         @views x = z[k:d, k]
         τ[k] = LinearAlgebra.reflector!(x)
         s[k] = sign(real(x[1]))
@@ -75,17 +75,17 @@ Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k, d)`.
 
 Reference: Heinosaari et al., [arXiv:1902.04751](https://arxiv.org/abs/1902.04751).
 """
-function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T<:Number}
-    d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n*k)"))
-    E = [Matrix{T}(undef, (d, d)) for _ = 1:n]
-    for i = 1:n
+function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T <: Number}
+    d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n * k)"))
+    E = [Matrix{T}(undef, (d, d)) for _ in 1:n]
+    for i in 1:n
         G = randn(T, (d, k))
         mul!(E[i], G, G')
     end
     S = sum(E)
     rootinvS = Hermitian(S)^-0.5 #don't worry, the probability of getting a singular S is zero
     mat = Matrix{T}(undef, (d, d))
-    for i = 1:n
+    for i in 1:n
         mul!(mat, rootinvS, E[i])
         mul!(E[i], mat, rootinvS)
     end

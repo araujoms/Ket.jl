@@ -11,9 +11,9 @@ end
 
 function _tidx!(tidx::AbstractVector{<:Integer}, idx::Integer, dims::Vector{<:Integer})
     nsys = length(dims)
-    cidx = idx - 1          # Current index 
+    cidx = idx - 1          # Current index
     dr = prod(dims)
-    for k = 1:nsys
+    for k in 1:nsys
         # Everytime you increase a tensor index you shift by the product of remaining dimensions
         dr ÷= dims[k]
         tidx[k] = (cidx ÷ dr) + 1
@@ -48,28 +48,28 @@ for (T, limit, wrapper) in
     [(:AbstractMatrix, :dY, :identity), (:(Hermitian), :j, :(Hermitian)), (:(Symmetric), :j, :(Symmetric))]
     @eval begin
         function partial_trace(
-            X::$T,
-            remove::AbstractVector{<:Integer},
-            dims::AbstractVector{<:Integer} = _equal_sizes(X)
-        )
+                X::$T,
+                remove::AbstractVector{<:Integer},
+                dims::AbstractVector{<:Integer} = _equal_sizes(X)
+            )
             isempty(remove) && return X
             length(remove) == length(dims) && return fill(tr(X), 1, 1)
 
-            keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept 
+            keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept
             counter = 0
-            for i = 1:length(dims)
+            for i in 1:length(dims)
                 if !(i in remove)
                     counter += 1
                     keep[counter] = i
                 end
             end
-            dimsY = dims[keep]                      # The tensor dimensions of Y 
+            dimsY = dims[keep]                      # The tensor dimensions of Y
             dimsR = dims[remove]                          # The tensor dimensions of the traced out systems
             dY = prod(dimsY)                           # Dimension of Y
             dR = prod(dimsR)                           # Dimension of system traced out
 
             Y = similar(X, (dY, dY))       # Final output Y
-            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column 
+            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
             tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
 
             @views tXikeep = tXi[keep]
@@ -78,16 +78,16 @@ for (T, limit, wrapper) in
             @views tXjremove = tXj[remove]
 
             # We loop through Y and find the corresponding element
-            @inbounds for j = 1:dY
+            @inbounds for j in 1:dY
                 # Find current column tensor index for Y
                 _tidx!(tXjkeep, j, dimsY)
-                for i = 1:$limit
+                for i in 1:$limit
                     # Find current row tensor index for Y
                     _tidx!(tXikeep, i, dimsY)
 
-                    # Now loop through the diagonal of the traced out systems 
+                    # Now loop through the diagonal of the traced out systems
                     Y[i, j] = 0
-                    for k = 1:dR
+                    for k in 1:dR
                         _tidx!(tXiremove, k, dimsR)
                         _tidx!(tXjremove, k, dimsR)
 
@@ -128,16 +128,16 @@ for (T, wrapper) in
     [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
     @eval begin
         function partial_transpose(
-            X::$T,
-            transp::AbstractVector{<:Integer},
-            dims::AbstractVector{<:Integer} = _equal_sizes(X)
-        )
+                X::$T,
+                transp::AbstractVector{<:Integer},
+                dims::AbstractVector{<:Integer} = _equal_sizes(X)
+            )
             isempty(transp) && return X
             length(transp) == length(dims) && return transpose(X)
 
-            keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept 
+            keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept
             counter = 0
-            for i = 1:length(dims)
+            for i in 1:length(dims)
                 if !(i in transp)
                     counter += 1
                     keep[counter] = i
@@ -147,15 +147,15 @@ for (T, wrapper) in
             d = size(X, 1)                              # Dimension of the final output Y
             Y = similar(X, (d, d))                      # Final output Y
 
-            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row 
+            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
             tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
 
-            tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row 
+            tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row
             tYj = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for column
 
             @inbounds for j in 1:d
                 _tidx!(tYj, j, dims)
-                for i in 1:j-1
+                for i in 1:(j - 1)
                     _tidx!(tYi, i, dims)
 
                     for k in keep
@@ -228,10 +228,10 @@ end
 Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
 function permute_systems!(
-    X::AbstractVector{T},
-    perm::AbstractVector{<:Integer},
-    dims::AbstractVector{<:Integer} = _equal_sizes(X)
-) where {T}
+        X::AbstractVector{T},
+        perm::AbstractVector{<:Integer},
+        dims::AbstractVector{<:Integer} = _equal_sizes(X)
+    ) where {T}
     perm == 1:length(perm) && return X
     X == 1:length(X) && return _idxperm!(X, perm, dims)
 
@@ -242,10 +242,10 @@ end
 export permute_systems!
 
 @doc """
-     permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
+    permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
- Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
- """ permute_systems(
+Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+""" permute_systems(
     X::AbstractMatrix,
     perm::AbstractVector,
     dims::AbstractVector = _equal_sizes(X);
@@ -255,11 +255,11 @@ for (T, wrapper) in
     [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
     @eval begin
         function permute_systems(
-            X::$T,
-            perm::AbstractVector{<:Integer},
-            dims::AbstractVector{<:Integer} = _equal_sizes(X);
-            rows_only::Bool = false
-        )
+                X::$T,
+                perm::AbstractVector{<:Integer},
+                dims::AbstractVector{<:Integer} = _equal_sizes(X);
+                rows_only::Bool = false
+            )
             perm == 1:length(perm) && return X
 
             p = _idxperm(perm, dims)
@@ -272,7 +272,7 @@ end
     permute_systems(X::AbstractMatrix, perm::Vector, dims::Matrix)
 
 Permutes the order of the subsystems of the matrix `X`, which is composed by subsystems of dimensions `dims`, according to the permutation `perm`.
-`dims` should be a n x 2 matrix where `dims[i, 1]` is the number of rows of subsystem i, and `dims[i,2]` is its number of columns. 
+`dims` should be a n x 2 matrix where `dims[i, 1]` is the number of rows of subsystem i, and `dims[i,2]` is its number of columns.
 """
 function permute_systems(X::AbstractMatrix, perm::AbstractVector{<:Integer}, dims::Matrix{<:Integer})
     perm == 1:length(perm) && return X
@@ -290,10 +290,10 @@ Unitary that permutes subsystems of dimension `dims` according to the permutatio
 If `dims` is an Integer, assumes there are `length(perm)` subsystems of equal dimensions `dims`.
 """
 function permutation_matrix(
-    dims::Union{Integer,AbstractVector{<:Integer}},
-    perm::AbstractVector{<:Integer};
-    is_sparse::Bool = true
-)
+        dims::Union{Integer, AbstractVector{<:Integer}},
+        perm::AbstractVector{<:Integer};
+        is_sparse::Bool = true
+    )
     dims = dims isa Integer ? fill(dims, length(perm)) : dims
     d = prod(dims)
     id = is_sparse ? SA.sparse(I, (d, d)) : I(d)

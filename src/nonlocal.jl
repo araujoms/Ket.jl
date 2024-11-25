@@ -6,7 +6,7 @@ as a 4-dimensional array.
 
 Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
 """
-function local_bound(G::Array{T,4}) where {T<:Real}
+function local_bound(G::Array{T, 4}) where {T <: Real}
     oa, ob, ia, ib = size(G)
 
     if oa^ia < ob^ib
@@ -17,7 +17,7 @@ function local_bound(G::Array{T,4}) where {T<:Real}
 
     G = permutedims(G, (1, 3, 2, 4))
     squareG = reshape(G, oa * ia, ob * ib)
-    offset = Vector(1 .+ ob * (0:ib-1))
+    offset = Vector(1 .+ ob * (0:(ib - 1)))
     @views initial_score = sum(maximum(reshape(sum(squareG[:, offset]; dims = 2), oa, ia); dims = 1)) #compute initial_score for the all-zeros strategy to serve as a reference point
 
     chunks = _partition(ob^ib - 1, Threads.nthreads())
@@ -30,14 +30,14 @@ function local_bound(G::Array{T,4}) where {T<:Real}
 end
 export local_bound
 
-function _local_bound_single(initial_score::T, chunk, sizeG, offset, squareG::Array{T,2}) where {T}
+function _local_bound_single(initial_score::T, chunk, sizeG, offset, squareG::Array{T, 2}) where {T}
     oa, ob, ia, ib = sizeG
     score = initial_score
     ind = digits(chunk[1]; base = ob, pad = ib)
     offset_ind = zeros(Int64, ib)
     Galice = zeros(T, oa * ia, 1)
     maxvec = zeros(T, 1, ia)
-    for b = chunk[1]:chunk[2]
+    for b in chunk[1]:chunk[2]
         offset_ind .= ind .+ offset
         @views sum!(Galice, squareG[:, offset_ind])
         squareGalice = Base.ReshapedArray(Galice, (oa, ia), ())
@@ -55,9 +55,9 @@ end
 If `n ≥ k` partitions the set `1:n` into `k` parts as equally sized as possible.
 Otherwise partitions it into `n` parts of size 1.
 """
-function _partition(n::T, k::T) where {T<:Integer}
+function _partition(n::T, k::T) where {T <: Integer}
     num_parts = min(k, n)
-    parts = Vector{Tuple{T,T}}(undef, num_parts)
+    parts = Vector{Tuple{T, T}}(undef, num_parts)
     base_size = div(n, k)
     num_larger = rem(n, k)
     if num_larger > 0
@@ -67,17 +67,17 @@ function _partition(n::T, k::T) where {T<:Integer}
     end
     i = 2
     while i ≤ num_larger
-        parts[i] = (1, base_size + 1) .+ parts[i-1][2]
+        parts[i] = (1, base_size + 1) .+ parts[i - 1][2]
         i += 1
     end
     while i ≤ num_parts
-        parts[i] = (1, base_size) .+ parts[i-1][2]
+        parts[i] = (1, base_size) .+ parts[i - 1][2]
         i += 1
     end
     return parts
 end
 
-#copied from QETLAB
+# copied from QETLAB
 function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
     # Start by increasing the last index by 1.
     ind_len = length(ind)
@@ -86,13 +86,13 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
     # Now we work the "odometer": repeatedly set each digit to 0 if it
     # is too high and carry the addition to the left until we hit a
     # digit that *isn't* too high.
-    for j = ind_len:-1:1
+    for j in ind_len:-1:1
         # If we've hit the upper limit in this entry, move onto the next
         # entry.
         if ind[j] ≥ upper_lim
             ind[j] = 0
             if j ≥ 2
-                ind[j-1] += 1
+                ind[j - 1] += 1
             else # we're at the left end of the vector; just stop
                 return
             end
@@ -122,7 +122,7 @@ export tsirelson_bound
 Takes a bipartite Bell functional `V` in full probability notation and transforms it
 to Collins-Gisin notation. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function fp2cg(V::AbstractArray{T,4}, behaviour::Bool = false) where {T}
+function fp2cg(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = size(V)
     alice_pars = ia * (oa - 1) + 1
     bob_pars = ib * (ob - 1) + 1
@@ -133,25 +133,25 @@ function fp2cg(V::AbstractArray{T,4}, behaviour::Bool = false) where {T}
 
     if ~behaviour
         CG[1, 1] = sum(V[oa, ob, :, :])
-        for a = 1:oa-1, x = 1:ia
+        for a in 1:(oa - 1), x in 1:ia
             CG[aindex(a, x), 1] = sum(V[a, ob, x, :] - V[oa, ob, x, :])
         end
-        for b = 1:ob-1, y = 1:ib
+        for b in 1:(ob - 1), y in 1:ib
             CG[1, bindex(b, y)] = sum(V[oa, b, :, y] - V[oa, ob, :, y])
         end
-        for a = 1:oa-1, b = 1:ob-1, x = 1:ia, y = 1:ib
+        for a in 1:(oa - 1), b in 1:(ob - 1), x in 1:ia, y in 1:ib
             CG[aindex(a, x), bindex(b, y)] = V[a, b, x, y] - V[a, ob, x, y] - V[oa, b, x, y] + V[oa, ob, x, y]
         end
     else
         CG[1, 1] = sum(V) / (ia * ib)
-        for x = 1:ia, a = 1:oa-1
-            CG[aindex(a, x), 1] = sum(V[a, b, x, y] for b = 1:ob, y = 1:ib) / ib
+        for x in 1:ia, a in 1:(oa - 1)
+            CG[aindex(a, x), 1] = sum(V[a, b, x, y] for b in 1:ob, y in 1:ib) / ib
         end
-        for y = 1:ib, b = 1:ob-1
-            CG[1, bindex(b, y)] = sum(V[a, b, x, y] for a = 1:oa, x = 1:ia) / ia
+        for y in 1:ib, b in 1:(ob - 1)
+            CG[1, bindex(b, y)] = sum(V[a, b, x, y] for a in 1:oa, x in 1:ia) / ia
         end
-        for x = 1:ia, y = 1:ib
-            CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)] = V[1:oa-1, 1:ob-1, x, y]
+        for x in 1:ia, y in 1:ib
+            CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)] = V[1:(oa - 1), 1:(ob - 1), x, y]
         end
     end
     return CG
@@ -169,19 +169,19 @@ function cg2fp(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = fal
     aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
     bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
 
-    V = Array{T,4}(undef, (oa, ob, ia, ib))
+    V = Array{T, 4}(undef, (oa, ob, ia, ib))
 
     if ~behaviour
-        for x = 1:ia, y = 1:ib
+        for x in 1:ia, y in 1:ib
             V[oa, ob, x, y] = CG[1, 1] / (ia * ib)
         end
-        for x = 1:ia, y = 1:ib, b = 1:ob-1
+        for x in 1:ia, y in 1:ib, b in 1:(ob - 1)
             V[oa, b, x, y] = CG[1, 1] / (ia * ib) + CG[1, bindex(b, y)] / ia
         end
-        for x = 1:ia, y = 1:ib, a = 1:oa-1
+        for x in 1:ia, y in 1:ib, a in 1:(oa - 1)
             V[a, ob, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib
         end
-        for x = 1:ia, y = 1:ib, a = 1:oa-1, b = 1:ob-1
+        for x in 1:ia, y in 1:ib, a in 1:(oa - 1), b in 1:(ob - 1)
             V[a, b, x, y] =
                 CG[1, 1] / (ia * ib) +
                 CG[aindex(a, x), 1] / ib +
@@ -189,12 +189,12 @@ function cg2fp(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = fal
                 CG[aindex(a, x), bindex(b, y)]
         end
     else
-        for x = 1:ia, y = 1:ib
-            V[1:oa-1, 1:ob-1, x, y] = CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]
-            V[1:oa-1, ob, x, y] =
+        for x in 1:ia, y in 1:ib
+            V[1:(oa - 1), 1:(ob - 1), x, y] = CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]
+            V[1:(oa - 1), ob, x, y] =
                 CG[aindex(1, x):aindex(oa - 1, x), 1] -
                 sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 2)
-            V[oa, 1:ob-1, x, y] =
+            V[oa, 1:(ob - 1), x, y] =
                 CG[1, bindex(1, y):bindex(ob - 1, y)] -
                 vec(sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 1))
             V[oa, ob, x, y] =
@@ -213,10 +213,10 @@ export cg2fp
 Applies N sets of measurements onto a state `rho` to form a probability array.
 """
 function probability_tensor(
-    rho::Hermitian{T1,Matrix{T1}},
-    first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
-    other_Aax::Vector{Measurement{T2}}...
-) where {T1,T2}
+        rho::Hermitian{T1, Matrix{T1}},
+        first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
+        other_Aax::Vector{Measurement{T2}}...
+    ) where {T1, T2}
     T = real(promote_type(T1, T2))
     all_Aax = (first_Aax, other_Aax...)
     N = length(all_Aax)
@@ -267,10 +267,10 @@ Convert a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
 """
-function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T} where {N2}
+function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
-    m = size(p)[N+1:end] # numbers of inputs per party
+    m = size(p)[(N + 1):end] # numbers of inputs per party
     o = size(p)[1:N] # numbers of outputs per party
     @assert collect(o) == 2ones(Int64, N)
     res = zeros(T, (marg ? m .+ 1 : m)...)

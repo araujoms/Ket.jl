@@ -7,7 +7,7 @@ end
 
 """
     schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
-    
+
 Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`. If the argument `dims` is omitted equally-sized subsystems are assumed. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
 
 Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
@@ -62,7 +62,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
 
     JuMP.@variable(model, h)
     JuMP.@objective(model, Min, h / log(Rs(2)))
-    JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs,Ts}(1 + 2 * vec_dim))
+    JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs, Ts}(1 + 2 * vec_dim))
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_silent(model)
     JuMP.optimize!(model)
@@ -98,8 +98,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     R = typeof(h)
     λ, U = eigen(σ)
     g = zeros(R, 4, 4)
-    for j = 1:4
-        for i = 1:j-1
+    for j in 1:4
+        for i in 1:(j - 1)
             g[i, j] = (λ[i] - λ[j]) / log(λ[i] / λ[j])
         end
         g[j, j] = λ[j]
@@ -109,8 +109,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     λ2, U2 = eigen(σT)
     phi = partial_transpose(ketbra(U2[:, 1]), 2, [2, 2])
     G = zero(U)
-    for i = 1:4
-        for j = 1:4
+    for i in 1:4
+        for j in 1:4
             G += g[i, j] * ketbra(U[:, i]) * phi * ketbra(U[:, j])
         end
     end
@@ -138,21 +138,21 @@ If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number `
 a PSD matrix ``ω`` in the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
 such that ``ω / s`` is separable  against ``AA′|B′B`` and ``Π† ω Π = ρ``, where ``Π = 1_A ⊗ s ψ^+ ⊗ 1_B``,
 and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is tested with the DPS hierarchy,
-with `n` controlling the how many copies of the ``B′B`` subsystem are used. 
+with `n` controlling the how many copies of the ``B′B`` subsystem are used.
 
 References:
     Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)\
-    Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
+Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
 """
 function schmidt_number(
-    ρ::AbstractMatrix{T},
-    s::Integer = 2,
-    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
-    n::Integer = 1;
-    ppt::Bool = true,
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T<:Number}
+        ρ::AbstractMatrix{T},
+        s::Integer = 2,
+        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+        n::Integer = 1;
+        ppt::Bool = true,
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)}
+    ) where {T <: Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
@@ -198,13 +198,13 @@ export schmidt_number
 Lower bounds the random robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `ppt` indicates whether to include the partial transposition constraints.
 """
 function random_robustness(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
-    n::Integer = 1;
-    ppt::Bool = true,
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T<:Number}
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+        n::Integer = 1;
+        ppt::Bool = true,
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)}
+    ) where {T <: Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     is_complex = (T <: Complex)
@@ -240,14 +240,14 @@ References:
     Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
 """
 function _dps_constraints!(
-    model::JuMP.GenericModel{T},
-    ρ::AbstractMatrix,
-    dims::AbstractVector{<:Integer},
-    n::Integer;
-    ppt::Bool = true,
-    is_complex::Bool = true,
-    isometry::AbstractMatrix = I(size(ρ, 1))
-) where {T}
+        model::JuMP.GenericModel{T},
+        ρ::AbstractMatrix,
+        dims::AbstractVector{<:Integer},
+        n::Integer;
+        ppt::Bool = true,
+        is_complex::Bool = true,
+        isometry::AbstractMatrix = I(size(ρ, 1))
+    ) where {T}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     dA, dB = dims
@@ -267,11 +267,11 @@ function _dps_constraints!(
 
     JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
     lifted = wrapper(V * symmetric_meat * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
+    JuMP.@expression(model, reduced, partial_trace(lifted, 3:(n + 1), ext_dims))
     JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt
-        for i in 2:n+1
+        for i in 2:(n + 1)
             JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) in psd_cone)
         end
     end
@@ -282,7 +282,7 @@ function _fully_decomposable_witness_constraints!(model, dims, W)
     biparts = Combinatorics.partitions(1:nparties, 2)
     dim = prod(dims)
 
-    Ps = [JuMP.@variable(model, [1:dim,1:dim] in JuMP.HermitianPSDCone()) for _ in 1:length(biparts)]
+    Ps = [JuMP.@variable(model, [1:dim, 1:dim] in JuMP.HermitianPSDCone()) for _ in 1:length(biparts)]
 
     JuMP.@constraint(model, tr(W) == 1)
     # this can be used instead of tr(W) = 1 if we want a GME entanglement quantifier (see ref.)
@@ -319,17 +319,17 @@ with the PPT criterion. If the state is a PPT mixture, returns a 0 matrix instea
 Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer};
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T <: Number}
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer};
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)}
+    ) where {T <: Number}
     dim = size(ρ, 1)
     prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
-    JuMP.@variable(model, W[1:dim,1:dim], Hermitian)
+    JuMP.@variable(model, W[1:dim, 1:dim], Hermitian)
 
     _fully_decomposable_witness_constraints!(model, dims, W)
     _min_dotprod!(model, ρ, W, solver, verbose)
@@ -356,7 +356,7 @@ defining such a witness.
 
 More precisely, if a list of observables ``O_i`` is provided in the parameter `obs`, the witness will be of the form
 ``∑_i α_i O_i`` and detects ρ only using these observables. For example, using only two-body operators (and lower order)
-one can call 
+one can call
 
 ```julia-repl
 julia> two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:2))
@@ -366,18 +366,18 @@ julia> ppt_mixture(state_ghz(2, 3), [2, 2, 2], two_body_basis)
 Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer},
-    obs::AbstractVector{<:AbstractMatrix};
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T <: Number}
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer},
+        obs::AbstractVector{<:AbstractMatrix};
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)}
+    ) where {T <: Number}
     dim = size(ρ, 1)
     prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
-    JuMP.@variable(model, w_coeffs[1:length(obs)]) 
+    JuMP.@variable(model, w_coeffs[1:length(obs)])
     W = sum(w_coeffs[i] * obs[i] for i in eachindex(w_coeffs))
 
     _fully_decomposable_witness_constraints!(model, dims, W)

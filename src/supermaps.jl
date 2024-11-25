@@ -1,7 +1,7 @@
 #extract from T the kind of float to be used in the conic solver
-_solver_type(::Type{T}) where {T<:AbstractFloat} = T
-_solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
-_solver_type(::Type{T}) where {T<:Number} = Float64
+_solver_type(::Type{T}) where {T <: AbstractFloat} = T
+_solver_type(::Type{Complex{T}}) where {T <: AbstractFloat} = T
+_solver_type(::Type{T}) where {T <: Number} = Float64
 
 """
     choi(K::Vector{<:AbstractMatrix})
@@ -26,13 +26,13 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypat
     din, dout = dims
     model = JuMP.GenericModel{_solver_type(T)}()
     if is_complex
-        JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Hermitian)
+        JuMP.@variable(model, Y[1:(din * dout), 1:(din * dout)], Hermitian)
         JuMP.@variable(model, σ[1:din, 1:din], Hermitian)
         bigσ = Hermitian(kron(σ, I(dout)))
         JuMP.@constraint(model, bigσ - Y in JuMP.HermitianPSDCone())
         JuMP.@constraint(model, bigσ + Y in JuMP.HermitianPSDCone())
     else
-        JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Symmetric)
+        JuMP.@variable(model, Y[1:(din * dout), 1:(din * dout)], Symmetric)
         JuMP.@variable(model, σ[1:din, 1:din], Symmetric)
         bigσ = Symmetric(kron(σ, I(dout)))
         JuMP.@constraint(model, bigσ - Y in JuMP.PSDCone())

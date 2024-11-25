@@ -7,7 +7,7 @@ Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between p
 
 Reference: [Quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy).
 """
-function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{T}) where {T<:Number}
+function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{T}) where {T <: Number}
     if size(ρ) != size(σ)
         throw(ArgumentError("ρ and σ have the same size."))
     end
@@ -24,7 +24,7 @@ function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{
     logσ_λ = _log.(Ref(base), σ_λ)
     d = size(ρ, 1)
     h = zero(real(T))
-    @inbounds for j = 1:d, i = 1:d
+    @inbounds for j in 1:d, i in 1:d
         h += ρ_λ[i] * (logρ_λ[i] - logσ_λ[j]) * m[i, j]
     end
     return h
@@ -39,7 +39,7 @@ Computes the relative entropy D(`p`||`q`) = Σᵢpᵢlog(pᵢ/qᵢ) between two 
 
 Reference: [Relative entropy](https://en.wikipedia.org/wiki/Relative_entropy).
 """
-function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{T}) where {T<:Real}
+function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{T}) where {T <: Real}
     if length(p) != length(q)
         throw(ArgumentError("`p` and q must have the same length."))
     end
@@ -48,7 +48,7 @@ function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{T}
     end
     logp = _log.(Ref(base), p)
     logq = _log.(Ref(base), q)
-    h = sum(p[i] * (logp[i] - logq[i]) for i = 1:length(p))
+    h = sum(p[i] * (logp[i] - logq[i]) for i in 1:length(p))
     return h
 end
 relative_entropy(p::AbstractVector, q::AbstractVector) = relative_entropy(2, p, q)
@@ -79,7 +79,7 @@ function entropy(base::Real, ρ::AbstractMatrix{T}) where {T <: Number}
     if any(λ .< -_rtol(T))
         throw(ArgumentError("ρ must be positive semidefinite."))
     end
-    h = -sum(λ[i] * _log(base, λ[i]) for i = 1:size(ρ, 1))
+    h = -sum(λ[i] * _log(base, λ[i]) for i in 1:size(ρ, 1))
     return h
 end
 entropy(ρ::AbstractMatrix) = entropy(2, ρ)
@@ -92,11 +92,11 @@ Computes the Shannon entropy -Σᵢpᵢlog(pᵢ) of a non-negative vector `p` us
 
 Reference: [Entropy (information theory)](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 """
-function entropy(base::Real, p::AbstractVector{T}) where {T<:Real}
+function entropy(base::Real, p::AbstractVector{T}) where {T <: Real}
     if any(p .< T(0))
         throw(ArgumentError("p must be non-negative."))
     end
-    h = -sum(p[i] * _log(base, p[i]) for i = 1:length(p))
+    h = -sum(p[i] * _log(base, p[i]) for i in 1:length(p))
     return h
 end
 entropy(p::AbstractVector) = entropy(2, p)
@@ -120,14 +120,14 @@ Computes the conditional Shannon entropy H(A|B) of the joint probability distrib
 
 Reference: [Conditional entropy](https://en.wikipedia.org/wiki/Conditional_entropy).
 """
-function conditional_entropy(base::Real, pAB::AbstractMatrix{T}) where {T<:Real}
+function conditional_entropy(base::Real, pAB::AbstractMatrix{T}) where {T <: Real}
     nA, nB = size(pAB)
     if any(pAB .< T(0))
         throw(ArgumentError("pAB must be non-negative."))
     end
     h = T(0)
     pB = sum(pAB; dims = 1)
-    for a = 1:nA, b = 1:nB
+    for a in 1:nA, b in 1:nB
         h -= pAB[a, b] * _log(base, pAB[a, b] / pB[b])
     end
     return h
@@ -142,17 +142,17 @@ Computes the conditional von Neumann entropy of `rho` with subsystem dimensions 
 Reference: [Conditional quantum entropy](https://en.wikipedia.org/wiki/Conditional_quantum_entropy).
 """
 function conditional_entropy(
-    base::Real,
-    rho::AbstractMatrix,
-    csys::AbstractVector{<:Integer},
-    dims::AbstractVector{<:Integer}
-)
+        base::Real,
+        rho::AbstractMatrix,
+        csys::AbstractVector{<:Integer},
+        dims::AbstractVector{<:Integer}
+    )
     isempty(csys) && return entropy(base, rho)
     length(csys) == length(dims) && return zero(real(eltype(rho)))
 
     remove = Vector{eltype(csys)}(undef, length(dims) - length(csys))  # To condition on csys we trace out the rest
     counter = 0
-    for i = 1:length(dims)
+    for i in 1:length(dims)
         if !(i in csys)
             counter += 1
             remove[counter] = i
