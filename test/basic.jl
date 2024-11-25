@@ -109,6 +109,6 @@
         @test collect(n_body_basis(0, 2)) == [I(4)]
         @test length(collect(n_body_basis(2, 3))) == 27
         sb = [I(2), I(2), I(2)]
-        @test collect(n_body_basis(1, 3; eye = 2I(2), sb = sb)) == [4I(8) for _ in 1:9]
+        @test collect(n_body_basis(1, 3; eye = 2I(2), sb)) == [4I(8) for _ in 1:9]
     end
 end
