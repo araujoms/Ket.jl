@@ -7,24 +7,23 @@ Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between p
 
 Reference: [Quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy).
 """
-function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{S}) where {T<:Number,S<:Number}
-    R = real(promote_type(T, S))
+function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{T}) where {T<:Number}
     if size(ρ) != size(σ)
         throw(ArgumentError("ρ and σ have the same size."))
     end
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ and σ must be square."))
     end
-    ρ_λ, ρ_U = LA.eigen(ρ)
-    σ_λ, σ_U = LA.eigen(σ)
-    if any(ρ_λ .< -Base.rtoldefault(R)) || any(σ_λ .< -Base.rtoldefault(R))
+    ρ_λ, ρ_U = eigen(ρ)
+    σ_λ, σ_U = eigen(σ)
+    if any(ρ_λ .< -_rtol(T)) || any(σ_λ .< -_rtol(T))
         throw(ArgumentError("ρ and σ must be positive semidefinite."))
     end
     m = abs2.(ρ_U' * σ_U)
     logρ_λ = _log.(Ref(base), ρ_λ)
     logσ_λ = _log.(Ref(base), σ_λ)
     d = size(ρ, 1)
-    h = R(0)
+    h = zero(real(T))
     @inbounds for j = 1:d, i = 1:d
         h += ρ_λ[i] * (logρ_λ[i] - logσ_λ[j]) * m[i, j]
     end
@@ -40,12 +39,11 @@ Computes the relative entropy D(`p`||`q`) = Σᵢpᵢlog(pᵢ/qᵢ) between two 
 
 Reference: [Relative entropy](https://en.wikipedia.org/wiki/Relative_entropy).
 """
-function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{S}) where {T<:Real,S<:Real}
-    R = promote_type(T, S)
+function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{T}) where {T<:Real}
     if length(p) != length(q)
         throw(ArgumentError("`p` and q must have the same length."))
     end
-    if any(p .< -Base.rtoldefault(R)) || any(q .< -Base.rtoldefault(R))
+    if any(p .< T(0)) || any(q .< T(0))
         throw(ArgumentError("p and q must be non-negative."))
     end
     logp = _log.(Ref(base), p)
@@ -73,12 +71,12 @@ Computes the von Neumann entropy -tr(ρ log ρ) of a positive semidefinite opera
 
 Reference: [von Neumann entropy](https://en.wikipedia.org/wiki/Von_Neumann_entropy).
 """
-function entropy(base::Real, ρ::AbstractMatrix)
+function entropy(base::Real, ρ::AbstractMatrix{T}) where {T <: Number}
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ must be square."))
     end
-    λ = LA.eigvals(ρ)
-    if any(λ .< -Base.rtoldefault(eltype(λ)))
+    λ = eigvals(ρ)
+    if any(λ .< -_rtol(T))
         throw(ArgumentError("ρ must be positive semidefinite."))
     end
     h = -sum(λ[i] * _log(base, λ[i]) for i = 1:size(ρ, 1))
@@ -95,7 +93,7 @@ Computes the Shannon entropy -Σᵢpᵢlog(pᵢ) of a non-negative vector `p` us
 Reference: [Entropy (information theory)](https://en.wikipedia.org/wiki/Entropy_(information_theory)).
 """
 function entropy(base::Real, p::AbstractVector{T}) where {T<:Real}
-    if any(p .< -Base.rtoldefault(T))
+    if any(p .< T(0))
         throw(ArgumentError("p must be non-negative."))
     end
     h = -sum(p[i] * _log(base, p[i]) for i = 1:length(p))
@@ -124,6 +122,9 @@ Reference: [Conditional entropy](https://en.wikipedia.org/wiki/Conditional_entro
 """
 function conditional_entropy(base::Real, pAB::AbstractMatrix{T}) where {T<:Real}
     nA, nB = size(pAB)
+    if any(pAB .< T(0))
+        throw(ArgumentError("pAB must be non-negative."))
+    end
     h = T(0)
     pB = sum(pAB; dims = 1)
     for a = 1:nA, b = 1:nB

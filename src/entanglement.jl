@@ -15,7 +15,7 @@ Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decompo
 function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
     m = transpose(reshape(ψ, dims[2], dims[1])) #necessary because the natural reshaping would be row-major, but Julia does it col-major
-    U, λ, V = LA.svd(m)
+    U, λ, V = svd(m)
     return λ, U, conj(V)
 end
 export schmidt_decomposition
@@ -39,7 +39,7 @@ export entanglement_entropy
 Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
 function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1) where {T}
-    LA.ishermitian(ρ) || throw(ArgumentError("State needs to be Hermitian"))
+    ishermitian(ρ) || throw(ArgumentError("State needs to be Hermitian"))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
 
     d = size(ρ, 1)
@@ -54,7 +54,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
         JuMP.@variable(model, σ[1:d, 1:d], Symmetric)
     end
     _dps_constraints!(model, σ, dims, n; is_complex)
-    JuMP.@constraint(model, LA.tr(σ) == 1)
+    JuMP.@constraint(model, tr(σ) == 1)
 
     vec_dim = Cones.svec_length(Ts, d)
     ρvec = _svec(ρ, Ts)
@@ -66,23 +66,23 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_silent(model)
     JuMP.optimize!(model)
-    return JuMP.objective_value(model), LA.Hermitian(JuMP.value.(σ))
+    return JuMP.objective_value(model), Hermitian(JuMP.value.(σ))
 end
 
 """
-    _svec(M::AbstractMatrix, ::Type{R})
+    _svec(M::AbstractMatrix, ::Type{T})
 
-Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `R`. The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,R),svec(N,R)⟩.
+Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `T`. The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,T),svec(N,T)⟩.
 """
-function _svec(M::AbstractMatrix, ::Type{R}) where {R} #the weird stuff here is to make it work with JuMP variables
+function _svec(M::AbstractMatrix, ::Type{T}) where {T} #the weird stuff here is to make it work with JuMP variables
     d = size(M, 1)
-    T = real(R)
-    vec_dim = Cones.svec_length(R, d)
+    R = real(T)
+    vec_dim = Cones.svec_length(T, d)
     v = Vector{real(eltype(1 * M))}(undef, vec_dim)
-    if R <: Real
-        Cones.smat_to_svec!(v, 1 * M, sqrt(T(2)))
+    if T <: Real
+        Cones.smat_to_svec!(v, 1 * M, sqrt(R(2)))
     else
-        Cones._smat_to_svec_complex!(v, M, sqrt(T(2)))
+        Cones._smat_to_svec_complex!(v, M, sqrt(R(2)))
     end
     return v
 end
@@ -96,7 +96,7 @@ Reference: Miranowicz and Ishizaka, [arXiv:0805.3134](https://arxiv.org/abs/0805
 """
 function _test_entanglement_entropy_qubit(h, ρ, σ)
     R = typeof(h)
-    λ, U = LA.eigen(σ)
+    λ, U = eigen(σ)
     g = zeros(R, 4, 4)
     for j = 1:4
         for i = 1:j-1
@@ -104,9 +104,9 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
         end
         g[j, j] = λ[j]
     end
-    g = LA.Hermitian(g)
+    g = Hermitian(g)
     σT = partial_transpose(σ, 2, [2, 2])
-    λ2, U2 = LA.eigen(σT)
+    λ2, U2 = eigen(σT)
     phi = partial_transpose(ketbra(U2[:, 1]), 2, [2, 2])
     G = zero(U)
     for i = 1:4
@@ -114,8 +114,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
             G += g[i, j] * ketbra(U[:, i]) * phi * ketbra(U[:, j])
         end
     end
-    G = LA.Hermitian(G)
-    x = real(LA.pinv(vec(G)) * vec(σ - ρ))
+    G = Hermitian(G)
+    x = real(pinv(vec(G)) * vec(σ - ρ))
     ρ2 = σ - x * G
     ρ_matches = isapprox(ρ2, ρ; rtol = sqrt(Base.rtoldefault(R)))
     h_matches = isapprox(h, relative_entropy(ρ2, σ); rtol = sqrt(Base.rtoldefault(R)))
@@ -153,26 +153,26 @@ function schmidt_number(
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
-    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+    ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
         return random_robustness(ρ, dims, n; ppt, verbose, solver)[1]
     end
 
     is_complex = (T <: Complex)
-    wrapper = is_complex ? LA.Hermitian : LA.Symmetric
+    wrapper = is_complex ? Hermitian : Symmetric
 
-    V = kron(LA.I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), LA.I(dims[2])) #this is an isometry up to normalization
+    V = kron(I(dims[1]), SA.sparse(state_ghz_ket(T, s, 2; coeff = 1)), I(dims[2])) #this is an isometry up to normalization
     lifted_dims = [dims[1] * s, dims[2] * s] # with the ancilla spaces A'B'...
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
     JuMP.@variable(model, λ)
-    noisy_state = wrapper(ρ + λ * LA.I(size(ρ, 1)))
+    noisy_state = wrapper(ρ + λ * I(size(ρ, 1)))
     JuMP.@objective(model, Min, λ)
 
     _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, isometry = V)
-    JuMP.@constraint(model, LA.tr(model[:symmetric_meat]) == s * (LA.tr(ρ) + λ * size(ρ, 1)))
+    JuMP.@constraint(model, tr(model[:symmetric_meat]) == s * (tr(ρ) + λ * size(ρ, 1)))
 
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
@@ -205,15 +205,15 @@ function random_robustness(
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
-    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+    ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     is_complex = (T <: Complex)
-    wrapper = is_complex ? LA.Hermitian : LA.Symmetric
+    wrapper = is_complex ? Hermitian : Symmetric
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
     JuMP.@variable(model, λ)
-    noisy_state = wrapper(ρ + λ * LA.I(size(ρ, 1)))
+    noisy_state = wrapper(ρ + λ * I(size(ρ, 1)))
     _dps_constraints!(model, noisy_state, dims, n; ppt, is_complex)
     JuMP.@objective(model, Min, λ)
 
@@ -246,23 +246,23 @@ function _dps_constraints!(
     n::Integer;
     ppt::Bool = true,
     is_complex::Bool = true,
-    isometry::AbstractMatrix = LA.I(size(ρ, 1))
+    isometry::AbstractMatrix = I(size(ρ, 1))
 ) where {T}
-    LA.ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+    ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     dA, dB = dims
     ext_dims = [dA; repeat([dB], n)]
 
     # Dimension of the extension space w/ bosonic symmetries: A dim. + `n` copies of B
     d = dA * binomial(n + dB - 1, n)
-    V = kron(LA.I(dA), symmetric_projection(T, dB, n; partial = true)) # Bosonic subspace isometry
+    V = kron(I(dA), symmetric_projection(T, dB, n; partial = true)) # Bosonic subspace isometry
 
     if is_complex
         psd_cone = JuMP.HermitianPSDCone()
-        wrapper = LA.Hermitian
+        wrapper = Hermitian
     else
         psd_cone = JuMP.PSDCone()
-        wrapper = LA.Symmetric
+        wrapper = Symmetric
     end
 
     JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
@@ -284,19 +284,19 @@ function _fully_decomposable_witness_constraints!(model, dims, W)
 
     Ps = [JuMP.@variable(model, [1:dim,1:dim] in JuMP.HermitianPSDCone()) for _ in 1:length(biparts)]
 
-    JuMP.@constraint(model, LA.tr(W) == 1)
+    JuMP.@constraint(model, tr(W) == 1)
     # this can be used instead of tr(W) = 1 if we want a GME entanglement quantifier (see ref.)
-    # [JuMP.@constraint(model, (LA.I(dim) - (W - Ps[i])) in JuMP.HermitianPSDCone()) for i in 1:length(biparts)]
+    # [JuMP.@constraint(model, (I(dim) - (W - Ps[i])) in JuMP.HermitianPSDCone()) for i in 1:length(biparts)]
 
     # constraints for W = Q^{T_M} + P^M:
     for (i, part) in enumerate(biparts)
-        JuMP.@constraint(model, LA.Hermitian(partial_transpose(W - Ps[i], part[1], dims)) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, Hermitian(partial_transpose(W - Ps[i], part[1], dims)) in JuMP.HermitianPSDCone())
     end
 end
 
 function _min_dotprod!(model, ρ, W, solver, verbose)
     JuMP.@variable(model, λ)
-    JuMP.@constraint(model, real(LA.dot(ρ, W)) <= λ)
+    JuMP.@constraint(model, real(dot(ρ, W)) <= λ)
     JuMP.@objective(model, Min, λ)
 
     JuMP.set_optimizer(model, solver)
@@ -336,7 +336,7 @@ function ppt_mixture(
 
     if JuMP.is_solved_and_feasible(model)
         JuMP.objective_value(model) ≤ 0 ? W = JuMP.value.(W) : W = zeros(T, size(W))
-        return 1 / (1 - dim * JuMP.value.(model[:λ])), LA.Hermitian(W)
+        return 1 / (1 - dim * JuMP.value.(model[:λ])), Hermitian(W)
     else
         return "Something went wrong: $(JuMP.raw_status(model))"
     end

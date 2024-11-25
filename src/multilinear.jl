@@ -45,7 +45,7 @@ Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the 
 """ partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, limit, wrapper) in
-    [(:AbstractMatrix, :dY, :identity), (:(LA.Hermitian), :j, :(LA.Hermitian)), (:(LA.Symmetric), :j, :(LA.Symmetric))]
+    [(:AbstractMatrix, :dY, :identity), (:(Hermitian), :j, :(Hermitian)), (:(Symmetric), :j, :(Symmetric))]
     @eval begin
         function partial_trace(
             X::$T,
@@ -53,7 +53,7 @@ for (T, limit, wrapper) in
             dims::AbstractVector{<:Integer} = _equal_sizes(X)
         )
             isempty(remove) && return X
-            length(remove) == length(dims) && return fill(LA.tr(X), 1, 1)
+            length(remove) == length(dims) && return fill(tr(X), 1, 1)
 
             keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept 
             counter = 0
@@ -98,10 +98,10 @@ for (T, limit, wrapper) in
                 end
             end
             if !isbits(Y[1]) #this is a workaround for a bug in Julia <= 1.10
-                if $T == LA.Hermitian
-                    LA.copytri!(Y, 'U', true)
-                elseif $T == LA.Symmetric
-                    LA.copytri!(Y, 'U')
+                if $T == Hermitian
+                    LinearAlgebra.copytri!(Y, 'U', true)
+                elseif $T == Symmetric
+                    LinearAlgebra.copytri!(Y, 'U')
                 end
             end
             return $wrapper(Y)
@@ -125,7 +125,7 @@ Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on th
 """ partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, wrapper) in
-    [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
+    [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
     @eval begin
         function partial_transpose(
             X::$T,
@@ -133,7 +133,7 @@ for (T, wrapper) in
             dims::AbstractVector{<:Integer} = _equal_sizes(X)
         )
             isempty(transp) && return X
-            length(transp) == length(dims) && return LA.transpose(X)
+            length(transp) == length(dims) && return transpose(X)
 
             keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept 
             counter = 0
@@ -252,7 +252,7 @@ export permute_systems!
     rows_only::Bool = false
 )
 for (T, wrapper) in
-    [(:AbstractMatrix, :identity), (:(LA.Hermitian), :(LA.Hermitian)), (:(LA.Symmetric), :(LA.Symmetric))]
+    [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
     @eval begin
         function permute_systems(
             X::$T,
@@ -296,7 +296,7 @@ function permutation_matrix(
 )
     dims = dims isa Integer ? fill(dims, length(perm)) : dims
     d = prod(dims)
-    id = is_sparse ? SA.sparse(LA.I, (d, d)) : LA.I(d)
+    id = is_sparse ? SA.sparse(I, (d, d)) : I(d)
     permute_systems(id, perm, dims; rows_only = true)
 end
 export permutation_matrix

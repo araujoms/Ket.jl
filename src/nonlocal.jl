@@ -77,7 +77,7 @@ function _partition(n::T, k::T) where {T<:Integer}
     return parts
 end
 
-#copyed from QETLAB
+#copied from QETLAB
 function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
     # Start by increasing the last index by 1.
     ind_len = length(ind)
@@ -106,7 +106,7 @@ end
     tsirelson_bound(CG::Matrix, scenario::Vector, level::Integer)
 
 Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, written in Collins-Gisin notation.
-`scenario` is vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
+`scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 `level` is an integer determining the level of the NPA hierarchy.
 
 This function requires [Moment](https://github.com/ajpgarner/moment). It is only available if you first do "import MATLAB" or "using MATLAB".
@@ -117,12 +117,12 @@ end
 export tsirelson_bound
 
 """
-    fp2cg(V::Array{T,4}) where {T <: Real}
+    fp2cg(V::Array{T,4}, behaviour::Bool = false) where {T <: Real}
 
 Takes a bipartite Bell functional `V` in full probability notation and transforms it
-to Collins-Gisin notation.
+to Collins-Gisin notation. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function fp2cg(V::AbstractArray{T,4}) where {T<:Real}
+function fp2cg(V::AbstractArray{T,4}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = size(V)
     alice_pars = ia * (oa - 1) + 1
     bob_pars = ib * (ob - 1) + 1
@@ -131,28 +131,89 @@ function fp2cg(V::AbstractArray{T,4}) where {T<:Real}
 
     CG = zeros(T, alice_pars, bob_pars)
 
-    CG[1, 1] = sum(V[oa, ob, :, :])
-    for a = 1:oa-1, x = 1:ia
-        CG[aindex(a, x), 1] = sum(V[a, ob, x, :] - V[oa, ob, x, :])
+    if ~behaviour
+        CG[1, 1] = sum(V[oa, ob, :, :])
+        for a = 1:oa-1, x = 1:ia
+            CG[aindex(a, x), 1] = sum(V[a, ob, x, :] - V[oa, ob, x, :])
+        end
+        for b = 1:ob-1, y = 1:ib
+            CG[1, bindex(b, y)] = sum(V[oa, b, :, y] - V[oa, ob, :, y])
+        end
+        for a = 1:oa-1, b = 1:ob-1, x = 1:ia, y = 1:ib
+            CG[aindex(a, x), bindex(b, y)] = V[a, b, x, y] - V[a, ob, x, y] - V[oa, b, x, y] + V[oa, ob, x, y]
+        end
+    else
+        CG[1, 1] = sum(V) / (ia * ib)
+        for x = 1:ia, a = 1:oa-1
+            CG[aindex(a, x), 1] = sum(V[a, b, x, y] for b = 1:ob, y = 1:ib) / ib
+        end
+        for y = 1:ib, b = 1:ob-1
+            CG[1, bindex(b, y)] = sum(V[a, b, x, y] for a = 1:oa, x = 1:ia) / ia
+        end
+        for x = 1:ia, y = 1:ib
+            CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)] = V[1:oa-1, 1:ob-1, x, y]
+        end
     end
-    for b = 1:ob-1, y = 1:ib
-        CG[1, bindex(b, y)] = sum(V[oa, b, :, y] - V[oa, ob, :, y])
-    end
-    for a = 1:oa-1, b = 1:ob-1, x = 1:ia, y = 1:ib
-        CG[aindex(a, x), bindex(b, y)] = V[a, b, x, y] - V[a, ob, x, y] - V[oa, b, x, y] + V[oa, ob, x, y]
-    end
-
     return CG
 end
 export fp2cg
 
 """
-    probability_tensor(rho::LA.Hermitian, all_Aax::Vector{Measurement}...)
+    cg2fp(CG::Matrix, behaviour::Bool = false)
+
+Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it
+to full probability notation. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib]. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
+"""
+function cg2fp(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
+    oa, ob, ia, ib = scenario
+    aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
+    bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
+
+    V = Array{T,4}(undef, (oa, ob, ia, ib))
+
+    if ~behaviour
+        for x = 1:ia, y = 1:ib
+            V[oa, ob, x, y] = CG[1, 1] / (ia * ib)
+        end
+        for x = 1:ia, y = 1:ib, b = 1:ob-1
+            V[oa, b, x, y] = CG[1, 1] / (ia * ib) + CG[1, bindex(b, y)] / ia
+        end
+        for x = 1:ia, y = 1:ib, a = 1:oa-1
+            V[a, ob, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib
+        end
+        for x = 1:ia, y = 1:ib, a = 1:oa-1, b = 1:ob-1
+            V[a, b, x, y] =
+                CG[1, 1] / (ia * ib) +
+                CG[aindex(a, x), 1] / ib +
+                CG[1, bindex(b, y)] / ia +
+                CG[aindex(a, x), bindex(b, y)]
+        end
+    else
+        for x = 1:ia, y = 1:ib
+            V[1:oa-1, 1:ob-1, x, y] = CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]
+            V[1:oa-1, ob, x, y] =
+                CG[aindex(1, x):aindex(oa - 1, x), 1] -
+                sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 2)
+            V[oa, 1:ob-1, x, y] =
+                CG[1, bindex(1, y):bindex(ob - 1, y)] -
+                vec(sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 1))
+            V[oa, ob, x, y] =
+                CG[1, 1] - sum(CG[aindex(1, x):aindex(oa - 1, x), 1]) -
+                sum(CG[1, bindex(1, y):bindex(ob - 1, y)]) +
+                sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)])
+        end
+    end
+    return V
+end
+export cg2fp
+
+"""
+    probability_tensor(rho::Hermitian, all_Aax::Vector{Measurement}...)
 
 Applies N sets of measurements onto a state `rho` to form a probability array.
 """
 function probability_tensor(
-    rho::LA.Hermitian{T1,Matrix{T1}},
+    rho::Hermitian{T1,Matrix{T1}},
     first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
     other_Aax::Vector{Measurement{T2}}...
 ) where {T1,T2}
@@ -166,7 +227,7 @@ function probability_tensor(
     cix = CartesianIndices(m)
     for a in cia, x in cix
         if all([a[n] ≤ length(all_Aax[n][x[n]]) for n in 1:N])
-            p[a, x] = real(LA.dot(LA.Hermitian(kron([all_Aax[n][x[n]][a[n]] for n in 1:N]...)), rho))
+            p[a, x] = real(dot(Hermitian(kron([all_Aax[n][x[n]][a[n]] for n in 1:N]...)), rho))
         end
     end
     return p
@@ -176,7 +237,7 @@ function probability_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}.
     return probability_tensor(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
-function probability_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...)
+function probability_tensor(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...)
     return probability_tensor(rho, povm.(all_φax)...)
 end
 # accepts pure states and projective measurements
@@ -184,13 +245,13 @@ function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatr
     return probability_tensor(ketbra(psi), povm.(all_φax)...)
 end
 # shorthand syntax for identical measurements on all parties
-function probability_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Integer)
+function probability_tensor(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer)
     return probability_tensor(rho, fill(Aax, N)...)
 end
 function probability_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer)
     return probability_tensor(psi, fill(Aax, N)...)
 end
-function probability_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer)
+function probability_tensor(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer)
     return probability_tensor(rho, fill(povm(φax), N)...)
 end
 function probability_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer)
@@ -228,26 +289,26 @@ function correlation_tensor(p::AbstractArray{T,N2}; marg::Bool = true) where {T}
 end
 # accepts directly the arguments of probability_tensor
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
-function correlation_tensor(rho::LA.Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
+function correlation_tensor(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
 end
 function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
 end
-function correlation_tensor(rho::LA.Hermitian, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
+function correlation_tensor(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(rho, all_φax...); marg)
 end
 function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
     return correlation_tensor(probability_tensor(psi, all_φax...); marg)
 end
 # shorthand syntax for identical measurements on all parties
-function correlation_tensor(rho::LA.Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
+function correlation_tensor(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
     return correlation_tensor(rho, fill(Aax, N)...; marg)
 end
 function correlation_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
     return correlation_tensor(psi, fill(Aax, N)...; marg)
 end
-function correlation_tensor(rho::LA.Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
+function correlation_tensor(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
     return correlation_tensor(rho, fill(povm(φax), N)...; marg)
 end
 function correlation_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)

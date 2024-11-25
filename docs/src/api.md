@@ -72,11 +72,14 @@ incompatibility_robustness_generalized
 ```@docs
 chsh
 cglmp
+inn22
 local_bound
 tsirelson_bound
+seesaw
 correlation_tensor
 probability_tensor
 fp2cg
+cg2fp
 ```
 
 ## Norms

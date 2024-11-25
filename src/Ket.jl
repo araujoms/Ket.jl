@@ -1,8 +1,8 @@
 module Ket
 
+using LinearAlgebra
 import Combinatorics
 import GenericLinearAlgebra
-import LinearAlgebra as LA
 import SparseArrays as SA
 import Nemo
 import JuMP
@@ -21,5 +21,6 @@ include("norms.jl")
 include("multilinear.jl")
 include("supermaps.jl")
 include("entanglement.jl")
+include("seesaw.jl")
 
 end # module Ket

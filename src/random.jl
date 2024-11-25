@@ -19,8 +19,8 @@ Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/a
 function random_state(::Type{T}, d::Integer, k::Integer = d) where {T}
     x = _randn(T, d, k)
     y = x * x'
-    y ./= LA.tr(y)
-    return LA.Hermitian(y)
+    y ./= tr(y)
+    return Hermitian(y)
 end
 random_state(d::Integer, k::Integer = d) = random_state(ComplexF64, d, k)
 export random_state
@@ -34,7 +34,7 @@ Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/a
 """
 function random_state_ket(::Type{T}, d::Integer) where {T}
     psi = _randn(T, d)
-    LA.normalize!(psi)
+    normalize!(psi)
     return psi
 end
 random_state_ket(d::Integer) = random_state_ket(ComplexF64, d)
@@ -50,20 +50,20 @@ Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
-    for j = 1:d
+    @inbounds for j = 1:d
         for i = j:d
             z[i, j] = _randn(T)
         end
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
-    for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
-        x = view(z, k:d, k)
-        τ[k] = LA.reflector!(x)
+    @inbounds for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
+        @views x = z[k:d, k]
+        τ[k] = LinearAlgebra.reflector!(x)
         s[k] = sign(real(x[1]))
     end
-    D = LA.Diagonal(s)
-    return LA.QRPackedQ(z, τ) * D
+    D = Diagonal(s)
+    return LinearAlgebra.QRPackedQ(z, τ) * D
 end
 random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
@@ -80,16 +80,16 @@ function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T
     E = [Matrix{T}(undef, (d, d)) for _ = 1:n]
     for i = 1:n
         G = randn(T, (d, k))
-        LA.mul!(E[i], G, G')
+        mul!(E[i], G, G')
     end
-    S = sum(LA.Hermitian.(E))
-    rootinvS = S^-0.5 #don't worry, the probability of getting a singular S is zero
+    S = sum(E)
+    rootinvS = Hermitian(S)^-0.5 #don't worry, the probability of getting a singular S is zero
     mat = Matrix{T}(undef, (d, d))
     for i = 1:n
-        LA.mul!(mat, rootinvS, E[i])
-        LA.mul!(E[i], mat, rootinvS)
+        mul!(mat, rootinvS, E[i])
+        mul!(E[i], mat, rootinvS)
     end
-    return LA.Hermitian.(E)
+    return Hermitian.(E)
 end
 random_povm(d::Integer, n::Integer, k::Integer = d) = random_povm(ComplexF64, d, n, k)
 export random_povm

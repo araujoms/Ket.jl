@@ -58,13 +58,13 @@ function incompatibility_robustness(
     end
     for x in 1:m
         for a in 1:o[x]
-            JuMP.add_to_expression!(lhs, LA.dot(X[x][a], A[x][a]))
+            JuMP.add_to_expression!(lhs, dot(X[x][a], A[x][a]))
             if measure == "d"
-                JuMP.add_to_expression!(rhs, (LA.tr(A[x][a]) / d) * LA.tr(X[x][a]))
+                JuMP.add_to_expression!(rhs, (tr(A[x][a]) / d) * tr(X[x][a]))
             elseif measure == "r"
-                JuMP.add_to_expression!(rhs, (1 / o[x]) * LA.tr(X[x][a]))
+                JuMP.add_to_expression!(rhs, (1 / o[x]) * tr(X[x][a]))
             elseif measure == "p"
-                JuMP.@constraint(model, ξ[x] ≥ real(LA.tr(X[x][a])))
+                JuMP.@constraint(model, ξ[x] ≥ real(tr(X[x][a])))
             elseif measure == "g"
                 JuMP.@constraint(model, X[x][a] in cone)
             end
@@ -79,7 +79,7 @@ function incompatibility_robustness(
     if measure in ["d", "r", "p"]
         JuMP.@objective(model, Min, lhs)
     else
-        JuMP.@objective(model, Min, real(LA.tr(N)))
+        JuMP.@objective(model, Min, real(tr(N)))
     end
 
     # call of the solver

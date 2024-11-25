@@ -32,7 +32,7 @@ CGLMP nonlocal game in full probability notation. If `T` is an integer type the 
 
 References: [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) for the original game, and [arXiv:2005.13418](https://arxiv.org/abs/2005.13418) for the form presented here.
 """
-function cglmp(::Type{T}, d::Integer) where {T}
+function cglmp(::Type{T}, d::Integer = 3) where {T}
     G = zeros(T, d, d, 2, 2)
 
     if T <: Integer
@@ -49,5 +49,30 @@ function cglmp(::Type{T}, d::Integer) where {T}
 
     return G
 end
-cglmp(d::Integer) = cglmp(Float64, d)
+cglmp(d::Integer = 3) = cglmp(Float64, d)
 export cglmp
+
+"""
+    inn22([T=Float64,] n::Integer = 3)
+
+inn22 Bell functional in Collins-Gisin notation. Local bound 1.
+
+Reference: Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
+"""
+function inn22(::Type{T}, n) where {T}
+	C = zeros(T, n+1,n+1)
+	for x = 1:n
+		for y = 1:n
+			if x+y <= n + 1
+				C[x+1,y+1] = -1
+			elseif x+y == n + 2
+				C[x+1,y+1] = 1
+            end
+        end
+    end
+	C[1,2] = 1
+	C[2,1] = 1
+	return C
+end
+inn22(n::Integer = 3) = inn22(Int, n)
+export inn22
