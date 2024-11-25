@@ -308,7 +308,7 @@ function _orthonormal_range_svd!(
 end
 
 _orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real, Nothing} = nothing) =
-    _orthonormal_range_svd!(deepcopy(A); tol = tol)
+    _orthonormal_range_svd!(deepcopy(A); tol)
 
 function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T, M}; tol::Union{Real, Nothing} = nothing) where {T <: Number, M}
     dec = qr(A)
@@ -332,7 +332,7 @@ function orthonormal_range(
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
     mode == -1 && (mode = SA.issparse(A) ? 0 : 1)
 
-    return (mode == 0 ? _orthonormal_range_qr(A; tol = tol) : _orthonormal_range_svd(A; tol = tol))
+    return (mode == 0 ? _orthonormal_range_qr(A; tol) : _orthonormal_range_svd(A; tol))
 end
 export orthonormal_range
 
