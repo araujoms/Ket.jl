@@ -78,8 +78,8 @@ tsirelson_bound
 seesaw
 correlation_tensor
 probability_tensor
-fp2cg
-cg2fp
+tensor_collinsgisin
+tensor_probability
 ```
 
 ## Norms

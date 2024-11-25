@@ -117,12 +117,12 @@ end
 export tsirelson_bound
 
 """
-    fp2cg(V::Array{T,4}, behaviour::Bool = false) where {T <: Real}
+    tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false) where {T <: Real}
 
 Takes a bipartite Bell functional `V` in full probability notation and transforms it
 to Collins-Gisin notation. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function fp2cg(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
+function tensor_collinsgisin(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = size(V)
     alice_pars = ia * (oa - 1) + 1
     bob_pars = ib * (ob - 1) + 1
@@ -156,15 +156,15 @@ function fp2cg(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
     end
     return CG
 end
-export fp2cg
+export tensor_collinsgisin
 
 """
-    cg2fp(CG::Matrix, behaviour::Bool = false)
+    tensor_probability(CG::Matrix, scenario::Vector, behaviour::Bool = false)
 
 Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it
 to full probability notation. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib]. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function cg2fp(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
+function tensor_probability(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = scenario
     aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
     bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
@@ -205,7 +205,7 @@ function cg2fp(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = fal
     end
     return V
 end
-export cg2fp
+export tensor_probability
 
 """
     probability_tensor(rho::Hermitian, all_Aax::Vector{Measurement}...)
