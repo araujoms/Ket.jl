@@ -31,7 +31,11 @@ end
     mesC = [random_povm(2, 2) for _ in 1:o[3]]
     fp1 = tensor_probability(rho, mesA, mesB, mesC)
     fp2 = randn(2, 2, 2, o...)
-    @test dot(tensor_correlation(fp1, true), tensor_correlation(fp2, false)) ≈ dot(fp1, fp2)
+    fc1 = tensor_correlation(fp1, true)
+    fc2 = tensor_correlation(fp2, false)
+    @test tensor_probability(fc1, true) ≈ fp1
+    @test tensor_probability(fc2, false) ≈ fp2
+    @test dot(fc1, fc2) ≈ dot(fp1, fp2)
 end
 
 @testset "FP and CG notations" begin

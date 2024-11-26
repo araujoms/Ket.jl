@@ -223,7 +223,37 @@ end
 Takes a bipartite Bell functional `FC` in full correlator notation and transforms it to full probability notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function tensor_probability(FC::AbstractMatrix{T}, behaviour::Bool = false) where {T}
+function tensor_probability(FC::AbstractArray{T, N}, behaviour::Bool = false) where {T, N}
+    o = Tuple(fill(2, N))
+    m = size(FC) .- 1
+    FP = zeros(T, o..., m...)
+    cia = CartesianIndices(o)
+    cix = CartesianIndices(m)
+    if ~behaviour
+        # there may be a smarter way to order these loops to save more allocations
+        for a2 in cia
+            ind = collect(a2.I) .== 1
+            for a1 in cia
+                s = (-1)^sum(a1.I[ind] .- 1; init = 0) / T(prod(m[.~ind]; init = 1))
+                for x in cix
+                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...]
+                end
+            end
+        end
+    else
+        for a2 in cia
+            ind = collect(a2.I) .== 1
+            for a1 in cia
+                s = (-1)^sum(a1.I[ind] .- 1; init = 0)
+                for x in cix
+                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...]
+                end
+            end
+        end
+        FP ./= 2^N
+    end
+    cleanup!(FP)
+    return FP
 end
 
 """
@@ -243,15 +273,15 @@ function tensor_probability(
     N = length(all_Aax)
     m = length.(all_Aax) # numbers of inputs per party
     o = broadcast(Aax -> maximum(length.(Aax)), all_Aax) # numbers of outputs per party
-    p = zeros(T, o..., m...)
+    FP = zeros(T, o..., m...)
     cia = CartesianIndices(o)
     cix = CartesianIndices(m)
     for a in cia, x in cix
         if all([a[n] ≤ length(all_Aax[n][x[n]]) for n in 1:N])
-            p[a, x] = real(dot(Hermitian(kron([all_Aax[n][x[n]][a[n]] for n in 1:N]...)), rho))
+            FP[a, x] = real(dot(Hermitian(kron([all_Aax[n][x[n]][a[n]] for n in 1:N]...)), rho))
         end
     end
-    return p
+    return FP
 end
 # shorthand syntax for identical measurements on all parties
 function tensor_probability(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer)
@@ -275,7 +305,7 @@ function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; ma
     o = size(p)[1:N] # numbers of outputs per party
     @assert all(o .== 2)
     m = size(p)[(N + 1):end] # numbers of inputs per party
-    size_FC = Tuple(marg ? m .+ 1 : m)
+    size_FC = marg ? m .+ 1 : m
     FC = zeros(T, size_FC)
     cia = CartesianIndices(o)
     cix = CartesianIndices(size_FC)
