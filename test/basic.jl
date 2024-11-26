@@ -42,17 +42,17 @@
     end
     @testset "Gell-Mann" begin
         for R in [Int64, Float64, Double64, Float128, BigFloat]
-            @test gell_mann(R, 1, 1) == Matrix{R}(I, 3, 3)
-            @test gell_mann(R, 1, 2) == [0 1 0; 1 0 0; 0 0 0]
-            @test gell_mann(R, 1, 3) == [0 0 1; 0 0 0; 1 0 0]
-            @test gell_mann(Complex{R}, 2, 1) == [0 -im 0; im 0 0; 0 0 0]
-            @test gell_mann(R, 2, 2) == [1 0 0; 0 -1 0; 0 0 0]
-            @test gell_mann(R, 2, 3) == [0 0 0; 0 0 1; 0 1 0]
-            @test gell_mann(Complex{R}, 3, 1) == [0 0 -im; 0 0 0; im 0 0]
-            @test gell_mann(Complex{R}, 3, 2) == [0 0 0; 0 0 -im; 0 im 0]
+            @test gellmann(R, 1, 1) == Matrix{R}(I, 3, 3)
+            @test gellmann(R, 1, 2) == [0 1 0; 1 0 0; 0 0 0]
+            @test gellmann(R, 1, 3) == [0 0 1; 0 0 0; 1 0 0]
+            @test gellmann(Complex{R}, 2, 1) == [0 -im 0; im 0 0; 0 0 0]
+            @test gellmann(R, 2, 2) == [1 0 0; 0 -1 0; 0 0 0]
+            @test gellmann(R, 2, 3) == [0 0 0; 0 0 1; 0 1 0]
+            @test gellmann(Complex{R}, 3, 1) == [0 0 -im; 0 0 0; im 0 0]
+            @test gellmann(Complex{R}, 3, 2) == [0 0 0; 0 0 -im; 0 im 0]
         end
-        @test gell_mann(3, 3) == Diagonal([1, 1, -2] / sqrt(3))
-        @test gell_mann(1, 1, 4) == Matrix{Float64}(I, 4, 4)
+        @test gellmann(3, 3) == Diagonal([1, 1, -2] / sqrt(3))
+        @test gellmann(1, 1, 4) == Matrix{Float64}(I, 4, 4)
     end
     @testset "Cleanup" begin
         for R in [Float64, Double64, Float128, BigFloat]

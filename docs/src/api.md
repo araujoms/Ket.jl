@@ -9,8 +9,8 @@ proj
 shift
 clock
 pauli
-gell_mann
-gell_mann!
+gellmann
+gellmann!
 partial_trace
 partial_transpose
 permute_systems!

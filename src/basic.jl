@@ -161,7 +161,7 @@ automatically generate Kronecker products of the corresponding
 operators.
 """
 function pauli(::Type{T}, i::Integer) where {T <: Number}
-    return gell_mann(T, i ÷ 2 + 1, i % 2 + 1, 2)
+    return gellmann(T, i ÷ 2 + 1, i % 2 + 1, 2)
 end
 function pauli(::Type{T}, ind::Vector{<:Integer}) where {T <: Number}
     if length(ind) == 1
@@ -195,43 +195,43 @@ pauli(c::Char) = pauli(ComplexF64, c)
 export pauli
 
 """
-    gell_mann([T=ComplexF64,], d::Integer = 3)
+    gellmann([T=ComplexF64,], d::Integer = 3)
 
 Constructs the set `G` of generalized Gell-Mann matrices in dimension `d` such that
 `G[1] = I` and `Tr(G[i]*G[j]) = 2 δ_ij`.
 
 Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Generalizations_of_Pauli_matrices)
 """
-function gell_mann(::Type{T}, d::Integer = 3) where {T <: Number}
-    return [gell_mann(T, i, j, d) for j in 1:d, i in 1:d][:]
+function gellmann(::Type{T}, d::Integer = 3) where {T <: Number}
+    return [gellmann(T, i, j, d) for j in 1:d, i in 1:d][:]
     # d=2, ρ = 1/2(σ0 + n*σ)
     # d=3, ρ = 1/3(I + √3 n*λ)
     #      ρ = 1/d(I + sqrt(2/(d*(d-1))) n*λ)
     # SD: the next line would be for a potential KetSparse extension
     # SD: I Haven't thought yet how to deal with this.
-    # return [gell_mann(T, k, j, d, sparse(zeros(Complex{T}, d, d))) for j in 1:d, k in 1:d][:]
+    # return [gellmann(T, k, j, d, sparse(zeros(Complex{T}, d, d))) for j in 1:d, k in 1:d][:]
 end
-gell_mann(d::Integer = 3) = gell_mann(ComplexF64, d)
-export gell_mann
+gellmann(d::Integer = 3) = gellmann(ComplexF64, d)
+export gellmann
 
 """
-    gell_mann([T=ComplexF64,], i::Integer, j::Integer, d::Integer = 3)
+    gellmann([T=ComplexF64,], i::Integer, j::Integer, d::Integer = 3)
 
 Constructs the set `i`,`j`th Gell-Mann matrix of dimension `d`.
 
 Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Generalizations_of_Pauli_matrices)
 """
-function gell_mann(::Type{T}, i::Integer, j::Integer, d::Integer = 3) where {T <: Number}
-    return gell_mann!(zeros(T, d, d), i, j, d)
+function gellmann(::Type{T}, i::Integer, j::Integer, d::Integer = 3) where {T <: Number}
+    return gellmann!(zeros(T, d, d), i, j, d)
 end
-gell_mann(i::Integer, j::Integer, d::Integer = 3) = gell_mann(ComplexF64, i, j, d)
+gellmann(i::Integer, j::Integer, d::Integer = 3) = gellmann(ComplexF64, i, j, d)
 
 """
-    gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3)
+    gellmann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3)
 
-In-place version of `gell_mann`.
+In-place version of `gellmann`.
 """
-function gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3) where {T <: Number}
+function gellmann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 3) where {T <: Number}
     if i < j
         res[i, j] = 1
         res[j, i] = 1
@@ -249,11 +249,11 @@ function gell_mann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer =
         end
         res[d, d] = -(d - 1) * tmp
     else
-        gell_mann!(view(res, 1:(d - 1), 1:(d - 1)), i, j, d - 1)
+        gellmann!(view(res, 1:(d - 1), 1:(d - 1)), i, j, d - 1)
     end
     return res
 end
-export gell_mann!
+export gellmann!
 
 _rtol(::Type{T}) where {T <: Number} = Base.rtoldefault(real(T))
 
