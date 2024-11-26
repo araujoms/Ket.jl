@@ -262,15 +262,17 @@ function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; mar
     cix = CartesianIndices(size_output)
     for x in cix
         x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
-        if ~behaviour
-            error("Not implemented yet")
-        else
-            res[x] =
-                sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia) /
-                prod(m[n] for n in 1:N if x[n] == marg; init = 1)
-        end
+        res[x] = sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
         if abs2(res[x]) < _eps(T)
             res[x] = 0
+        end
+    end
+    if ~behaviour
+        res ./= 2^N
+    elseif marg
+        for n in 1:N
+            x_colon = Union{Colon, Int64}[i == n ? 1 : Colon() for i in 1:N]
+            res[x_colon...] ./= m[n]
         end
     end
     return res

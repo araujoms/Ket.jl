@@ -19,6 +19,18 @@ end
     Aax = povm(mub(2))
     @test tensor_correlation(state_phiplus(), Aax, 2) ≈ Diagonal([1, 1, 1, -1])
     @test tensor_correlation(state_phiplus(), Aax, 2; marg = false) ≈ Diagonal([1, 1, -1])
+    FC_ghz = zeros(4, 4, 4)
+    FC_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, -1, 1, 1, 1]
+    @test tensor_correlation(state_ghz(), Aax, 3) ≈ FC_ghz
+    @test tensor_correlation(state_ghz(), Aax, 3; marg = false) ≈ FC_ghz[2:end, 2:end, 2:end]
+    scenario = [3, 4, 5] # dichotomic outcomes to test full correlation
+    rho = random_state(2^3)
+    mesA = [random_povm(2, 2) for _ in 1:scenario[1]]
+    mesB = [random_povm(2, 2) for _ in 1:scenario[2]]
+    mesC = [random_povm(2, 2) for _ in 1:scenario[3]]
+    FP_behaviour = tensor_probability(rho, mesA, mesB, mesC)
+    FP_functional = randn(2, 2, 2, scenario...)
+    @test dot(tensor_correlation(FP_behaviour, true), tensor_correlation(FP_functional, false)) ≈ dot(FP_behaviour, FP_functional)
     scenario = [2, 3, 4, 5]
     cg = randn(scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
     @test tensor_collinsgisin(tensor_probability(cg, scenario)) ≈ cg
