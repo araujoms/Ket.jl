@@ -216,13 +216,22 @@ function tensor_probability(CG::AbstractMatrix{T}, scenario::Vector{<:Integer}, 
     end
     return V
 end
-export tensor_probability
+
+"""
+    tensor_probability(FC::Matrix, behaviour::Bool = false)
+
+Takes a bipartite Bell functional `FC` in full correlator notation and transforms it to full probability notation.
+If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
+"""
+function tensor_probability(FC::AbstractMatrix{T}, behaviour::Bool = false) where {T}
+end
 
 """
     tensor_probability(rho::Hermitian, all_Aax::Vector{Measurement}...)
-    tensor_probability(rho::Hermitian, Aax::Measurement, N::Integer)
+    tensor_probability(rho::Hermitian, Aax::Vector{Measurement}, N::Integer)
 
 Applies N sets of measurements onto a state `rho` to form a probability array.
+If all parties apply the same measurements, use the shorthand notation.
 """
 function tensor_probability(
         rho::Hermitian{T1, Matrix{T1}},
@@ -251,16 +260,16 @@ end
 export tensor_probability
 
 """
-    tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true)
+    tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; marg::Bool = true)
 
 Converts a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
-If `behaviour` is `true` do the transformation for behaviours. Doesn't assume normalization.
+If `behaviour` is `true` do the transformation for behaviours. Does assume normalization.
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
-function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true) where {T, N2}
+function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; marg::Bool = true) where {T, N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     o = size(p)[1:N] # numbers of outputs per party
