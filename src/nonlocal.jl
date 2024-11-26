@@ -241,27 +241,34 @@ end
 export tensor_probability
 
 """
-    tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true)
+    tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true, behaviour::Bool = true)
 
 Converts a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
+If `behaviour` is `true` do the transformation for behaviours. Doesn't assume normalization.
+
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
-function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true) where {T} where {N2}
+function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true, behaviour::Bool = true) where {T} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     m = size(p)[(N + 1):end] # numbers of inputs per party
     o = size(p)[1:N] # numbers of outputs per party
     @assert collect(o) == 2ones(Int64, N)
-    res = zeros(T, (marg ? m .+ 1 : m)...)
+    size_output = Tuple(marg ? m .+ 1 : m)
+    res = zeros(T, size_output)
     cia = CartesianIndices(Tuple(2ones(Int64, N)))
-    cix = CartesianIndices(Tuple(marg ? m .+ 1 : m))
+    cix = CartesianIndices(size_output)
     for x in cix
-        x_colon = [x[n] ≤ m[n] ? x[n] : Colon() for n in 1:N]
-        res[x] =
-            sum((-1)^sum(a[n] for n in 1:N if x[n] ≤ m[n]; init = 0) * sum(p[a, x_colon...]) for a in cia) /
-            prod(m[n] for n in 1:N if x[n] > m[n]; init = 1)
+        x_colon = Union{Colon, Int64}[x[n] - marg == 0 ? Colon() : x[n] - marg for n in 1:N]
+        if ~behaviour
+            error("Not implemented yet")
+        else
+            res[x] =
+                sum((-1)^sum(a[n] for n in 1:N if x[n] - marg > 0; init = 0) * sum(p[a, x_colon...]) for a in cia) /
+                prod(m[n] for n in 1:N if x[n] - marg == 0; init = 1)
+        end
         if abs2(res[x]) < _eps(T)
             res[x] = 0
         end
@@ -270,7 +277,7 @@ function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true) where {T
 end
 # accepts directly the arguments of tensor_probability
 function tensor_correlation(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
-    return tensor_correlation(tensor_probability(rho, all_Aax...); marg)
+    return tensor_correlation(tensor_probability(rho, all_Aax...); marg, behaviour = true)
 end
 # shorthand syntax for identical measurements on all parties
 function tensor_correlation(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
