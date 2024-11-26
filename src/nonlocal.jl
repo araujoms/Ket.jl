@@ -121,6 +121,8 @@ export tsirelson_bound
 
 Takes a bipartite Bell functional `V` in full probability notation and transforms it to Collins-Gisin notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
+
+Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
 function tensor_collinsgisin(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = size(V)
@@ -155,6 +157,14 @@ function tensor_collinsgisin(V::AbstractArray{T, 4}, behaviour::Bool = false) wh
         end
     end
     return CG
+end
+# accepts directly the arguments of tensor_probability
+function tensor_collinsgisin(rho::Hermitian, all_Aax::Vector{<:Measurement}...)
+    return tensor_collinsgisin(tensor_probability(rho, all_Aax...), true)
+end
+# shorthand syntax for identical measurements on all parties
+function tensor_collinsgisin(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer)
+    return tensor_collinsgisin(rho, fill(Aax, N)...)
 end
 export tensor_collinsgisin
 
