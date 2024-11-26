@@ -229,28 +229,18 @@ function tensor_probability(FC::AbstractArray{T, N}, behaviour::Bool = false) wh
     FP = zeros(T, o..., m...)
     cia = CartesianIndices(o)
     cix = CartesianIndices(m)
-    if ~behaviour
-        # there may be a smarter way to order these loops
-        for a2 in cia
-            ind = collect(a2.I) .== 2
-            denominator = prod(m[.~ind]; init = 1)
-            for a1 in cia
-                s = (-1)^sum(a1.I[ind] .- 1; init = 0)
-                for x in cix
-                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...] / denominator
-                end
+    # there may be a smarter way to order these loops
+    for a2 in cia
+        ind = collect(a2.I) .== 2
+        denominator = behaviour ? 1 : prod(m[.~ind]; init = 1)
+        for a1 in cia
+            s = (-1)^sum(a1.I[ind] .- 1; init = 0)
+            for x in cix
+                FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...] / denominator
             end
         end
-    else
-        for a2 in cia
-            ind = collect(a2.I) .== 2
-            for a1 in cia
-                s = (-1)^sum(a1.I[ind] .- 1; init = 0)
-                for x in cix
-                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...]
-                end
-            end
-        end
+    end
+    if behaviour
         FP ./= 2^N
     end
     cleanup!(FP)
