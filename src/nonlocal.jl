@@ -241,7 +241,7 @@ end
 export tensor_probability
 
 """
-    tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true, behaviour::Bool = true)
+    tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true)
 
 Converts a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
@@ -250,7 +250,7 @@ If `behaviour` is `true` do the transformation for behaviours. Doesn't assume no
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
-function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true, behaviour::Bool = true) where {T} where {N2}
+function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true) where {T} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     m = size(p)[(N + 1):end] # numbers of inputs per party
@@ -277,7 +277,7 @@ function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true, behaviou
 end
 # accepts directly the arguments of tensor_probability
 function tensor_correlation(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
-    return tensor_correlation(tensor_probability(rho, all_Aax...); marg, behaviour = true)
+    return tensor_correlation(tensor_probability(rho, all_Aax...), true; marg)
 end
 # shorthand syntax for identical measurements on all parties
 function tensor_correlation(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
