@@ -24,13 +24,13 @@ end
     fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, -1, 1, 1, 1]
     @test tensor_correlation(state_ghz(), Aax, 3) ≈ fc_ghz
     @test tensor_correlation(state_ghz(), Aax, 3; marg = false) ≈ fc_ghz[2:end, 2:end, 2:end]
-    scenario = [3, 4, 5] # dichotomic outcomes
+    o = [3, 4, 5] # dichotomic outcomes
     rho = random_state(2^3)
-    mesA = [random_povm(2, 2) for _ in 1:scenario[1]]
-    mesB = [random_povm(2, 2) for _ in 1:scenario[2]]
-    mesC = [random_povm(2, 2) for _ in 1:scenario[3]]
+    mesA = [random_povm(2, 2) for _ in 1:o[1]]
+    mesB = [random_povm(2, 2) for _ in 1:o[2]]
+    mesC = [random_povm(2, 2) for _ in 1:o[3]]
     fp1 = tensor_probability(rho, mesA, mesB, mesC)
-    fp2 = randn(2, 2, 2, scenario...)
+    fp2 = randn(2, 2, 2, o...)
     @test dot(tensor_correlation(fp1, true), tensor_correlation(fp2, false)) ≈ dot(fp1, fp2)
 end
 

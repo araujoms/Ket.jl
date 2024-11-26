@@ -117,7 +117,7 @@ end
 export tsirelson_bound
 
 """
-    tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false) where {T <: Real}
+    tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false)
 
 Takes a bipartite Bell functional `V` in full probability notation and transforms it to Collins-Gisin notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
@@ -260,32 +260,32 @@ If `behaviour` is `true` do the transformation for behaviours. Doesn't assume no
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
-function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true) where {T} where {N2}
+function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true) where {T, N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     o = size(p)[1:N] # numbers of outputs per party
     @assert all(o .== 2)
     m = size(p)[(N + 1):end] # numbers of inputs per party
-    size_res = Tuple(marg ? m .+ 1 : m)
-    res = zeros(T, size_res)
+    size_FC = Tuple(marg ? m .+ 1 : m)
+    FC = zeros(T, size_FC)
     cia = CartesianIndices(o)
-    cix = CartesianIndices(size_res)
+    cix = CartesianIndices(size_FC)
     for x in cix
         x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
-        res[x] = sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
-        if abs2(res[x]) < _eps(T)
-            res[x] = 0
+        FC[x] = sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
+        if abs2(FC[x]) < _eps(T)
+            FC[x] = 0
         end
     end
     if ~behaviour
-        res ./= 2^N
+        FC ./= 2^N
     elseif marg
         for n in 1:N
             x_colon = Union{Colon, Int64}[i == n ? 1 : Colon() for i in 1:N]
-            res[x_colon...] ./= m[n]
+            FC[x_colon...] ./= m[n]
         end
     end
-    return res
+    return FC
 end
 # accepts directly the arguments of tensor_probability
 function tensor_correlation(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
