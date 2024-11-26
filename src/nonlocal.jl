@@ -209,11 +209,11 @@ end
 export tensor_probability
 
 """
-    probability_tensor(rho::Hermitian, all_Aax::Vector{Measurement}...)
+    tensor_probability(rho::Hermitian, all_Aax::Vector{Measurement}...)
 
 Applies N sets of measurements onto a state `rho` to form a probability array.
 """
-function probability_tensor(
+function tensor_probability(
         rho::Hermitian{T1, Matrix{T1}},
         first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
         other_Aax::Vector{Measurement{T2}}...
@@ -234,41 +234,41 @@ function probability_tensor(
     return p
 end
 # accepts a pure state
-function probability_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...)
-    return probability_tensor(ketbra(psi), all_Aax...)
+function tensor_probability(psi::AbstractVector, all_Aax::Vector{<:Measurement}...)
+    return tensor_probability(ketbra(psi), all_Aax...)
 end
 # accepts projective measurements
-function probability_tensor(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...)
-    return probability_tensor(rho, povm.(all_φax)...)
+function tensor_probability(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...)
+    return tensor_probability(rho, povm.(all_φax)...)
 end
 # accepts pure states and projective measurements
-function probability_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
-    return probability_tensor(ketbra(psi), povm.(all_φax)...)
+function tensor_probability(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...)
+    return tensor_probability(ketbra(psi), povm.(all_φax)...)
 end
 # shorthand syntax for identical measurements on all parties
-function probability_tensor(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer)
-    return probability_tensor(rho, fill(Aax, N)...)
+function tensor_probability(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer)
+    return tensor_probability(rho, fill(Aax, N)...)
 end
-function probability_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer)
-    return probability_tensor(psi, fill(Aax, N)...)
+function tensor_probability(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer)
+    return tensor_probability(psi, fill(Aax, N)...)
 end
-function probability_tensor(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer)
-    return probability_tensor(rho, fill(povm(φax), N)...)
+function tensor_probability(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer)
+    return tensor_probability(rho, fill(povm(φax), N)...)
 end
-function probability_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer)
-    return probability_tensor(psi, fill(povm(φax), N)...)
+function tensor_probability(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer)
+    return tensor_probability(psi, fill(povm(φax), N)...)
 end
-export probability_tensor
+export tensor_probability
 
 """
-    correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true)
+    tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true)
 
 Applies N sets of measurements onto a state `rho` to form a probability array.
 Convert a 2x...x2xmx...xm probability array into
 - a mx...xm correlation array (no marginals)
 - a (m+1)x...x(m+1) correlation array (marginals).
 """
-function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T} where {N2}
+function tensor_correlation(p::AbstractArray{T, N2}; marg::Bool = true) where {T} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     m = size(p)[(N + 1):end] # numbers of inputs per party
@@ -288,31 +288,31 @@ function correlation_tensor(p::AbstractArray{T, N2}; marg::Bool = true) where {T
     end
     return res
 end
-# accepts directly the arguments of probability_tensor
+# accepts directly the arguments of tensor_probability
 # SD: I'm still unsure whether it would be better practice to have a general syntax for this kind of argument passing
-function correlation_tensor(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
-    return correlation_tensor(probability_tensor(rho, all_Aax...); marg)
+function tensor_correlation(rho::Hermitian, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
+    return tensor_correlation(tensor_probability(rho, all_Aax...); marg)
 end
-function correlation_tensor(psi::AbstractVector, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
-    return correlation_tensor(probability_tensor(psi, all_Aax...); marg)
+function tensor_correlation(psi::AbstractVector, all_Aax::Vector{<:Measurement}...; marg::Bool = true)
+    return tensor_correlation(tensor_probability(psi, all_Aax...); marg)
 end
-function correlation_tensor(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
-    return correlation_tensor(probability_tensor(rho, all_φax...); marg)
+function tensor_correlation(rho::Hermitian, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
+    return tensor_correlation(tensor_probability(rho, all_φax...); marg)
 end
-function correlation_tensor(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
-    return correlation_tensor(probability_tensor(psi, all_φax...); marg)
+function tensor_correlation(psi::AbstractVector, all_φax::Vector{<:AbstractMatrix}...; marg::Bool = true)
+    return tensor_correlation(tensor_probability(psi, all_φax...); marg)
 end
 # shorthand syntax for identical measurements on all parties
-function correlation_tensor(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
-    return correlation_tensor(rho, fill(Aax, N)...; marg)
+function tensor_correlation(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
+    return tensor_correlation(rho, fill(Aax, N)...; marg)
 end
-function correlation_tensor(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
-    return correlation_tensor(psi, fill(Aax, N)...; marg)
+function tensor_correlation(psi::AbstractVector, Aax::Vector{<:Measurement}, N::Integer; marg::Bool = true)
+    return tensor_correlation(psi, fill(Aax, N)...; marg)
 end
-function correlation_tensor(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
-    return correlation_tensor(rho, fill(povm(φax), N)...; marg)
+function tensor_correlation(rho::Hermitian, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
+    return tensor_correlation(rho, fill(povm(φax), N)...; marg)
 end
-function correlation_tensor(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
-    return correlation_tensor(psi, fill(povm(φax), N)...; marg)
+function tensor_correlation(psi::AbstractVector, φax::Vector{<:AbstractMatrix}, N::Integer; marg::Bool = true)
+    return tensor_correlation(psi, fill(povm(φax), N)...; marg)
 end
-export correlation_tensor
+export tensor_correlation

@@ -17,8 +17,8 @@ end
 
 @testset "FP and FC notations" begin
     Aax = povm(mub(2))
-    @test correlation_tensor(state_phiplus(), Aax, 2) ≈ Diagonal([1, 1, -1, 1])
-    @test correlation_tensor(state_phiplus(), Aax, 2; marg = false) ≈ Diagonal([1, 1, -1])
+    @test tensor_correlation(state_phiplus(), Aax, 2) ≈ Diagonal([1, 1, -1, 1])
+    @test tensor_correlation(state_phiplus(), Aax, 2; marg = false) ≈ Diagonal([1, 1, -1])
     scenario = [2, 3, 4, 5]
     cg = randn(scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
     @test tensor_collinsgisin(tensor_probability(cg, scenario)) ≈ cg

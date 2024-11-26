@@ -76,8 +76,8 @@ inn22
 local_bound
 tsirelson_bound
 seesaw
-correlation_tensor
-probability_tensor
+tensor_correlation
+tensor_probability
 tensor_collinsgisin
 tensor_probability
 ```
