@@ -21,20 +21,16 @@ end
     @test tensor_correlation(state_phiplus(), Aax, 2) ≈ fc_phiplus
     @test tensor_correlation(state_phiplus(), Aax, 2; marg = false) ≈ fc_phiplus[2:end, 2:end]
     fc_ghz = zeros(4, 4, 4)
-    fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, -1, 1, 1, 1]
+    fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, 1, -1, -1, -1]
     @test tensor_correlation(state_ghz(), Aax, 3) ≈ fc_ghz
     @test tensor_correlation(state_ghz(), Aax, 3; marg = false) ≈ fc_ghz[2:end, 2:end, 2:end]
-    o = [3, 4, 5] # dichotomic outcomes
-    rho = random_state(2^3)
-    mesA = [random_povm(2, 2) for _ in 1:o[1]]
-    mesB = [random_povm(2, 2) for _ in 1:o[2]]
-    mesC = [random_povm(2, 2) for _ in 1:o[3]]
-    fp1 = tensor_probability(rho, mesA, mesB, mesC)
-    fp2 = randn(2, 2, 2, o...)
-    fc1 = tensor_correlation(fp1, true)
-    fc2 = tensor_correlation(fp2, false)
-    @test tensor_probability(fc1, true) ≈ fp1
-    @test tensor_probability(fc2, false) ≈ fp2
+    m = [3, 4, 5] # dichotomic outcomes
+    fc1 = randn(m...)
+    fc2 = randn(m...)
+    fp1 = tensor_probability(fc1, true)
+    fp2 = tensor_probability(fc2, false)
+    @test tensor_correlation(fp1, true) ≈ fc1
+    @test tensor_correlation(fp2, false) ≈ fc2
     @test dot(fc1, fc2) ≈ dot(fp1, fp2)
 end
 

@@ -230,19 +230,20 @@ function tensor_probability(FC::AbstractArray{T, N}, behaviour::Bool = false) wh
     cia = CartesianIndices(o)
     cix = CartesianIndices(m)
     if ~behaviour
-        # there may be a smarter way to order these loops to save more allocations
+        # there may be a smarter way to order these loops
         for a2 in cia
-            ind = collect(a2.I) .== 1
+            ind = collect(a2.I) .== 2
+            denominator = prod(m[.~ind]; init = 1)
             for a1 in cia
-                s = (-1)^sum(a1.I[ind] .- 1; init = 0) / T(prod(m[.~ind]; init = 1))
+                s = (-1)^sum(a1.I[ind] .- 1; init = 0)
                 for x in cix
-                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...]
+                    FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n in 1:N]...] / denominator
                 end
             end
         end
     else
         for a2 in cia
-            ind = collect(a2.I) .== 1
+            ind = collect(a2.I) .== 2
             for a1 in cia
                 s = (-1)^sum(a1.I[ind] .- 1; init = 0)
                 for x in cix
@@ -311,7 +312,7 @@ function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; ma
     cix = CartesianIndices(size_FC)
     for x in cix
         x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
-        FC[x] = sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
+        FC[x] = sum((-1)^sum(a[n] - 1 for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
         if abs2(FC[x]) < _eps(T)
             FC[x] = 0
         end
