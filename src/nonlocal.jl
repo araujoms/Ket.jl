@@ -119,8 +119,8 @@ export tsirelson_bound
 """
     tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false) where {T <: Real}
 
-Takes a bipartite Bell functional `V` in full probability notation and transforms it
-to Collins-Gisin notation. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
+Takes a bipartite Bell functional `V` in full probability notation and transforms it to Collins-Gisin notation.
+If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
 function tensor_collinsgisin(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = size(V)
@@ -161,10 +161,11 @@ export tensor_collinsgisin
 """
     tensor_probability(CG::Matrix, scenario::Vector, behaviour::Bool = false)
 
-Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it
-to full probability notation. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib]. If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
+Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
+`scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
+If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function tensor_probability(CG::Matrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
+function tensor_probability(CG::AbstractMatrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
     oa, ob, ia, ib = scenario
     aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
     bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
