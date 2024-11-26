@@ -253,13 +253,13 @@ Also accepts the arguments of `tensor_probability` (state and measurements) for 
 function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = true; marg::Bool = true) where {T} where {N2}
     @assert iseven(N2)
     N = N2 ÷ 2
-    m = size(p)[(N + 1):end] # numbers of inputs per party
     o = size(p)[1:N] # numbers of outputs per party
-    @assert collect(o) == 2ones(Int64, N)
-    size_output = Tuple(marg ? m .+ 1 : m)
-    res = zeros(T, size_output)
-    cia = CartesianIndices(Tuple(2ones(Int64, N)))
-    cix = CartesianIndices(size_output)
+    @assert all(o .== 2)
+    m = size(p)[(N + 1):end] # numbers of inputs per party
+    size_res = Tuple(marg ? m .+ 1 : m)
+    res = zeros(T, size_res)
+    cia = CartesianIndices(o)
+    cix = CartesianIndices(size_res)
     for x in cix
         x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
         res[x] = sum((-1)^sum(a[n] for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
