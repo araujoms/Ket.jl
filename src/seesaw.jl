@@ -131,6 +131,7 @@ function _compute_value_assemblage(CG::Matrix{R}, scenario, ρxa, ρ_B, B) where
     return ω
 end
 
+#rather unstable
 function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T}
     oa, ob, ia, ib = scenario
 
@@ -140,12 +141,8 @@ function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T
     for i in 1:d
         @views ψ .+= sqrt(λ[i]) * kron(conj(U[:, i]), U[:, i])
     end
-    W = zeros(T, d, d)
-    for i in 1:d
-        if λ[i] >= _eps(T)
-            @views W .+= ketbra(U[:, i]) / sqrt(λ[i])
-        end
-    end
+    invrootλ = map(x -> x >= _rtol(T) ? 1/sqrt(x) : zero(x), λ)
+    W = U*Diagonal(invrootλ)*U'
     A = [[Hermitian(conj(W * ρxa[x][a] * W)) for a in 1:(oa - 1)] for x in 1:ia]
     return ψ, A
 end
