@@ -25,14 +25,13 @@ end
         fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, 1, -1, -1, -1]
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3) ≈ fc_ghz
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3; marg = false) ≈ fc_ghz[2:end, 2:end, 2:end]
-        m = [3, 4, 5] # dichotomic outcomes
-        fc1 = randn(T, m...)
-        fc2 = randn(T, m...)
-        fp1 = tensor_probability(fc1, true)
-        fp2 = tensor_probability(fc2, false)
-        @test tensor_correlation(fp1, true) ≈ fc1
-        @test tensor_correlation(fp2, false) ≈ fc2
-        @test dot(fc1, fc2) ≈ dot(fp1, fp2)
+        scenario = [2,2,2,2,3,4]
+        p = randn(T, scenario...)
+        mfc = randn(T, scenario[4] + 1, scenario[5] + 1, scenario[6] + 1)
+        @test dot(mfc, tensor_correlation(p, true)) ≈ dot(tensor_probability(mfc, false), p)
+        pfc = mfc
+        m = p
+        @test dot(tensor_correlation(m, false), pfc) ≈ dot(m, tensor_probability(pfc, true))
     end
 end
 
@@ -42,12 +41,11 @@ end
         cg_phiplus = [1.0 0.5 0.5 0.5; 0.5 0.5 0.25 0.25; 0.5 0.25 0.5 0.25; 0.5 0.25 0.25 0.0]
         @test tensor_collinsgisin(state_phiplus(Complex{T}, ), Aax, 2) ≈ cg_phiplus
         scenario = [2, 3, 4, 5]
-        cg1 = randn(T, scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
-        cg2 = randn(T, scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
-        fp1 = tensor_probability(cg1, scenario, true)
-        fp2 = tensor_probability(cg2, scenario, false)
-        @test tensor_collinsgisin(fp1, true) ≈ cg1
-        @test tensor_collinsgisin(fp2, false) ≈ cg2
-        @test dot(fp1, fp2) ≈ dot(cg1, cg2)
+        p = randn(T, scenario...)
+        mcg = randn(T, scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
+        @test dot(mcg, tensor_collinsgisin(p, true)) ≈ dot(tensor_probability(mcg, scenario, false), p)
+        pcg = mcg
+        m = p
+        @test dot(tensor_collinsgisin(m, false), pcg) ≈ dot(m, tensor_probability(pcg, scenario, true))
     end
 end
