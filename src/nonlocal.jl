@@ -301,10 +301,12 @@ function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; ma
     cia = CartesianIndices(o)
     cix = CartesianIndices(size_FC)
     for x in cix
-        x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
-        FC[x] = sum((-1)^sum(a[n] - 1 for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
-        if abs2(FC[x]) < _eps(T)
-            FC[x] = 0
+        # separating here prevent the need of the iterate function on unique elements of type T
+        if all(x.I .> marg)
+            FC[x] = sum((-1)^sum(a[n] - 1 for n in 1:N if x[n] > marg; init = 0) * p[a, (x.I .- marg)...] for a in cia)
+        else
+            x_colon = Union{Colon, Int64}[x[n] > marg ? x[n] - marg : Colon() for n in 1:N]
+            FC[x] = sum((-1)^sum(a[n] - 1 for n in 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a in cia)
         end
     end
     if ~behaviour
@@ -315,6 +317,7 @@ function tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; ma
             FC[x_colon...] ./= m[n]
         end
     end
+    cleanup!(FC)
     return FC
 end
 # accepts directly the arguments of tensor_probability
