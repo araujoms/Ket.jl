@@ -100,6 +100,7 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
             return # always return if the odometer doesn't turn over
         end
     end
+    return
 end
 
 """
@@ -112,7 +113,7 @@ Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, writte
 This function requires [Moment](https://github.com/ajpgarner/moment). It is only available if you first do "import MATLAB" or "using MATLAB".
 """
 function tsirelson_bound(CG::Matrix{<:Real}, scenario::Vector{<:Integer}, level)
-    error("This function requires MATLAB. Do `import MATLAB` or `using MATLAB` in order to enable it.")
+    return error("This function requires MATLAB. Do `import MATLAB` or `using MATLAB` in order to enable it.")
 end
 export tsirelson_bound
 
@@ -124,36 +125,62 @@ If `behaviour` is `true` do instead the transformation for behaviours. Doesn't a
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
 """
-function tensor_collinsgisin(V::AbstractArray{T, 4}, behaviour::Bool = false) where {T}
-    oa, ob, ia, ib = size(V)
-    alice_pars = ia * (oa - 1) + 1
-    bob_pars = ib * (ob - 1) + 1
-    aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
-    bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
-
-    CG = zeros(T, alice_pars, bob_pars)
+function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) where {T, N2}
+    @assert iseven(N2)
+    N = N2 ÷ 2
 
     if ~behaviour
-        CG[1, 1] = sum(V[oa, ob, :, :])
+        N == 2 || error("Multipartite transformation for functionals not yet implemented.")
+        oa, ob, ia, ib = size(p)
+        alice_pars = ia * (oa - 1) + 1
+        bob_pars = ib * (ob - 1) + 1
+        aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
+        bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
+        CG = zeros(T, alice_pars, bob_pars)
+        CG[1, 1] = sum(p[oa, ob, :, :])
         for a in 1:(oa - 1), x in 1:ia
-            CG[aindex(a, x), 1] = sum(V[a, ob, x, :] - V[oa, ob, x, :])
+            CG[aindex(a, x), 1] = sum(p[a, ob, x, :] - p[oa, ob, x, :])
         end
         for b in 1:(ob - 1), y in 1:ib
-            CG[1, bindex(b, y)] = sum(V[oa, b, :, y] - V[oa, ob, :, y])
+            CG[1, bindex(b, y)] = sum(p[oa, b, :, y] - p[oa, ob, :, y])
         end
         for a in 1:(oa - 1), b in 1:(ob - 1), x in 1:ia, y in 1:ib
-            CG[aindex(a, x), bindex(b, y)] = V[a, b, x, y] - V[a, ob, x, y] - V[oa, b, x, y] + V[oa, ob, x, y]
+            CG[aindex(a, x), bindex(b, y)] = p[a, b, x, y] - p[a, ob, x, y] - p[oa, b, x, y] + p[oa, ob, x, y]
         end
     else
-        CG[1, 1] = sum(V) / (ia * ib)
-        for x in 1:ia, a in 1:(oa - 1)
-            CG[aindex(a, x), 1] = sum(V[a, b, x, y] for b in 1:ob, y in 1:ib) / ib
+        scenario = size(p)
+        outs = scenario[1:N]
+        num_outs = prod(outs)
+
+        ins = scenario[(N + 1):(2 * N)]
+        num_ins = prod(ins)
+
+        p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
+
+        cgdesc = ins .* (outs .- 1) .+ 1
+        cgprodsizes = ones(Int, N)
+        for i in 1:N
+            cgprodsizes[i] = prod(cgdesc[1:(i - 1)])
         end
-        for y in 1:ib, b in 1:(ob - 1)
-            CG[1, bindex(b, y)] = sum(V[a, b, x, y] for a in 1:oa, x in 1:ia) / ia
+        cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
+        prodsizes = ones(Int, 2 * N)
+        for i in 1:(2 * N)
+            prodsizes[i] = prod(scenario[1:(i - 1)])
         end
-        for x in 1:ia, y in 1:ib
-            CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)] = V[1:(oa - 1), 1:(ob - 1), x, y]
+        pindex(posvec) = prodsizes' * (posvec .- 1) + 1
+        CG = zeros(T, cgdesc...)
+
+        for inscalar in 0:(num_ins - 1)
+            invec = 1 .+ _digits_mixed_basis(inscalar, ins)
+            for outscalar in 0:(num_outs - 1)
+                outvec = 1 .+ _digits_mixed_basis(outscalar, outs)
+                for outscalar2 in 0:(num_outs - 1)
+                    outvec2 = 1 .+ _digits_mixed_basis(outscalar2, outs)
+                    if (outvec .!= outs) .* outvec == (outvec .!= outs) .* outvec2
+                        CG[cgindex(p2cg(outvec, invec))] += p[pindex([outvec2; invec])] / prod(ins[outvec .== outs])
+                    end
+                end
+            end
         end
     end
     return CG
@@ -169,52 +196,79 @@ end
 export tensor_collinsgisin
 
 """
-    tensor_probability(CG::Matrix, scenario::Vector, behaviour::Bool = false)
+    tensor_probability(CG::Array{T, N}, scenario::Vector, behaviour::Bool = false)
 
 Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
 `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function tensor_probability(CG::AbstractMatrix{T}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T}
-    oa, ob, ia, ib = scenario
-    aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
-    bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
-
-    V = Array{T, 4}(undef, (oa, ob, ia, ib))
+function tensor_probability(CG::AbstractArray{T, N}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T, N}
+    p = zeros(T, scenario...)
 
     if ~behaviour
+        N == 2 || error("Multipartite transformation for functionals not yet implemented.")
+        oa, ob, ia, ib = scenario
+        aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
+        bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
         for x in 1:ia, y in 1:ib
-            V[oa, ob, x, y] = CG[1, 1] / (ia * ib)
+            p[oa, ob, x, y] = CG[1, 1] / (ia * ib)
         end
         for x in 1:ia, y in 1:ib, b in 1:(ob - 1)
-            V[oa, b, x, y] = CG[1, 1] / (ia * ib) + CG[1, bindex(b, y)] / ia
+            p[oa, b, x, y] = CG[1, 1] / (ia * ib) + CG[1, bindex(b, y)] / ia
         end
         for x in 1:ia, y in 1:ib, a in 1:(oa - 1)
-            V[a, ob, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib
+            p[a, ob, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib
         end
         for x in 1:ia, y in 1:ib, a in 1:(oa - 1), b in 1:(ob - 1)
-            V[a, b, x, y] =
-                CG[1, 1] / (ia * ib) +
-                CG[aindex(a, x), 1] / ib +
-                CG[1, bindex(b, y)] / ia +
-                CG[aindex(a, x), bindex(b, y)]
+            p[a, b, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib + CG[1, bindex(b, y)] / ia + CG[aindex(a, x), bindex(b, y)]
         end
     else
-        for x in 1:ia, y in 1:ib
-            V[1:(oa - 1), 1:(ob - 1), x, y] = CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]
-            V[1:(oa - 1), ob, x, y] =
-                CG[aindex(1, x):aindex(oa - 1, x), 1] -
-                sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 2)
-            V[oa, 1:(ob - 1), x, y] =
-                CG[1, bindex(1, y):bindex(ob - 1, y)] -
-                vec(sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)]; dims = 1))
-            V[oa, ob, x, y] =
-                CG[1, 1] - sum(CG[aindex(1, x):aindex(oa - 1, x), 1]) -
-                sum(CG[1, bindex(1, y):bindex(ob - 1, y)]) +
-                sum(CG[aindex(1, x):aindex(oa - 1, x), bindex(1, y):bindex(ob - 1, y)])
+        outs = scenario[1:N]
+        num_outs = prod(outs)
+
+        ins = scenario[(N + 1):(2 * N)]
+        num_ins = prod(ins)
+
+        p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
+
+        cgdesc = size(CG)
+        cgprodsizes = ones(Int, N)
+        for i in 1:N
+            cgprodsizes[i] = prod(cgdesc[1:(i - 1)])
+        end
+        cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
+
+        prodsizes = ones(Int, 2 * N)
+        for i in 1:(2 * N)
+            prodsizes[i] = prod(scenario[1:(i - 1)])
+        end
+        pindex(posvec) = prodsizes' * (posvec .- 1) + 1
+
+        for inscalar in 0:(num_ins - 1)
+            invec = 1 .+ _digits_mixed_basis(inscalar, ins)
+            for outscalar in 0:(num_outs - 1)
+                outvec = 1 .+ _digits_mixed_basis(outscalar, outs)
+                for outscalar2 in 0:(num_outs - 1)
+                    outvec2 = 1 .+ _digits_mixed_basis(outscalar2, outs)
+                    if (outvec .!= outs) .* outvec == (outvec .!= outs) .* outvec2
+                        ndiff = abs(sum(outvec .!= outs) - sum(outvec2 .!= outs))
+                        p[pindex([outvec; invec])] += (-1)^ndiff * CG[cgindex(p2cg(outvec2, invec))]
+                    end
+                end
+            end
         end
     end
-    return V
+    return p
+end
+
+function _digits_mixed_basis(ind, bases)
+    N = length(bases)
+    digits = zeros(Int, N)
+    for i in N:-1:1
+        digits[i] = mod(ind, bases[i])
+        ind = div(ind, bases[i])
+    end
+    return digits
 end
 
 """
@@ -257,7 +311,7 @@ If all parties apply the same measurements, use the shorthand notation.
 function tensor_probability(
         rho::Hermitian{T1, Matrix{T1}},
         first_Aax::Vector{Measurement{T2}}, # needed so that T2 is not unbounded
-        other_Aax::Vector{Measurement{T2}}...
+        other_Aax::Vector{Measurement{T2}}...,
     ) where {T1, T2}
     T = real(promote_type(T1, T2))
     all_Aax = (first_Aax, other_Aax...)
