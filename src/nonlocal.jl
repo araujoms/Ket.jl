@@ -104,7 +104,7 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
 end
 
 """
-    tsirelson_bound(CG::Matrix, scenario::Vector, level::Integer)
+    tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level::Integer)
 
 Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, written in Collins-Gisin notation.
 `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
@@ -112,7 +112,7 @@ Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, writte
 
 This function requires [Moment](https://github.com/ajpgarner/moment). It is only available if you first do "import MATLAB" or "using MATLAB".
 """
-function tsirelson_bound(CG::Matrix{<:Real}, scenario::Vector{<:Integer}, level)
+function tsirelson_bound(CG::Matrix{<:Real}, scenario::AbstractVecOrTuple{<:Integer}, level)
     return error("This function requires MATLAB. Do `import MATLAB` or `using MATLAB` in order to enable it.")
 end
 export tsirelson_bound
@@ -157,10 +157,10 @@ function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) w
 
         p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
 
-        cgdesc = ins .* (outs .- 1) .+ 1
+        cgsizes = ins .* (outs .- 1) .+ 1
         cgprodsizes = ones(Int, N)
         for i in 1:N
-            cgprodsizes[i] = prod(cgdesc[1:(i - 1)])
+            cgprodsizes[i] = prod(cgsizes[1:(i - 1)])
         end
         cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
         prodsizes = ones(Int, 2 * N)
@@ -168,7 +168,7 @@ function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) w
             prodsizes[i] = prod(scenario[1:(i - 1)])
         end
         pindex(posvec) = prodsizes' * (posvec .- 1) + 1
-        CG = zeros(T, cgdesc...)
+        CG = zeros(T, cgsizes...)
 
         for inscalar in 0:(num_ins - 1)
             invec = 1 .+ _digits_mixed_basis(inscalar, ins)
@@ -196,13 +196,13 @@ end
 export tensor_collinsgisin
 
 """
-    tensor_probability(CG::Array{T, N}, scenario::Vector, behaviour::Bool = false)
+    tensor_probability(CG::Array{T, N}, scenario::AbstractVecOrTuple, behaviour::Bool = false)
 
 Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
 `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function tensor_probability(CG::AbstractArray{T, N}, scenario::Vector{<:Integer}, behaviour::Bool = false) where {T, N}
+function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTuple{<:Integer}, behaviour::Bool = false) where {T, N}
     p = zeros(T, scenario...)
 
     if ~behaviour
@@ -231,10 +231,10 @@ function tensor_probability(CG::AbstractArray{T, N}, scenario::Vector{<:Integer}
 
         p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
 
-        cgdesc = size(CG)
+        cgsizes = size(CG)
         cgprodsizes = ones(Int, N)
         for i in 1:N
-            cgprodsizes[i] = prod(cgdesc[1:(i - 1)])
+            cgprodsizes[i] = prod(cgsizes[1:(i - 1)])
         end
         cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
 

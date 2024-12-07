@@ -2,10 +2,11 @@ module KetMATLAB
 
 import Ket
 import MATLAB
+import Base.AbstractVecOrTuple
 
-function Ket.tsirelson_bound(CG::Matrix{<:Real}, scenario::Vector{<:Integer}, level::Integer)
+function Ket.tsirelson_bound(CG::Matrix{<:Real}, scenario::AbstractVecOrTuple{<:Integer}, level::Integer)
     CG = Float64.(CG)
-    scenario = Float64.(scenario)
+    scenario = collect(Float64.(scenario))
     return MATLAB.mxcall(:mtk_tsirelson, 1, CG, scenario, level)
 end
 

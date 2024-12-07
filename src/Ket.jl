@@ -8,6 +8,7 @@ import Nemo
 import JuMP
 const MOI = JuMP.MOI
 import Hypatia, Hypatia.Cones
+import Base.AbstractVecOrTuple
 
 include("basic.jl")
 include("states.jl")

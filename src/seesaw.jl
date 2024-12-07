@@ -1,5 +1,5 @@
 """
-    seesaw(CG::Matrix, scenario::Vector, d::Integer)
+    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer)
 
 Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 `d` is an integer determining the local dimension of the strategy.
@@ -9,7 +9,7 @@ If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Ot
 References: Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032),
 section II.B.1 of Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551)
 """
-function seesaw(CG::Matrix{T}, scenario::Vector{<:Integer}, d::Integer) where {T <: Real}
+function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer) where {T <: Real}
     R = _solver_type(T)
     CG = R.(CG)
     T2 = Complex{R}

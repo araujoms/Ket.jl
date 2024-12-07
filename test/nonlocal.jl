@@ -6,8 +6,8 @@
     @test local_bound(chsh(Int64, 3)) == 6
     @test local_bound(cglmp(Int64, 4)) == 9
     Random.seed!(1337)
-    @test seesaw(tensor_collinsgisin(cglmp()), [3, 3, 2, 2], 3)[1] ≈ (15 + sqrt(33)) / 24
-    @test seesaw(inn22(), [2, 2, 3, 3], 2)[1] ≈ 1.25
+    @test seesaw(tensor_collinsgisin(cglmp()), (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
+    @test seesaw(inn22(), (2, 2, 3, 3), 2)[1] ≈ 1.25
     for T in [Float64, Double64, Float128, BigFloat]
         @test eltype(chsh(T)) <: T
         @test eltype(cglmp(T)) <: T
@@ -25,9 +25,9 @@ end
         fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, 1, -1, -1, -1]
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3) ≈ fc_ghz
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3; marg = false) ≈ fc_ghz[2:end, 2:end, 2:end]
-        scenario = [2,2,2,2,3,4]
-        p = randn(T, scenario...)
-        mfc = randn(T, scenario[4] + 1, scenario[5] + 1, scenario[6] + 1)
+        scenario = (2,2,2,2,3,4)
+        p = randn(T, scenario)
+        mfc = randn(T, scenario[4:6] .+ 1)
         @test dot(mfc, tensor_correlation(p, true)) ≈ dot(tensor_probability(mfc, false), p)
         pfc = mfc
         m = p
@@ -40,12 +40,15 @@ end
         Aax = povm(mub(Complex{T}, 2))
         cg_phiplus = [1.0 0.5 0.5 0.5; 0.5 0.5 0.25 0.25; 0.5 0.25 0.5 0.25; 0.5 0.25 0.25 0.0]
         @test tensor_collinsgisin(state_phiplus(Complex{T}, ), Aax, 2) ≈ cg_phiplus
-        scenario = [2, 3, 4, 5]
-        p = randn(T, scenario...)
-        mcg = randn(T, scenario[3] * (scenario[1] - 1) + 1, scenario[4] * (scenario[2] - 1) + 1)
+        scenario = (2, 3, 4, 5)
+        p = randn(T, scenario)
+        mcg = randn(T, scenario[3:4] .* (scenario[1:2] .- 1) .+ 1)
         @test dot(mcg, tensor_collinsgisin(p, true)) ≈ dot(tensor_probability(mcg, scenario, false), p)
         pcg = mcg
         m = p
         @test dot(tensor_collinsgisin(m, false), pcg) ≈ dot(m, tensor_probability(pcg, scenario, true))
+        scenario = (2, 3, 4, 5, 6, 7)
+        cg = randn(T, scenario[4:6] .* (scenario[1:3] .- 1) .+ 1)
+        @test tensor_collinsgisin(tensor_probability(cg, scenario, true), true) ≈ cg
     end
 end
