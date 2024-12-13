@@ -6,8 +6,11 @@ import GenericLinearAlgebra
 import SparseArrays as SA
 import Nemo
 import JuMP
-const MOI = JuMP.MOI
 import Hypatia, Hypatia.Cones
+import QuantumNPA
+import Dualization
+
+const MOI = JuMP.MOI
 import Base.AbstractVecOrTuple
 
 include("basic.jl")
@@ -23,5 +26,6 @@ include("multilinear.jl")
 include("supermaps.jl")
 include("entanglement.jl")
 include("seesaw.jl")
+include("tsirelson.jl")
 
 end # module Ket

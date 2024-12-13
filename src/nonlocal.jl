@@ -104,20 +104,6 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
 end
 
 """
-    tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level::Integer)
-
-Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, written in Collins-Gisin notation.
-`scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
-`level` is an integer determining the level of the NPA hierarchy.
-
-This function requires [Moment](https://github.com/ajpgarner/moment). It is only available if you first do "import MATLAB" or "using MATLAB".
-"""
-function tsirelson_bound(CG::Matrix{<:Real}, scenario::AbstractVecOrTuple{<:Integer}, level)
-    return error("This function requires MATLAB. Do `import MATLAB` or `using MATLAB` in order to enable it.")
-end
-export tsirelson_bound
-
-"""
     tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false)
 
 Takes a bipartite Bell functional `V` in full probability notation and transforms it to Collins-Gisin notation.

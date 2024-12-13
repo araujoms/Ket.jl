@@ -6,8 +6,15 @@
     @test local_bound(chsh(Int64, 3)) == 6
     @test local_bound(cglmp(Int64, 4)) == 9
     Random.seed!(1337)
-    @test seesaw(tensor_collinsgisin(cglmp()), (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
+    cglmp_cg = tensor_collinsgisin(cglmp())
+    @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
     @test seesaw(inn22(), (2, 2, 3, 3), 2)[1] ≈ 1.25
+    @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), 2) ≈ (15 + sqrt(33)) / 24 rtol = 1e-7
+    τ = Double64(9)/10
+    tilted_chsh_fc = [0 τ  0;
+                      τ 1  1;
+                      0 1 -1]
+    @test tsirelson_bound_fc(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
     for T in [Float64, Double64, Float128, BigFloat]
         @test eltype(chsh(T)) <: T
         @test eltype(cglmp(T)) <: T
