@@ -11,14 +11,14 @@
             @test isa(ψ, Vector{T})
             ρ = random_state(T, 3)
             @test tr(ρ) ≈ 1
-            @test rank(ρ; rtol = Ket._rtol(T)) == 3
+            @test rank(ρ; rtol = _rtol(T)) == 3
             ρ = random_state(T, 3, 2)
             @test tr(ρ) ≈ 1
-            @test rank(ρ; rtol = Ket._rtol(T)) == 2
+            @test rank(ρ; rtol = _rtol(T)) == 2
             ρ = random_state(T, 3, 1)
             @test tr(ρ) ≈ 1
-            @test rank(ρ; rtol = Ket._rtol(T)) == 1
-            @test minimum(eigvals(ρ)) > -Ket._rtol(T)
+            @test rank(ρ; rtol = _rtol(T)) == 1
+            @test minimum(eigvals(ρ)) > -_rtol(T)
             @test isa(ρ, Hermitian{T})
         end
     end
@@ -46,12 +46,12 @@
             E = random_povm(T, 2, 3)
             @test test_povm(E)
             for i in 1:length(E)
-                @test rank(E[i]; rtol = Ket._rtol(T)) == 2
+                @test rank(E[i]; rtol = _rtol(T)) == 2
             end
             E = random_povm(T, 2, 3, 1)
             @test test_povm(E)
             for i in 1:length(E)
-                @test rank(E[i]; rtol = Ket._rtol(T)) == 1
+                @test rank(E[i]; rtol = _rtol(T)) == 1
             end
         end
     end

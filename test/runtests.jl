@@ -1,4 +1,5 @@
 using Ket
+using Ket: _rtol, _eps
 using LinearAlgebra
 using SparseArrays
 using CyclotomicNumbers

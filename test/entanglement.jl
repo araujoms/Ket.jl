@@ -1,6 +1,6 @@
 @testset "Entanglement       " begin
     @testset "Schmidt decomposition" begin
-        for R in [Float64, Double64, Float128, BigFloat]
+        for R ∈ (Float64, Double64, Float128, BigFloat)
             T = Complex{R}
             ψ = random_state_ket(T, 6)
             λ, U, V = schmidt_decomposition(ψ, [2, 3])
@@ -11,14 +11,8 @@
         end
     end
     @testset "Entanglement entropy" begin
-        for R in [Float64, Double64] #Float128 and BigFloat take too long
+        for R ∈ (Float64, Double64), T ∈ (R, Complex{R}) #Float128 and BigFloat take too long
             Random.seed!(8) #makes all states entangled
-            ψ = random_state_ket(R, 6)
-            @test entanglement_entropy(ψ, [2, 3]) ≈ entanglement_entropy(ketbra(ψ), [2, 3])[1] atol = 1.0e-3 rtol = 1.0e-3
-            ρ = random_state(R, 4)
-            h, σ = entanglement_entropy(ρ)
-            @test Ket._test_entanglement_entropy_qubit(h, ρ, σ)
-            T = Complex{R}
             ψ = random_state_ket(T, 6)
             @test entanglement_entropy(ψ, [2, 3]) ≈ entanglement_entropy(ketbra(ψ), [2, 3])[1] atol = 1.0e-3 rtol = 1.0e-3
             ρ = random_state(T, 4)
@@ -27,13 +21,7 @@
         end
     end
     @testset "DPS hierarchy" begin
-        for R in [Float64, Double64]
-            ρ = state_ghz(R, 2, 2)
-            s, W = random_robustness(ρ)
-            @test eltype(W) == R
-            @test s ≈ 0.5 atol = 1.0e-5 rtol = 1.0e-5
-            @test dot(ρ, W) ≈ -s atol = 1.0e-5 rtol = 1.0e-5
-            T = Complex{R}
+        for R ∈ (Float64, Double64), T ∈ (R, Complex{R})
             ρ = state_ghz(T, 2, 2)
             s, W = random_robustness(ρ)
             @test eltype(W) == T
@@ -51,7 +39,7 @@
         @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) <= 0
     end
     @testset "GME entanglement" begin
-        for R in [Float64, Double64]
+        for R ∈ (Float64, Double64)
             ρ = state_ghz(R, 2, 3)
 
             v, W = ppt_mixture(ρ, [2, 2, 2])
