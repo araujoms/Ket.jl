@@ -2,7 +2,7 @@
     @testset "Kets" begin
         @test isa(ket(1, 3), Vector{Bool})
         @test isa(proj(1, 3), Hermitian{Bool})
-        for R ∈ (Int64, Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
+        for R ∈ (Int, Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
             ψ = ket(T, 2, 3)
             P = proj(T, 2, 3)
             @test ψ == [0, 1, 0]
@@ -24,7 +24,7 @@
         end
     end
     @testset "Pauli" begin
-        for R ∈ (Int64, Float64, Double64, Float128, BigFloat)
+        for R ∈ (Int, Float64, Double64, Float128, BigFloat)
             @test pauli(R, 0) == Matrix{R}(I, 2, 2)
             @test pauli(R, "x") == [0 1; 1 0]
             @test pauli(Complex{R}, 2) == [0 -im; im 0]
@@ -34,7 +34,7 @@
         end
     end
     @testset "Gell-Mann" begin
-        for R ∈ (Int64, Float64, Double64, Float128, BigFloat)
+        for R ∈ (Int, Float64, Double64, Float128, BigFloat)
             @test gellmann(R, 1, 1) == Matrix{R}(I, 3, 3)
             @test gellmann(R, 1, 2) == [0 1 0; 1 0 0; 0 0 0]
             @test gellmann(R, 1, 3) == [0 0 1; 0 0 0; 1 0 0]

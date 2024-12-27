@@ -48,13 +48,13 @@ end
 export povm
 
 """
-    tensor_to_povm(A::Array{T,4}, o::Vector{Int64})
+    tensor_to_povm(A::Array{T,4}, o::Vector{Int})
 
 Converts a set of measurements in the common tensor format into a matrix of (hermitian) matrices.
 By default, the second argument is fixed by the size of `A`.
 It can also contain custom number of outcomes if there are measurements with less outcomes.
 """
-function tensor_to_povm(Aax::Array{T, 4}, o::Vector{Int64} = fill(size(Aax, 3), size(Aax, 4))) where {T}
+function tensor_to_povm(Aax::Array{T, 4}, o::Vector{Int} = fill(size(Aax, 3), size(Aax, 4))) where {T}
     return [[Hermitian(Aax[:, :, a, x]) for a in 1:o[x]] for x in axes(Aax, 4)]
 end
 export tensor_to_povm
@@ -171,7 +171,7 @@ function pauli(::Type{T}, ind::Vector{<:Integer}) where {T <: Number}
     end
 end
 function pauli(::Type{T}, str::String) where {T <: Number}
-    ind = Int64[]
+    ind = Int[]
     for c in str
         if c in ['I', 'i', '1']
             push!(ind, 0)

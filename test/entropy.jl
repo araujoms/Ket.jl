@@ -52,7 +52,7 @@
             ρ = random_state(Complex{R}, 6)
             @test conditional_entropy(ρ, 2, [2, 3]) ≈ conditional_entropy(ℯ, ρ, 2, [2, 3]) / log(R(2))
             @test conditional_entropy(ρ, [1, 2], [2, 3]) == 0
-            @test conditional_entropy(ρ, Int64[], [2, 3]) ≈ entropy(ρ)
+            @test conditional_entropy(ρ, Int[], [2, 3]) ≈ entropy(ρ)
         end
     end
 end

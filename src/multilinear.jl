@@ -4,7 +4,7 @@
 Converts a standard index `idx` to a tensor index [i₁, i₂, ...] with subsystems dimensions `dims`.
 """
 function _tidx(idx::Integer, dims::Vector{<:Integer})
-    result = Vector{Int64}(undef, length(dims))
+    result = Vector{Int}(undef, length(dims))
     _tidx!(result, idx, dims)
     return result
 end
@@ -69,8 +69,8 @@ for (T, limit, wrapper) in
             dR = prod(dimsR)                           # Dimension of system traced out
 
             Y = similar(X, (dY, dY))       # Final output Y
-            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
-            tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
+            tXi = Vector{Int}(undef, length(dims))    # Tensor indexing of X for column
+            tXj = Vector{Int}(undef, length(dims))    # Tensor indexing of X for row
 
             @views tXikeep = tXi[keep]
             @views tXiremove = tXi[remove]
@@ -147,11 +147,11 @@ for (T, wrapper) in
             d = size(X, 1)                              # Dimension of the final output Y
             Y = similar(X, (d, d))                      # Final output Y
 
-            tXi = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for row
-            tXj = Vector{Int64}(undef, length(dims))    # Tensor indexing of X for column
+            tXi = Vector{Int}(undef, length(dims))    # Tensor indexing of X for row
+            tXj = Vector{Int}(undef, length(dims))    # Tensor indexing of X for column
 
-            tYi = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for row
-            tYj = Vector{Int64}(undef, length(dims))    # Tensor indexing of Y for column
+            tYi = Vector{Int}(undef, length(dims))    # Tensor indexing of Y for row
+            tYj = Vector{Int}(undef, length(dims))    # Tensor indexing of Y for column
 
             @inbounds for j in 1:d
                 _tidx!(tYj, j, dims)
@@ -203,7 +203,7 @@ partial_transpose(X::AbstractMatrix, transp::Integer, dims::AbstractVector{<:Int
 Computes the index permutation associated with permuting the subsystems of a vector with subsystem dimensions `dims` according to `perm`.
 """
 function _idxperm(perm::Vector{<:Integer}, dims::Vector{<:Integer})
-    p = Vector{Int64}(undef, prod(dims))
+    p = Vector{Int}(undef, prod(dims))
     _idxperm!(p, perm, dims)
     return p
 end
@@ -211,7 +211,7 @@ end
 function _idxperm!(p::Vector{<:Integer}, perm::Vector{<:Integer}, dims::Vector{<:Integer})
     pdims = dims[perm]
 
-    ti = Vector{Int64}(undef, length(dims))
+    ti = Vector{Int}(undef, length(dims))
 
     for i in eachindex(p)
         _tidx!(ti, i, dims)

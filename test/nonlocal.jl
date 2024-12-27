@@ -3,8 +3,8 @@
     @test eltype(cglmp()) <: Float64
     @test eltype(inn22()) <: Int
     @test local_bound(chsh()) ≈ 0.75
-    @test local_bound(chsh(Int64, 3)) == 6
-    @test local_bound(cglmp(Int64, 4)) == 9
+    @test local_bound(chsh(Int, 3)) == 6
+    @test local_bound(cglmp(Int, 4)) == 9
     Random.seed!(1337)
     cglmp_cg = tensor_collinsgisin(cglmp())
     @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
@@ -28,7 +28,7 @@ end
         fc_phiplus = Diagonal([1, 1, 1, -1])
         @test tensor_correlation(state_phiplus(Complex{T}), Aax, 2) ≈ fc_phiplus
         @test tensor_correlation(state_phiplus(Complex{T}), Aax, 2; marg = false) ≈ fc_phiplus[2:end, 2:end]
-        fc_ghz = zeros(Int64, 4, 4, 4)
+        fc_ghz = zeros(Int, 4, 4, 4)
         fc_ghz[[1, 6, 18, 21, 43, 48, 60, 63]] .= [1, 1, 1, 1, 1, -1, -1, -1]
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3) ≈ fc_ghz
         @test tensor_correlation(state_ghz(Complex{T}), Aax, 3; marg = false) ≈ fc_ghz[2:end, 2:end, 2:end]

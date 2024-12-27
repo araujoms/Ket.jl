@@ -12,7 +12,7 @@
             @test partial_trace(ab, [1, 2])[1] ≈ tr(ab)
             @test partial_trace(ab, 2) ≈ a * tr(b)
             @test partial_trace(ab, 1) ≈ b * tr(a)
-            @test partial_trace(ab, Int64[]) ≈ ab
+            @test partial_trace(ab, Int[]) ≈ ab
             @test partial_trace(abc, [1, 2, 3], [d1, d2, d3])[1] ≈ tr(abc)
             @test partial_trace(abc, [2, 3], [d1, d2, d3]) ≈ a * tr(b) * tr(c)
             @test partial_trace(abc, [1, 3], [d1, d2, d3]) ≈ b * tr(a) * tr(c)
@@ -20,7 +20,7 @@
             @test partial_trace(abc, 3, [d1, d2, d3]) ≈ ab * tr(c)
             @test partial_trace(abc, 2, [d1, d2, d3]) ≈ ac * tr(b)
             @test partial_trace(abc, 1, [d1, d2, d3]) ≈ bc * tr(a)
-            @test partial_trace(abc, Int64[], [d1, d2, d3]) ≈ abc
+            @test partial_trace(abc, Int[], [d1, d2, d3]) ≈ abc
         end
         for wrapper in (Symmetric, Hermitian)
             M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
@@ -43,7 +43,7 @@
             @test partial_transpose(ab, [1, 2]) ≈ transpose(ab)
             @test partial_transpose(ab, 2) ≈ kron(a, transpose(b))
             @test partial_transpose(ab, 1) ≈ kron(transpose(a), b)
-            @test partial_transpose(ab, Int64[]) ≈ ab
+            @test partial_transpose(ab, Int[]) ≈ ab
             @test partial_transpose(abc, [1, 2, 3], [d1, d2, d3]) ≈ transpose(abc)
             @test partial_transpose(abc, [2, 3], [d1, d2, d3]) ≈ kron(a, transpose(b), transpose(c))
             @test partial_transpose(abc, [1, 3], [d1, d2, d3]) ≈ kron(transpose(a), b, transpose(c))
@@ -51,7 +51,7 @@
             @test partial_transpose(abc, 3, [d1, d2, d3]) ≈ kron(ab, transpose(c))
             @test partial_transpose(abc, 2, [d1, d2, d3]) ≈ kron(a, transpose(b), c)
             @test partial_transpose(abc, 1, [d1, d2, d3]) ≈ kron(transpose(a), bc)
-            @test partial_transpose(abc, Int64[], [d1, d2, d3]) ≈ abc
+            @test partial_transpose(abc, Int[], [d1, d2, d3]) ≈ abc
         end
         for wrapper in (Symmetric, Hermitian)
             M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
