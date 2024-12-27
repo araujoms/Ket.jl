@@ -137,33 +137,17 @@ function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) w
         scenario = size(p)
         outs = scenario[1:N]
         num_outs = prod(outs)
-
         ins = scenario[(N + 1):(2 * N)]
         num_ins = prod(ins)
-
-        p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
-
+        cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
         cgsizes = ins .* (outs .- 1) .+ 1
-        cgprodsizes = ones(Int, N)
-        for i in 1:N
-            cgprodsizes[i] = prod(cgsizes[1:(i - 1)])
-        end
-        cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
-        prodsizes = ones(Int, 2 * N)
-        for i in 1:(2 * N)
-            prodsizes[i] = prod(scenario[1:(i - 1)])
-        end
-        pindex(posvec) = prodsizes' * (posvec .- 1) + 1
         CG = zeros(T, cgsizes...)
 
-        for inscalar in 0:(num_ins - 1)
-            invec = 1 .+ _digits_mixed_basis(inscalar, ins)
-            for outscalar in 0:(num_outs - 1)
-                outvec = 1 .+ _digits_mixed_basis(outscalar, outs)
-                for outscalar2 in 0:(num_outs - 1)
-                    outvec2 = 1 .+ _digits_mixed_basis(outscalar2, outs)
-                    if (outvec .!= outs) .* outvec == (outvec .!= outs) .* outvec2
-                        CG[cgindex(p2cg(outvec, invec))] += p[pindex([outvec2; invec])] / prod(ins[outvec .== outs])
+        for invec in CartesianIndices(ins)
+            for outvec in CartesianIndices(outs)
+                for outvec2 in CartesianIndices(outs)
+                    if (outvec.I .!= outs) .* outvec.I == (outvec.I .!= outs) .* outvec2.I
+                        CG[cgindex(outvec.I, invec.I)...] += p[outvec2,invec] / prod(ins[BitVector(outvec.I .== outs)])
                     end
                 end
             end
@@ -211,50 +195,22 @@ function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTupl
     else
         outs = scenario[1:N]
         num_outs = prod(outs)
-
         ins = scenario[(N + 1):(2 * N)]
         num_ins = prod(ins)
+        cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
-        p2cg(a, x) = (a .!= outs) .* (a + (x .- 1) .* (outs .- 1)) .+ 1
-
-        cgsizes = size(CG)
-        cgprodsizes = ones(Int, N)
-        for i in 1:N
-            cgprodsizes[i] = prod(cgsizes[1:(i - 1)])
-        end
-        cgindex(posvec) = cgprodsizes' * (posvec .- 1) + 1
-
-        prodsizes = ones(Int, 2 * N)
-        for i in 1:(2 * N)
-            prodsizes[i] = prod(scenario[1:(i - 1)])
-        end
-        pindex(posvec) = prodsizes' * (posvec .- 1) + 1
-
-        for inscalar in 0:(num_ins - 1)
-            invec = 1 .+ _digits_mixed_basis(inscalar, ins)
-            for outscalar in 0:(num_outs - 1)
-                outvec = 1 .+ _digits_mixed_basis(outscalar, outs)
-                for outscalar2 in 0:(num_outs - 1)
-                    outvec2 = 1 .+ _digits_mixed_basis(outscalar2, outs)
-                    if (outvec .!= outs) .* outvec == (outvec .!= outs) .* outvec2
-                        ndiff = abs(sum(outvec .!= outs) - sum(outvec2 .!= outs))
-                        p[pindex([outvec; invec])] += (-1)^ndiff * CG[cgindex(p2cg(outvec2, invec))]
+        for invec in CartesianIndices(ins)
+            for outvec in CartesianIndices(outs)
+                for outvec2 in CartesianIndices(outs)
+                    if (outvec.I .!= outs) .* outvec.I == (outvec.I .!= outs) .* outvec2.I
+                        ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2.I .!= outs))
+                        p[outvec,invec] += (-1)^ndiff * CG[cgindex(outvec2.I, invec.I)...]
                     end
                 end
             end
         end
     end
     return p
-end
-
-function _digits_mixed_basis(ind, bases)
-    N = length(bases)
-    digits = zeros(Int, N)
-    for i in N:-1:1
-        digits[i] = mod(ind, bases[i])
-        ind = div(ind, bases[i])
-    end
-    return digits
 end
 
 """
