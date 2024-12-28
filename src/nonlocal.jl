@@ -114,41 +114,27 @@ Also accepts the arguments of `tensor_probability` (state and measurements) for 
 function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) where {T, N2}
     @assert iseven(N2)
     N = N2 ÷ 2
+    scenario = size(p)
+    outs = scenario[1:N]
+    ins = scenario[(N + 1):(2 * N)]
+    cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
+    CG = zeros(T, ins .* (outs .- 1) .+ 1)
 
     if ~behaviour
-        N == 2 || error("Multipartite transformation for functionals not yet implemented.")
-        oa, ob, ia, ib = size(p)
-        alice_pars = ia * (oa - 1) + 1
-        bob_pars = ib * (ob - 1) + 1
-        aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
-        bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
-        CG = zeros(T, alice_pars, bob_pars)
-        CG[1, 1] = sum(p[oa, ob, :, :])
-        for a in 1:(oa - 1), x in 1:ia
-            CG[aindex(a, x), 1] = sum(p[a, ob, x, :] - p[oa, ob, x, :])
-        end
-        for b in 1:(ob - 1), y in 1:ib
-            CG[1, bindex(b, y)] = sum(p[oa, b, :, y] - p[oa, ob, :, y])
-        end
-        for a in 1:(oa - 1), b in 1:(ob - 1), x in 1:ia, y in 1:ib
-            CG[aindex(a, x), bindex(b, y)] = p[a, b, x, y] - p[a, ob, x, y] - p[oa, b, x, y] + p[oa, ob, x, y]
-        end
-    else
-        scenario = size(p)
-        outs = scenario[1:N]
-        num_outs = prod(outs)
-        ins = scenario[(N + 1):(2 * N)]
-        num_ins = prod(ins)
-        cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
-        cgsizes = ins .* (outs .- 1) .+ 1
-        CG = zeros(T, cgsizes...)
-
         for invec in CartesianIndices(ins)
             for outvec in CartesianIndices(outs)
-                for outvec2 in CartesianIndices(outs)
-                    if (outvec.I .!= outs) .* outvec.I == (outvec.I .!= outs) .* outvec2.I
-                        CG[cgindex(outvec.I, invec.I)...] += p[outvec2,invec] / prod(ins[BitVector(outvec.I .== outs)])
-                    end
+                for outvec2 in Iterators.product(union.(outvec.I, outs)...)
+                    ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2 .!= outs))
+                    CG[cgindex(outvec.I, invec.I)...] += (-1)^ndiff * p[outvec2..., invec]
+                end
+            end
+        end
+    else
+        for invec in CartesianIndices(ins)
+            for outvec in CartesianIndices(outs)
+                cgiterators = map((a, b) -> a == b ? (1:b) : (a:a), outvec.I, outs)
+                for outvec2 in Iterators.product(cgiterators...)
+                    CG[cgindex(outvec.I, invec.I)...] += p[outvec2..., invec] / prod(ins[BitVector(outvec.I .== outs)])
                 end
             end
         end
@@ -174,38 +160,25 @@ If `behaviour` is `true` do instead the transformation for behaviours. Doesn't a
 """
 function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTuple{<:Integer}, behaviour::Bool = false) where {T, N}
     p = zeros(T, scenario...)
+    outs = scenario[1:N]
+    ins = scenario[(N + 1):(2 * N)]
+    cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
     if ~behaviour
-        N == 2 || error("Multipartite transformation for functionals not yet implemented.")
-        oa, ob, ia, ib = scenario
-        aindex(a, x) = 1 + a + (x - 1) * (oa - 1)
-        bindex(b, y) = 1 + b + (y - 1) * (ob - 1)
-        for x in 1:ia, y in 1:ib
-            p[oa, ob, x, y] = CG[1, 1] / (ia * ib)
-        end
-        for x in 1:ia, y in 1:ib, b in 1:(ob - 1)
-            p[oa, b, x, y] = CG[1, 1] / (ia * ib) + CG[1, bindex(b, y)] / ia
-        end
-        for x in 1:ia, y in 1:ib, a in 1:(oa - 1)
-            p[a, ob, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib
-        end
-        for x in 1:ia, y in 1:ib, a in 1:(oa - 1), b in 1:(ob - 1)
-            p[a, b, x, y] = CG[1, 1] / (ia * ib) + CG[aindex(a, x), 1] / ib + CG[1, bindex(b, y)] / ia + CG[aindex(a, x), bindex(b, y)]
-        end
-    else
-        outs = scenario[1:N]
-        num_outs = prod(outs)
-        ins = scenario[(N + 1):(2 * N)]
-        num_ins = prod(ins)
-        cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
-
         for invec in CartesianIndices(ins)
             for outvec in CartesianIndices(outs)
-                for outvec2 in CartesianIndices(outs)
-                    if (outvec.I .!= outs) .* outvec.I == (outvec.I .!= outs) .* outvec2.I
-                        ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2.I .!= outs))
-                        p[outvec,invec] += (-1)^ndiff * CG[cgindex(outvec2.I, invec.I)...]
-                    end
+                for outvec2 in Iterators.product(union.(outvec.I, outs)...)
+                    p[outvec, invec] += CG[cgindex(outvec2, invec.I)...] / prod(ins[BitVector(outvec2 .== outs)])
+                end
+            end
+        end
+    else
+        for invec in CartesianIndices(ins)
+            for outvec in CartesianIndices(outs)
+                cgiterators = map((a, b) -> a == b ? (1:b) : (a:a), outvec.I, outs)
+                for outvec2 in Iterators.product(cgiterators...)
+                    ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2 .!= outs))
+                    p[outvec, invec] += (-1)^ndiff * CG[cgindex(outvec2, invec.I)...]
                 end
             end
         end
