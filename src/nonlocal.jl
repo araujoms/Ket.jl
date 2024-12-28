@@ -104,9 +104,9 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
 end
 
 """
-    tensor_collinsgisin(V::Array{T,4}, behaviour::Bool = false)
+    tensor_collinsgisin(p::Array, behaviour::Bool = false)
 
-Takes a bipartite Bell functional `V` in full probability notation and transforms it to Collins-Gisin notation.
+Takes a multipartite Bell functional `p` in full probability notation and transforms it to Collins-Gisin notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
@@ -152,10 +152,10 @@ end
 export tensor_collinsgisin
 
 """
-    tensor_probability(CG::Array{T, N}, scenario::AbstractVecOrTuple, behaviour::Bool = false)
+    tensor_probability(CG::Array, scenario::AbstractVecOrTuple, behaviour::Bool = false)
 
-Takes a bipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
-`scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
+Takes a multipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
+`scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
 function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTuple{<:Integer}, behaviour::Bool = false) where {T, N}
