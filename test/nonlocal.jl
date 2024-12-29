@@ -9,7 +9,7 @@
     cglmp_cg = tensor_collinsgisin(cglmp())
     @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
     @test seesaw(inn22(), (2, 2, 3, 3), 2)[1] ≈ 1.25
-    @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), 2) ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
+    @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), "1 + A B") ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
     τ = Double64(9) / 10
     tilted_chsh_fc = [
         0 τ  0;
@@ -19,6 +19,17 @@
     @test tsirelson_bound(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
     gyni_cg = tensor_collinsgisin(gyni())
     @test tsirelson_bound(gyni_cg, 2*ones(Int,6), 3) ≈ 0.25 rtol = 1e-6 #for some reason CI gives a different result
+    Śliwa18 = [0   0   0
+               1   1   0
+               1   1   0;;;
+               0  -2   0
+               1   0   1
+               1   0  -1;;;
+               0   0   2
+               0   1  -1
+               0  -1  -1]
+    @test tsirelson_bound(Śliwa18, 2) ≈ 2*(7-sqrt(17)) rtol = 1e-7
+
     for T in [Float64, Double64, Float128, BigFloat]
         @test eltype(chsh(T)) <: T
         @test eltype(cglmp(T)) <: T

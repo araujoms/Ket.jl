@@ -8,14 +8,13 @@ Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written 
 function tsirelson_bound(CG::Array{T, N}, scenario::AbstractVecOrTuple{<:Integer}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
     outs = Tuple(scenario[1:N])
     ins = Tuple(scenario[(N + 1):(2 * N)])
-    Π = [[QuantumNPA.projector(n, 1:(outs[n] - 1), 1:ins[n]) [QuantumNPA.Id for _ in 1:(outs[n] - 1)]] for n in 1:N]
-    cgindex(a, x) = (x .!= (ins .+ 1)) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
+    Π = [[[QuantumNPA.Id for _ in 1:(outs[n] - 1)] QuantumNPA.projector(n, 1:(outs[n] - 1), 1:ins[n])] for n in 1:N]
+    cgindex(a, x) = (x .!= 1) .* (a .+ (x .- 2) .* (outs .- 1)) .+ 1
 
     bell_functional = QuantumNPA.Polynomial()
     for x in CartesianIndices(ins .+ 1)
-        cgiterators = map((a, b, c) -> a == b ? (1:1) : (1:c), x.I, ins .+ 1, outs .- 1)
-        for a in Iterators.product(cgiterators...)
-            bell_functional += CG[cgindex(a, x.I)...] * prod(Π[n][a[n], x.I[n]] for n in 1:N)
+        for a in CartesianIndices((x.I .!= 1) .* (outs .- 2) .+ 1)
+            bell_functional += CG[cgindex(a.I, x.I)...] * prod(Π[n][a.I[n], x.I[n]] for n in 1:N)
         end
     end
 
@@ -23,27 +22,24 @@ function tsirelson_bound(CG::Array{T, N}, scenario::AbstractVecOrTuple{<:Integer
     return Q
 end
 export tsirelson_bound
-
 """
     tsirelson_bound(FC::Matrix, level::Integer)
 
 Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(FC::Matrix{T}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number}
-    ia, ib = size(FC) .- 1
-    A = QuantumNPA.dichotomic(1, 1:ia)
-    B = QuantumNPA.dichotomic(2, 1:ib)
+function tsirelson_bound(FC::Array{T, N}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
+    ins = size(FC) .- 1
+    O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n in 1:N]
 
-    bell_functional = sum(FC[x + 1, y + 1] * A[x] * B[y] for x in 1:ia, y in 1:ib)
-    bell_functional += sum(FC[x + 1, 1] * A[x] for x in 1:ia)
-    bell_functional += sum(FC[1, y + 1] * B[y] for y in 1:ib)
-    bell_functional += FC[1, 1] * QuantumNPA.Id
+    bell_functional = QuantumNPA.Polynomial()
+    for x in CartesianIndices(ins .+ 1)
+        bell_functional += FC[x] * prod(O[n][x[n]] for n in 1:N)
+    end
 
     Q = _npa(_solver_type(T), bell_functional, level; solver)
     return Q
 end
-export tsirelson_bound_fc
 
 function _npa(::Type{T}, functional, level; solver) where {T <: AbstractFloat}
     model = JuMP.GenericModel{T}()

@@ -8,15 +8,11 @@ Reference: Buhrman and Massar, [arXiv:quant-ph/0409066](https://arxiv.org/abs/qu
 function chsh(::Type{T}, d::Integer = 2) where {T}
     G = zeros(T, d, d, d, d)
 
-    if T <: Integer
-        element = 1
-    else
-        element = inv(T(d^2))
-    end
+    normalization = T <: Integer ? 1 : inv(T(d^2))
 
     for a in 0:(d - 1), b in 0:(d - 1), x in 0:(d - 1), y in 0:(d - 1)
         if mod(a + b + x * y, d) == 0
-            G[a + 1, b + 1, x + 1, y + 1] = element
+            G[a + 1, b + 1, x + 1, y + 1] = normalization
         end
     end
 
@@ -35,11 +31,7 @@ References: [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) for
 function cglmp(::Type{T}, d::Integer = 3) where {T}
     G = zeros(T, d, d, 2, 2)
 
-    if T <: Integer
-        normalization = 1
-    else
-        normalization = inv(T(4 * (d - 1)))
-    end
+    normalization = T <: Integer ? 1 : inv(T(4 * (d - 1)))
 
     for a in 0:(d - 1), b in 0:(d - 1), x in 0:1, y in 0:1, k in 0:(d - 2)
         if mod(a - b, d) == mod((-1)^mod(x + y, 2) * k + x * y, d)
