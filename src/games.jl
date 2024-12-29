@@ -26,7 +26,7 @@ chsh(d::Integer = 2) = chsh(Float64, d)
 export chsh
 
 """
-    cglmp([T=Float64,] d::Integer)
+    cglmp([T=Float64,] d::Integer = 3)
 
 CGLMP nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
 
@@ -76,3 +76,27 @@ function inn22(::Type{T}, n) where {T}
 end
 inn22(n::Integer = 3) = inn22(Int, n)
 export inn22
+
+"""
+    gyni([T=Float64,] n::Integer)
+
+Guess your neighbour's input nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+
+Reference: Mafalda et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844).
+"""
+function gyni(::Type{T}, n::Integer = 3) where {T}
+    G = zeros(T, 2 * ones(Int, 2 * n)...)
+
+    normalization = T <: Integer ? 1 : inv(T(2^(n - 1)))
+
+    for x in CartesianIndices(Tuple(2 * ones(Int, n)))
+        if sum(x.I) % 2 == 1
+            a = (x.I[2:n]..., x.I[1])
+            G[a..., x] = normalization
+        end
+    end
+
+    return G
+end
+gyni(n::Integer = 3) = gyni(Float64, n)
+export gyni

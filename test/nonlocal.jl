@@ -16,7 +16,9 @@
         τ 1  1;
         0 1 -1
     ]
-    @test tsirelson_bound_fc(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
+    @test tsirelson_bound(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
+    gyni_cg = tensor_collinsgisin(gyni())
+    @test tsirelson_bound(gyni_cg, 2*ones(Int,6), 3) ≈ 0.25
     for T in [Float64, Double64, Float128, BigFloat]
         @test eltype(chsh(T)) <: T
         @test eltype(cglmp(T)) <: T

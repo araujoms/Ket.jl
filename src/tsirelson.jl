@@ -1,22 +1,23 @@
 """
-    tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level::Integer)
+    tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level)
 
-Upper bounds the Tsirelson bound of a bipartite Bell funcional game `CG`, written in Collins-Gisin notation.
-`scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
-`level` is an integer determining the level of the NPA hierarchy.
+Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written in Collins-Gisin notation.
+`scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
+`level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, level::Integer; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number}
-    oa, ob, ia, ib = scenario
-    A = QuantumNPA.projector(1, 1:(oa - 1), 1:ia)
-    B = QuantumNPA.projector(2, 1:(ob - 1), 1:ib)
+function tsirelson_bound(CG::Array{T, N}, scenario::AbstractVecOrTuple{<:Integer}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
+    outs = scenario[1:N]
+    ins = scenario[(N + 1):(2 * N)]
+    Π = [[QuantumNPA.projector(n, 1:(outs[n] - 1), 1:ins[n]) [QuantumNPA.Id for _ in 1:(outs[n] - 1)]] for n in 1:N]
+    cgindex(a, x) = (x .!= (ins .+ 1)) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
-    aind(a, x) = 1 + a + (x - 1) * (oa - 1)
-    bind(b, y) = 1 + b + (y - 1) * (ob - 1)
-
-    bell_functional = sum(CG[aind(a, x), bind(b, y)] * A[a, x] * B[b, y] for a in 1:(oa - 1), b in 1:(ob - 1), x in 1:ia, y in 1:ib)
-    bell_functional += sum(CG[aind(a, x), 1] * A[a, x] for a in 1:(oa - 1), x in 1:ia)
-    bell_functional += sum(CG[1, bind(b, y)] * B[b, y] for b in 1:(ob - 1), y in 1:ib)
-    bell_functional += CG[1, 1] * QuantumNPA.Id
+    bell_functional = QuantumNPA.Polynomial()
+    for x in CartesianIndices(ins .+ 1)
+        cgiterators = map((a, b, c) -> a == b ? (1:1) : (1:c), x.I, ins .+ 1, outs .- 1)
+        for a in Iterators.product(cgiterators...)
+            bell_functional += CG[cgindex(a, x.I)...] * prod(Π[n][a[n], x.I[n]] for n in 1:N)
+        end
+    end
 
     Q = _npa(_solver_type(T), bell_functional, level; solver)
     return Q
@@ -24,12 +25,12 @@ end
 export tsirelson_bound
 
 """
-    tsirelson_bound_fc(FC::Matrix, level::Integer)
+    tsirelson_bound(FC::Matrix, level::Integer)
 
-Upper bounds the Tsirelson bound of a bipartite Bell funcional game `FC`, written in full correlation notation.
-`level` is an integer determining the level of the NPA hierarchy.
+Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
+`level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound_fc(FC::Matrix{T}, level::Integer; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number}
+function tsirelson_bound(FC::Matrix{T}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number}
     ia, ib = size(FC) .- 1
     A = QuantumNPA.dichotomic(1, 1:ia)
     B = QuantumNPA.dichotomic(2, 1:ib)

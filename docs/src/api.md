@@ -75,7 +75,6 @@ cglmp
 inn22
 local_bound
 tsirelson_bound
-tsirelson_bound_fc
 seesaw
 tensor_probability
 tensor_collinsgisin
