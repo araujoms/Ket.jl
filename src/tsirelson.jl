@@ -6,8 +6,8 @@ Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written 
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
 function tsirelson_bound(CG::Array{T, N}, scenario::AbstractVecOrTuple{<:Integer}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
-    outs = scenario[1:N]
-    ins = scenario[(N + 1):(2 * N)]
+    outs = Tuple(scenario[1:N])
+    ins = Tuple(scenario[(N + 1):(2 * N)])
     Π = [[QuantumNPA.projector(n, 1:(outs[n] - 1), 1:ins[n]) [QuantumNPA.Id for _ in 1:(outs[n] - 1)]] for n in 1:N]
     cgindex(a, x) = (x .!= (ins .+ 1)) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 

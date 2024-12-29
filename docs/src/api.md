@@ -73,6 +73,7 @@ incompatibility_robustness_generalized
 chsh
 cglmp
 inn22
+gyni
 local_bound
 tsirelson_bound
 seesaw

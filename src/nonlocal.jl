@@ -121,20 +121,20 @@ function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) w
     CG = zeros(T, ins .* (outs .- 1) .+ 1)
 
     if ~behaviour
-        for invec in CartesianIndices(ins)
-            for outvec in CartesianIndices(outs)
-                for outvec2 in Iterators.product(union.(outvec.I, outs)...)
-                    ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2 .!= outs))
-                    CG[cgindex(outvec.I, invec.I)...] += (-1)^ndiff * p[outvec2..., invec]
+        for x in CartesianIndices(ins)
+            for a in CartesianIndices(outs)
+                for a2 in Iterators.product(union.(a.I, outs)...)
+                    ndiff = abs(sum(a.I .!= outs) - sum(a2 .!= outs))
+                    CG[cgindex(a.I, x.I)...] += (-1)^ndiff * p[a2..., x]
                 end
             end
         end
     else
-        for invec in CartesianIndices(ins)
-            for outvec in CartesianIndices(outs)
-                cgiterators = map((a, b) -> a == b ? (1:b) : (a:a), outvec.I, outs)
-                for outvec2 in Iterators.product(cgiterators...)
-                    CG[cgindex(outvec.I, invec.I)...] += p[outvec2..., invec] / prod(ins[BitVector(outvec.I .== outs)])
+        for x in CartesianIndices(ins)
+            for a in CartesianIndices(outs)
+                cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
+                for a2 in Iterators.product(cgiterators...)
+                    CG[cgindex(a.I, x.I)...] += p[a2..., x] / prod(ins[BitVector(a.I .== outs)])
                 end
             end
         end
@@ -160,25 +160,25 @@ If `behaviour` is `true` do instead the transformation for behaviours. Doesn't a
 """
 function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTuple{<:Integer}, behaviour::Bool = false) where {T, N}
     p = zeros(T, scenario...)
-    outs = scenario[1:N]
-    ins = scenario[(N + 1):(2 * N)]
+    outs = Tuple(scenario[1:N])
+    ins = Tuple(scenario[(N + 1):(2 * N)])
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
     if ~behaviour
-        for invec in CartesianIndices(ins)
-            for outvec in CartesianIndices(outs)
-                for outvec2 in Iterators.product(union.(outvec.I, outs)...)
-                    p[outvec, invec] += CG[cgindex(outvec2, invec.I)...] / prod(ins[BitVector(outvec2 .== outs)])
+        for x in CartesianIndices(ins)
+            for a in CartesianIndices(outs)
+                for a2 in Iterators.product(union.(a.I, outs)...)
+                    p[a, x] += CG[cgindex(a2, x.I)...] / prod(ins[BitVector(a2 .== outs)])
                 end
             end
         end
     else
-        for invec in CartesianIndices(ins)
-            for outvec in CartesianIndices(outs)
-                cgiterators = map((a, b) -> a == b ? (1:b) : (a:a), outvec.I, outs)
-                for outvec2 in Iterators.product(cgiterators...)
-                    ndiff = abs(sum(outvec.I .!= outs) - sum(outvec2 .!= outs))
-                    p[outvec, invec] += (-1)^ndiff * CG[cgindex(outvec2, invec.I)...]
+        for x in CartesianIndices(ins)
+            for a in CartesianIndices(outs)
+                cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
+                for a2 in Iterators.product(cgiterators...)
+                    ndiff = abs(sum(a.I .!= outs) - sum(a2 .!= outs))
+                    p[a, x] += (-1)^ndiff * CG[cgindex(a2, x.I)...]
                 end
             end
         end
