@@ -133,8 +133,8 @@ function tensor_collinsgisin(p::AbstractArray{T, N2}, behaviour::Bool = false) w
         for x in CartesianIndices(ins)
             for a in CartesianIndices(outs)
                 cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
-                for a2 in Iterators.product(cgiterators...)
-                    CG[cgindex(a.I, x.I)...] += p[a2..., x] / prod(ins[BitVector(a.I .== outs)])
+                for a2 in CartesianIndices(cgiterators)
+                    CG[cgindex(a.I, x.I)...] += p[a2, x] / prod(ins[BitVector(a.I .== outs)])
                 end
             end
         end
@@ -176,9 +176,9 @@ function tensor_probability(CG::AbstractArray{T, N}, scenario::AbstractVecOrTupl
         for x in CartesianIndices(ins)
             for a in CartesianIndices(outs)
                 cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
-                for a2 in Iterators.product(cgiterators...)
-                    ndiff = abs(sum(a.I .!= outs) - sum(a2 .!= outs))
-                    p[a, x] += (-1)^ndiff * CG[cgindex(a2, x.I)...]
+                for a2 in CartesianIndices(cgiterators)
+                    ndiff = abs(sum(a.I .!= outs) - sum(a2.I .!= outs))
+                    p[a, x] += (-1)^ndiff * CG[cgindex(a2.I, x.I)...]
                 end
             end
         end
