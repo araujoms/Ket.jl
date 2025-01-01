@@ -1,49 +1,96 @@
 """
-    local_bound(G::Array{T,4})
+    local_bound(G::Array{T,N})
 
-Computes the local bound of a bipartite Bell functional `G`, written in full probability notation
-as a 4-dimensional array.
+Computes the local bound of a multipartite Bell functional `G`, written in full probability notation
+as an `N`-dimensional array.
 
 Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
 """
-function local_bound(G::Array{T, 4}) where {T <: Real}
-    oa, ob, ia, ib = size(G)
+function local_bound(G::Array{T, N2}) where {T <: Real, N2}
+    @assert iseven(N2)
+    N = N2 ÷ 2
+    scenario = size(G)
+    outs = scenario[1:N]
+    ins = scenario[(N + 1):(2 * N)]
 
-    if oa^ia < ob^ib
-        G = permutedims(G, (2, 1, 4, 3))
-        oa, ob, ia, ib = size(G)
+    num_strategies = outs .^ ins
+    largest_party = argmax(num_strategies)
+    if largest_party != 1
+        perm = [largest_party; 2:(largest_party - 1); 1; (largest_party + 1):N]
+        outs = outs[perm]
+        ins = ins[perm]
+        bigperm::NTuple{N2, Int} = Tuple([perm; perm .+ N])
+        G = permutedims(G, bigperm)
     end
-    sizeG = size(G) #this is a workaround for julia issue #15276
 
-    G = permutedims(G, (1, 3, 2, 4))
-    squareG = reshape(G, oa * ia, ob * ib)
-    offset = Vector(1 .+ ob * (0:(ib - 1)))
-    @views initial_score = sum(maximum(reshape(sum(squareG[:, offset]; dims = 2), oa, ia); dims = 1)) #compute initial_score for the all-zeros strategy to serve as a reference point
+    perm::NTuple{N2, Int} = Tuple([1; N + 1; 2:N; (N + 2):(2 * N)])
+    permutedG = permutedims(G, perm)
+    squareG = reshape(permutedG, outs[1] * ins[1], prod(outs[2:N]) * prod(ins[2:N]))
 
-    chunks = _partition(ob^ib - 1, Threads.nthreads())
+    chunks = _partition(prod((outs .^ ins)[2:N]), Threads.nthreads())
+    outs2 = outs; ins2 = ins; squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
     tasks = map(chunks) do chunk
-        Threads.@spawn _local_bound_single(initial_score, chunk, sizeG, offset, squareG)
+        Threads.@spawn _local_bound_single(chunk, outs2, ins2, squareG2)
     end
-    score = maximum(T.(fetch.(tasks))) #this type cast is to remove type instability
+    score = maximum(fetch.(tasks))
 
     return score
 end
 export local_bound
 
-function _local_bound_single(initial_score::T, chunk, sizeG, offset, squareG::Array{T, 2}) where {T}
-    oa, ob, ia, ib = sizeG
-    score = initial_score
-    ind = digits(chunk[1]; base = ob, pad = ib)
+function _local_bound_single(chunk, outs::NTuple{2, Int}, ins::NTuple{2, Int}, squareG::Array{T, 2}) where {T}
+    oa, ob = outs
+    ia, ib = ins
+    score = typemin(T)
+    ind = digits(chunk[1] - 1; base = ob, pad = ib)
+    offset = Vector(1 .+ ob * (0:(ib - 1)))
     offset_ind = zeros(Int, ib)
     Galice = zeros(T, oa * ia, 1)
     maxvec = zeros(T, 1, ia)
-    for b in chunk[1]:chunk[2]
+    @inbounds for _ in chunk[1]:chunk[2]
         offset_ind .= ind .+ offset
         @views sum!(Galice, squareG[:, offset_ind])
-        squareGalice = Base.ReshapedArray(Galice, (oa, ia), ())
+        squareGalice = reshape(Galice, oa, ia)
         temp_score = sum(maximum!(maxvec, squareGalice))
         score = max(score, temp_score)
         _update_odometer!(ind, ob)
+    end
+
+    return score
+end
+
+function _local_bound_single(chunk, outs::NTuple{N, Int}, ins::NTuple{N, Int}, squareG::Array{T, 2}) where {T, N}
+    score = typemin(T)
+    bases = reduce(vcat, [outs[i] * ones(Int, ins[i]) for i in 2:length(ins)])
+    ind = _digits_mixed_basis(chunk[1] - 1, bases)
+    Galice = zeros(T, outs[1] * ins[1], 1)
+    maxvec = zeros(T, 1, ins[1])
+    b = zeros(Int, N - 1)
+    sizes = (outs[2:N]..., ins[2:N]...)
+    prodsizes = ones(Int, 2 * (N - 1))
+    for i in 1:length(prodsizes)
+        prodsizes[i] = prod(sizes[1:(i - 1)])
+    end
+    linearindex(v) = 1 + dot(v, prodsizes)
+    by = zeros(Int, 2 * (N - 1))
+    @inbounds for _ in chunk[1]:chunk[2]
+        fill!(Galice, 0)
+        for y in CartesianIndices(ins[2:N])
+            by[1] = ind[y[1]]
+            for i in 2:length(y)
+                by[i] = ind[y[i] + ins[i]]
+            end
+            for i in 1:(N - 1)
+                by[i + N - 1] = y[i] - 1
+            end
+            for x in 1:ins[1], a in 1:outs[1]
+                Galice[a + (x - 1) * outs[1]] += squareG[a + (x - 1) * outs[1], linearindex(by)]
+            end
+        end
+        squareGalice = reshape(Galice, outs[1], ins[1])
+        temp_score = sum(maximum!(maxvec, squareGalice))
+        score = max(score, temp_score)
+        _update_odometer!(ind, bases)
     end
 
     return score
@@ -77,30 +124,42 @@ function _partition(n::T, k::T) where {T <: Integer}
     return parts
 end
 
-# copied from QETLAB
-function _update_odometer!(ind::AbstractVector{<:Integer}, upper_lim::Integer)
-    # Start by increasing the last index by 1.
-    ind_len = length(ind)
-    ind[end] += 1
+function _digits_mixed_basis(ind, bases)
+    N = length(bases)
+    digits = zeros(Int, N)
+    for i in N:-1:1
+        digits[i] = mod(ind, bases[i])
+        ind = div(ind, bases[i])
+    end
+    return digits
+end
 
-    # Now we work the "odometer": repeatedly set each digit to 0 if it
-    # is too high and carry the addition to the left until we hit a
-    # digit that *isn't* too high.
-    for j in ind_len:-1:1
-        # If we've hit the upper limit in this entry, move onto the next
-        # entry.
-        if ind[j] ≥ upper_lim
-            ind[j] = 0
-            if j ≥ 2
-                ind[j - 1] += 1
-            else # we're at the left end of the vector; just stop
-                return
-            end
+function _update_odometer!(ind::AbstractVector{<:Integer}, bases::AbstractVector{<:Integer})
+    ind[1] += 1
+    d = length(ind)
+
+    for i in 1:d
+        if ind[i] ≥ bases[i]
+            ind[i] = 0
+            i < d ? ind[i + 1] += 1 : return
         else
-            return # always return if the odometer doesn't turn over
+            return
         end
     end
-    return
+end
+
+function _update_odometer!(ind::AbstractVector{<:Integer}, bases::Integer)
+    ind[1] += 1
+    d = length(ind)
+
+    for i in 1:d
+        if ind[i] ≥ bases
+            ind[i] = 0
+            i < d ? ind[i + 1] += 1 : return
+        else
+            return
+        end
+    end
 end
 
 """

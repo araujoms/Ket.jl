@@ -81,8 +81,9 @@ function gyni(::Type{T}, n::Integer = 3) where {T}
 
     normalization = T <: Integer ? 1 : inv(T(2^(n - 1)))
 
+    nmax = n % 2 == 1 ? n : n - 1
     for x in CartesianIndices(Tuple(2 * ones(Int, n)))
-        if sum(x.I) % 2 == 1
+        if sum(x.I[1:nmax] .- 1) % 2 == 0
             a = (x.I[2:n]..., x.I[1])
             G[a..., x] = normalization
         end
