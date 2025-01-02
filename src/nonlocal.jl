@@ -1,20 +1,67 @@
 """
-    local_bound(G::Array{T,N}; correlation = N < 4)
+    local_bound(G::Array{T,N}; correlation = N < 4, marg = true)
 
 Computes the local bound of a multipartite Bell functional `G` given as an `N`-dimensional array.
 If `correlation` is `false`, `G` is assumed to be written in full probability notation.
-If `correlation` is `true`, `G` is assumed to be written in full correlation notation.
+If `correlation` is `true`, `G` is assumed to be written in correlation notation, with or without marginals depending on `marg`.
 
 Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
 """
-function local_bound(G::Array{T,N}; correlation::Bool = N < 4) where {T<:Real,N}
+function local_bound(G::Array{T,N}; correlation::Bool = N < 4, marg::Bool = true) where {T<:Real,N}
     if correlation
-        return _local_bound_correlation(G)
+        return _local_bound_correlation(G; marg)
     else
         return _local_bound_probability(G)
     end
 end
 export local_bound
+
+function _local_bound_correlation(G::Array{T,N}; marg::Bool = true) where {T<:Real,N}
+    outs = fill(2, N)
+    ins = size(G)
+
+    num_strategies = outs .^ ins
+    largest_party = argmax(num_strategies)
+    if largest_party != 1
+        perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
+        ins = ins[perm]
+        G = permutedims(G, perm)
+    end
+    squareG = reshape(G, ins[1], prod(ins[2:N]))
+
+    chunks = _partition(prod((outs .^ ins)[2:N]), Threads.nthreads())
+    ins2 = ins
+    squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
+    tasks = map(chunks) do chunk
+        Threads.@spawn _local_bound_correlation_single(chunk, ins2, squareG2; marg)
+    end
+    score = maximum(fetch.(tasks))
+    return score
+end
+
+function _local_bound_correlation_single(chunk, ins::NTuple{2,Int}, squareG::Array{T,2}; marg::Bool = true) where {T}
+    ia, ib = ins
+    score = typemin(T)
+    ind = digits(chunk[1] - 1; base = 2, pad = ib)
+    offset = Vector(1 .+ 2 * (0:ib-1))
+    tmp = zeros(T, ia)
+    ax = zeros(T, ia)
+    if marg
+        ax[1] = 1
+    end
+    by = zeros(T, ib)
+    @inbounds for _ ∈ chunk[1]:chunk[2]
+        by .= 2 .* ind .- 1
+        @views mul!(tmp, squareG, by)
+        for x in marg+1:ia
+            ax[x] = tmp[x] > zero(T) ? one(T) : -one(T)
+        end
+        temp_score = dot(ax, tmp)
+        score = max(score, temp_score)
+        _update_odometer!(ind, 2)
+    end
+    return score
+end
 
 function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     @assert iseven(N2)
@@ -26,13 +73,12 @@ function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     num_strategies = outs .^ ins
     largest_party = argmax(num_strategies)
     if largest_party != 1
-        perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
-        outs = outs[perm]
-        ins = ins[perm]
-        bigperm::NTuple{N2,Int} = Tuple([perm; perm .+ N])
+        vperm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
+        outs = outs[vperm]
+        ins = ins[vperm]
+        bigperm::NTuple{N2,Int} = Tuple([vperm; vperm .+ N])
         G = permutedims(G, bigperm)
     end
-
     perm::NTuple{N2,Int} = Tuple([1; N + 1; 2:N; N+2:2N])
     permutedG = permutedims(G, perm)
     squareG = reshape(permutedG, outs[1] * ins[1], prod(outs[2:N]) * prod(ins[2:N]))
@@ -45,7 +91,6 @@ function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
         Threads.@spawn _local_bound_probability_single(chunk, outs2, ins2, squareG2)
     end
     score = maximum(fetch.(tasks))
-
     return score
 end
 
@@ -64,7 +109,6 @@ function _local_bound_probability_single(chunk, outs::NTuple{2,Int}, ins::NTuple
         score = max(score, temp_score)
         _update_odometer!(ind, ob)
     end
-
     return score
 end
 
@@ -99,7 +143,6 @@ function _local_bound_probability_single(chunk, outs::NTuple{N,Int}, ins::NTuple
         score = max(score, temp_score)
         _update_odometer!(ind, bases)
     end
-
     return score
 end
 
@@ -350,7 +393,7 @@ function tensor_correlation(p::AbstractArray{T,N2}, behaviour::Bool = false; mar
     N = N2 ÷ 2
     o = size(p)[1:N] # numbers of outputs per party
     @assert all(o .== 2)
-    m = size(p)[(N+1):end] # numbers of inputs per party
+    m = size(p)[N+1:end] # numbers of inputs per party
     size_FC = marg ? m .+ 1 : m
     FC = zeros(T, size_FC)
     cia = CartesianIndices(o)

@@ -7,6 +7,17 @@
     @test local_bound(cglmp(Int, 4)) == 9
     @test local_bound(gyni(Int, 3)) == 1
     @test local_bound(gyni(Int, 4)) == 1
+    for T ∈ [Float64, Double64, Float128, BigFloat]
+        fp1 = rand(T, 2, 2, 3, 4) # randn would mess things up
+        fp2 = permutedims(fp1, (2, 1, 4, 3))
+        fc1 = tensor_correlation(fp1)
+        fc2 = tensor_correlation(fp2)
+        @test local_bound(fp1) ≈ local_bound(fp2)
+        @test local_bound(fc1) ≈ local_bound(fc2)
+        @test local_bound(fc1) ≈ local_bound(fp1)
+    end
+    @test local_bound([1 1; 1 -1]; marg = false) == 2
+
     Random.seed!(1337)
     cglmp_cg = tensor_collinsgisin(cglmp())
     @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
