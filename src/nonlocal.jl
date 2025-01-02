@@ -124,7 +124,7 @@ function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     return score
 end
 
-function _local_bound_probability_single(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squareG::Array{T,2}) where {T}
+function _local_bound_probability_single2(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squareG::Array{T,2}) where {T}
     oa, ob = outs
     ia, ib = ins
     score = typemin(T)
@@ -154,9 +154,11 @@ function _local_bound_probability_single(chunk, outs::NTuple{N,Int}, ins::NTuple
     end
     linearindex(v) = 1 + dot(v, prodsizes)
     by = zeros(Int, 2 * (N - 1))
+    ins_region = CartesianIndices(ins[2:N])
+    offset_ind = zeros(Int, prod(ins[2:N]))
     @inbounds for _ ∈ chunk[1]:chunk[2]
-        fill!(Galice, 0)
-        for y ∈ CartesianIndices(ins[2:N])
+        counter = 0
+        for y ∈ ins_region
             by[1] = ind[y[1]]
             for i ∈ 2:length(y)
                 by[i] = ind[y[i]+ins[i]]
@@ -164,11 +166,10 @@ function _local_bound_probability_single(chunk, outs::NTuple{N,Int}, ins::NTuple
             for i ∈ 1:N-1
                 by[i+N-1] = y[i] - 1
             end
-            lin_by = linearindex(by)
-            for i ∈ 1:outs[1]*ins[1]
-                Galice[i] += squareG[i, lin_by]
-            end
+            counter += 1
+            offset_ind[counter] = linearindex(by)
         end
+        @views sum!(Galice, squareG[:, offset_ind])
         temp_score = _maxcols!(Galice, outs[1], ins[1])
         score = max(score, temp_score)
         _update_odometer!(ind, bases)
@@ -176,7 +177,11 @@ function _local_bound_probability_single(chunk, outs::NTuple{N,Int}, ins::NTuple
     return score
 end
 
-#sum(maximum(v, dims = 1)), with v interpreted as a oa x ia matrix
+"""
+    _maxcols!(A::Array, n::Integer, m::Integer)
+
+Computes `sum(maximum(A, dims = 1))`, with `A` interpreted as an `n` by `m` matrix. `A` is destroyed.
+"""
 function _maxcols!(v, oa, ia)
     for x ∈ 1:ia
         for a ∈ 2:oa
@@ -223,7 +228,7 @@ end
 function _digits_mixed_basis(ind, bases)
     N = length(bases)
     digits = zeros(Int, N)
-    for i ∈ N:-1:1
+    @inbounds for i ∈ N:-1:1
         digits[i] = mod(ind, bases[i])
         ind = div(ind, bases[i])
     end
@@ -234,7 +239,7 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, bases::AbstractVector
     ind[1] += 1
     d = length(ind)
 
-    for i ∈ 1:d
+    @inbounds for i ∈ 1:d
         if ind[i] ≥ bases[i]
             ind[i] = 0
             i < d ? ind[i+1] += 1 : return
@@ -248,7 +253,7 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, bases::Integer)
     ind[1] += 1
     d = length(ind)
 
-    for i ∈ 1:d
+    @inbounds for i ∈ 1:d
         if ind[i] ≥ bases
             ind[i] = 0
             i < d ? ind[i+1] += 1 : return
