@@ -279,7 +279,7 @@ function tensor_collinsgisin(p::AbstractArray{T,N2}, behaviour::Bool = false) wh
     outs = scenario[1:N]
     ins = scenario[N+1:2N]
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
-    CG = zeros(T, ins .* (outs .- 1) .+ 1)
+    CG = zeros(_solver_type(T), ins .* (outs .- 1) .+ 1)
 
     if !behaviour
         for x ∈ CartesianIndices(ins)
@@ -324,7 +324,7 @@ function tensor_probability(
     scenario::AbstractVecOrTuple{<:Integer},
     behaviour::Bool = false
 ) where {T,N}
-    p = zeros(T, scenario...)
+    p = zeros(_solver_type(T), scenario...)
     outs = Tuple(scenario[1:N])
     ins = Tuple(scenario[N+1:2N])
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
@@ -431,7 +431,7 @@ function tensor_correlation(p::AbstractArray{T,N2}, behaviour::Bool = false; mar
     @assert all(o .== 2)
     m = size(p)[N+1:end] # numbers of inputs per party
     size_FC = marg ? m .+ 1 : m
-    FC = zeros(T, size_FC)
+    FC = zeros(_solver_type(T), size_FC)
     cia = CartesianIndices(o)
     cix = CartesianIndices(size_FC)
     for x ∈ cix
