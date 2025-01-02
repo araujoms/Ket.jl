@@ -57,7 +57,7 @@ Produces the vector of the maximally entangled state ψ⁻ of local dimension `d
 """
 function state_psiminus_ket(::Type{T}, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^2)
-    psi[d.+(d-1)*(0:(d-1))] .= (-1) .^ (0:(d-1)) .* coeff
+    psi[d.+(d-1)*(0:d-1)] .= (-1) .^ (0:d-1) .* coeff
     return psi
 end
 state_psiminus_ket(d::Integer = 2; kwargs...) = state_psiminus_ket(ComplexF64, d; kwargs...)
@@ -84,7 +84,7 @@ Produces the vector of the GHZ state local dimension `d`.
 function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^N)
     spacing = (1 - d^N) ÷ (1 - d)
-    psi[1:spacing:(d^N)] .= coeff
+    psi[1:spacing:d^N] .= coeff
     return psi
 end
 state_ghz_ket(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz_ket(ComplexF64, d, N; kwargs...)
@@ -108,7 +108,7 @@ Produces the vector of the `N`-partite W state.
 """
 function state_w_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, N))) where {T<:Number}
     psi = zeros(T, 2^N)
-    psi[2 .^ (0:(N-1)).+1] .= coeff
+    psi[2 .^ (0:N-1) .+ 1] .= coeff
     return psi
 end
 state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)

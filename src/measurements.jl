@@ -5,15 +5,15 @@ _sqrt(::Type{T}, n::Integer) where {T<:Number} = sqrt(real(T)(n))
 function mub_prime(::Type{T}, p::Integer) where {T<:Number}
     γ = _root_unity(T, p)
     inv_sqrt_p = inv(_sqrt(T, p))
-    B = [Matrix{T}(undef, p, p) for _ ∈ 1:(p+1)]
+    B = [Matrix{T}(undef, p, p) for _ ∈ 1:p+1]
     B[1] .= I(p)
     if p == 2
         B[2] .= [1 1; 1 -1] .* inv_sqrt_p
         B[3] .= [1 1; im -im] .* inv_sqrt_p
     else
-        for k ∈ 0:(p-1)
+        for k ∈ 0:p-1
             fill!(B[k+2], inv_sqrt_p)
-            for t ∈ 0:(p-1), j ∈ 0:(p-1)
+            for t ∈ 0:p-1, j ∈ 0:p-1
                 exponent = mod(j * (t + k * j), p)
                 if exponent == 0
                     continue
@@ -37,23 +37,23 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
     d = Int64(p^r)
     γ = _root_unity(T, p)
     inv_sqrt_d = inv(_sqrt(T, d))
-    B = [zeros(T, d, d) for _ ∈ 1:(d+1)]
+    B = [zeros(T, d, d) for _ ∈ 1:d+1]
     B[1] .= I(d)
     f, x = Nemo.finite_field(p, r, "x")
-    pow = [x^i for i ∈ 0:(r-1)]
-    el = [sum(digits(i; base = p, pad = r) .* pow) for i ∈ 0:(d-1)]
+    pow = [x^i for i ∈ 0:r-1]
+    el = [sum(digits(i; base = p, pad = r) .* pow) for i ∈ 0:d-1]
     if p == 2
-        for i ∈ 1:d, k ∈ 0:(d-1), q ∈ 0:(d-1)
+        for i ∈ 1:d, k ∈ 0:d-1, q ∈ 0:d-1
             aux = one(T)
             q_bin = digits(q; base = 2, pad = r)
-            for m ∈ 0:(r-1), n ∈ 0:(r-1)
+            for m ∈ 0:r-1, n ∈ 0:r-1
                 aux *= conj(im^_tr_ff(el[i] * el[q_bin[m+1]*2^m+1] * el[q_bin[n+1]*2^n+1]))
             end
             B[i+1][:, k+1] += (-1)^_tr_ff(el[q+1] * el[k+1]) * aux * B[1][:, q+1] * inv_sqrt_d
         end
     else
         inv_two = inv(2 * one(f))
-        for i ∈ 1:d, k ∈ 0:(d-1), q ∈ 0:(d-1)
+        for i ∈ 1:d, k ∈ 0:d-1, q ∈ 0:d-1
             B[i+1][:, k+1] +=
                 γ^_tr_ff(-el[q+1] * el[k+1]) * γ^_tr_ff(el[i] * el[q+1] * el[q+1] * inv_two) * B[1][:, q+1] * inv_sqrt_d
         end
@@ -145,9 +145,9 @@ Reference: Appleby, Yadsan-Appleby, Zauner, [arXiv:1209.1813](http://arxiv.org/a
 function sic_povm(::Type{T}, d::Integer) where {T}
     fiducial = _fiducial_WH(real(T), d)
     vecs = Vector{Vector{T}}(undef, d^2)
-    for p ∈ 0:(d-1)
+    for p ∈ 0:d-1
         Xp = shift(T, d, p)
-        for q ∈ 0:(d-1)
+        for q ∈ 0:d-1
             Zq = clock(T, d, q)
             vecs[d*p+q+1] = Xp * Zq * fiducial
         end
@@ -171,7 +171,7 @@ function test_sic(vecs::Vector{Vector{T}}) where {T<:Number}
     length(vecs) == d^2 || throw(ArgumentError("Number of vectors must be d² = $(d^2), got $(length(vecs))."))
     normalization = inv(T(d^2))
     symmetry = inv(T(d^2 * (d + 1)))
-    for j ∈ 1:(d^2), i ∈ 1:j
+    for j ∈ 1:d^2, i ∈ 1:j
         inner_product = abs2(dot(vecs[i], vecs[j]))
         if i == j
             deviation = abs2(inner_product - normalization)

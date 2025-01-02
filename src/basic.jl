@@ -113,7 +113,7 @@ Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generali
 """
 function shift(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     X = zeros(T, d, d)
-    for i ∈ 0:(d-1)
+    for i ∈ 0:d-1
         X[mod(i + p, d)+1, i+1] = 1
     end
     return X
@@ -131,7 +131,7 @@ Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generali
 function clock(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     z = zeros(T, d)
     ω = _root_unity(T, d)
-    for i ∈ 0:(d-1)
+    for i ∈ 0:d-1
         exponent = mod(i * p, d)
         if exponent == 0
             z[i+1] = 1
@@ -244,12 +244,12 @@ function gellmann!(res::AbstractMatrix{T}, i::Integer, j::Integer, d::Integer = 
         end
     elseif i == d
         tmp = _sqrt(T, 2) / _sqrt(T, d * (d - 1))
-        for k ∈ 1:(d-1)
+        for k ∈ 1:d-1
             res[k, k] = tmp
         end
         res[d, d] = -(d - 1) * tmp
     else
-        gellmann!(view(res, 1:(d-1), 1:(d-1)), i, j, d - 1)
+        gellmann!(view(res, 1:d-1, 1:d-1), i, j, d - 1)
     end
     return res
 end

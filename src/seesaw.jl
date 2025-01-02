@@ -42,7 +42,7 @@ function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integ
     else
         B = Vector{Measurement{T2}}(undef, ib)
         for y ∈ 1:ib
-            B[y] = random_povm(T2, d, ob)[1:(ob-1)]
+            B[y] = random_povm(T2, d, ob)[1:ob-1]
         end
         local ψ, A
         ω = -R(Inf)
@@ -68,12 +68,12 @@ function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia
     d = size(B[1][1], 1)
 
     model = JuMP.GenericModel{R}()
-    ρxa = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:(oa-1)] for _ ∈ 1:ia] #assemblage
+    ρxa = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:oa-1] for _ ∈ 1:ia] #assemblage
     ρ_B = JuMP.@variable(model, [1:d, 1:d], Hermitian) #auxiliary quantum state
 
     JuMP.@constraint(model, tr(ρ_B) == 1)
     for x ∈ 1:ia
-        JuMP.@constraint(model, ρ_B - sum(ρxa[x][a] for a ∈ 1:(oa-1)) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, ρ_B - sum(ρxa[x][a] for a ∈ 1:oa-1) in JuMP.HermitianPSDCone())
     end
 
     ω = _compute_value_assemblage(CG, scenario, ρxa, ρ_B, B)
@@ -82,7 +82,7 @@ function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia
     JuMP.set_optimizer(model, solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
-    value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:(oa-1)] for x ∈ 1:ia]
+    value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:oa-1] for x ∈ 1:ia]
     return JuMP.value(ω), value_ρxa, Hermitian(JuMP.value.(ρ_B))
 end
 
@@ -91,9 +91,9 @@ function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypati
     d = size(ρ_B, 1)
 
     model = JuMP.GenericModel{R}()
-    B = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:(ob-1)] for _ ∈ 1:ib] #povm
+    B = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:ob-1] for _ ∈ 1:ib] #povm
     for y ∈ 1:ib
-        JuMP.@constraint(model, I - sum(B[y][b] for b ∈ 1:(ob-1)) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, I - sum(B[y][b] for b ∈ 1:ob-1) in JuMP.HermitianPSDCone())
     end
 
     ω = _compute_value_assemblage(CG, scenario, ρxa, ρ_B, B)
@@ -102,7 +102,7 @@ function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypati
     JuMP.set_optimizer(model, solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
-    B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:(ob-1)] for y ∈ 1:ib]
+    B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:ob-1] for y ∈ 1:ib]
     return JuMP.value(ω), B
 end
 
@@ -112,18 +112,18 @@ function _compute_value_assemblage(CG::Matrix{R}, scenario, ρxa, ρ_B, B) where
     bind(b, y) = 1 + b + (y - 1) * (ob - 1)
 
     ω = CG[1, 1] * one(JuMP.GenericAffExpr{R,JuMP.GenericVariableRef{R}})
-    for a ∈ 1:(oa-1)
+    for a ∈ 1:oa-1
         for x ∈ 1:ia
-            tempB = sum(CG[aind(a, x), bind(b, y)] * B[y][b] for b ∈ 1:(ob-1) for y ∈ 1:ib)
+            tempB = sum(CG[aind(a, x), bind(b, y)] * B[y][b] for b ∈ 1:ob-1 for y ∈ 1:ib)
             ω += real(dot(tempB, ρxa[x][a]))
         end
     end
-    for a ∈ 1:(oa-1)
+    for a ∈ 1:oa-1
         for x ∈ 1:ia
             ω += CG[aind(a, x), 1] * real(tr(ρxa[x][a]))
         end
     end
-    for b ∈ 1:(ob-1)
+    for b ∈ 1:ob-1
         for y ∈ 1:ib
             ω += CG[1, bind(b, y)] * real(dot(B[y][b], ρ_B))
         end
@@ -143,7 +143,7 @@ function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T
     end
     invrootλ = map(x -> x >= _rtol(T) ? 1 / sqrt(x) : zero(x), λ)
     W = U * Diagonal(invrootλ) * U'
-    A = [[Hermitian(conj(W * ρxa[x][a] * W)) for a ∈ 1:(oa-1)] for x ∈ 1:ia]
+    A = [[Hermitian(conj(W * ρxa[x][a] * W)) for a ∈ 1:oa-1] for x ∈ 1:ia]
     return ψ, A
 end
 

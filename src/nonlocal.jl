@@ -11,19 +11,19 @@ function local_bound(G::Array{T,N2}) where {T<:Real,N2}
     N = N2 ÷ 2
     scenario = size(G)
     outs = scenario[1:N]
-    ins = scenario[(N+1):(2*N)]
+    ins = scenario[N+1:2N]
 
     num_strategies = outs .^ ins
     largest_party = argmax(num_strategies)
     if largest_party != 1
-        perm = [largest_party; 2:(largest_party-1); 1; (largest_party+1):N]
+        perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
         outs = outs[perm]
         ins = ins[perm]
         bigperm::NTuple{N2,Int} = Tuple([perm; perm .+ N])
         G = permutedims(G, bigperm)
     end
 
-    perm::NTuple{N2,Int} = Tuple([1; N + 1; 2:N; (N+2):(2*N)])
+    perm::NTuple{N2,Int} = Tuple([1; N + 1; 2:N; N+2:2N])
     permutedG = permutedims(G, perm)
     squareG = reshape(permutedG, outs[1] * ins[1], prod(outs[2:N]) * prod(ins[2:N]))
 
@@ -45,7 +45,7 @@ function _local_bound_single(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squ
     ia, ib = ins
     score = typemin(T)
     ind = digits(chunk[1] - 1; base = ob, pad = ib)
-    offset = Vector(1 .+ ob * (0:(ib-1)))
+    offset = Vector(1 .+ ob * (0:ib-1))
     offset_ind = zeros(Int, ib)
     Galice = zeros(T, oa * ia)
     @inbounds for _ ∈ chunk[1]:chunk[2]
@@ -68,7 +68,7 @@ function _local_bound_single(chunk, outs::NTuple{N,Int}, ins::NTuple{N,Int}, squ
     sizes = (outs[2:N]..., ins[2:N]...)
     prodsizes = ones(Int, 2 * (N - 1))
     for i ∈ 1:length(prodsizes)
-        prodsizes[i] = prod(sizes[1:(i-1)])
+        prodsizes[i] = prod(sizes[1:i-1])
     end
     linearindex(v) = 1 + dot(v, prodsizes)
     by = zeros(Int, 2 * (N - 1))
@@ -189,7 +189,7 @@ function tensor_collinsgisin(p::AbstractArray{T,N2}, behaviour::Bool = false) wh
     N = N2 ÷ 2
     scenario = size(p)
     outs = scenario[1:N]
-    ins = scenario[(N+1):(2*N)]
+    ins = scenario[N+1:2N]
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
     CG = zeros(T, ins .* (outs .- 1) .+ 1)
 
@@ -238,7 +238,7 @@ function tensor_probability(
 ) where {T,N}
     p = zeros(T, scenario...)
     outs = Tuple(scenario[1:N])
-    ins = Tuple(scenario[(N+1):(2*N)])
+    ins = Tuple(scenario[N+1:2N])
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
     if ~behaviour

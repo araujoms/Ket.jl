@@ -99,7 +99,7 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     λ, U = eigen(σ)
     g = zeros(R, 4, 4)
     for j ∈ 1:4
-        for i ∈ 1:(j-1)
+        for i ∈ 1:j-1
             g[i, j] = (λ[i] - λ[j]) / log(λ[i] / λ[j])
         end
         g[j, j] = λ[j]
@@ -267,11 +267,11 @@ function _dps_constraints!(
 
     JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
     lifted = wrapper(V * symmetric_meat * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, 3:(n+1), ext_dims))
+    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
     JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt
-        for i ∈ 2:(n+1)
+        for i ∈ 2:n+1
             JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) in psd_cone)
         end
     end

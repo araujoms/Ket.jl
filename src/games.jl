@@ -10,7 +10,7 @@ function chsh(::Type{T}, d::Integer = 2) where {T}
 
     normalization = T <: Integer ? 1 : inv(T(d^2))
 
-    for a ∈ 0:(d-1), b ∈ 0:(d-1), x ∈ 0:(d-1), y ∈ 0:(d-1)
+    for a ∈ 0:d-1, b ∈ 0:d-1, x ∈ 0:d-1, y ∈ 0:d-1
         if mod(a + b + x * y, d) == 0
             G[a+1, b+1, x+1, y+1] = normalization
         end
@@ -33,7 +33,7 @@ function cglmp(::Type{T}, d::Integer = 3) where {T}
 
     normalization = T <: Integer ? 1 : inv(T(4 * (d - 1)))
 
-    for a ∈ 0:(d-1), b ∈ 0:(d-1), x ∈ 0:1, y ∈ 0:1, k ∈ 0:(d-2)
+    for a ∈ 0:d-1, b ∈ 0:d-1, x ∈ 0:1, y ∈ 0:1, k ∈ 0:d-2
         if mod(a - b, d) == mod((-1)^mod(x + y, 2) * k + x * y, d)
             G[a+1, b+1, x+1, y+1] = normalization * (d - 1 - k)
         end

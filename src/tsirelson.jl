@@ -12,8 +12,8 @@ function tsirelson_bound(
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
     outs = Tuple(scenario[1:N])
-    ins = Tuple(scenario[(N+1):(2*N)])
-    Π = [[[QuantumNPA.Id for _ ∈ 1:(outs[n]-1)] QuantumNPA.projector(n, 1:(outs[n]-1), 1:ins[n])] for n ∈ 1:N]
+    ins = Tuple(scenario[N+1:2N])
+    Π = [[[QuantumNPA.Id for _ ∈ 1:outs[n]-1] QuantumNPA.projector(n, 1:outs[n]-1, 1:ins[n])] for n ∈ 1:N]
     cgindex(a, x) = (x .!= 1) .* (a .+ (x .- 2) .* (outs .- 1)) .+ 1
 
     bell_functional = QuantumNPA.Polynomial()
