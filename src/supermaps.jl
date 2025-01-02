@@ -1,4 +1,4 @@
-#extract from T the kind of float to be used ∈ the conic solver
+#extract from T the kind of float to be used in the conic solver
 _solver_type(::Type{T}) where {T<:AbstractFloat} = T
 _solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
 _solver_type(::Type{T}) where {T<:Number} = Float64
