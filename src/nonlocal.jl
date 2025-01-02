@@ -46,13 +46,13 @@ function _local_bound_correlation_core(chunk, ins::NTuple{2,Int}, squareG::Array
     offset = zeros(T, ia)
     @views sum!(offset, squareG[:, marg+1:ib])
     marg && @views offset .-= squareG[:, 1]
-    offset .*= -1
+    offset ./= -2
     @inbounds for _ ∈ chunk[1]:chunk[2]
         bx .= offset
-        for y ∈ 1+marg:ib
+        for y ∈ marg+1:ib
             if ind[y-marg] == 1
                 for x ∈ 1:ia
-                    bx[x] += 2 * squareG[x, y]
+                    bx[x] += squareG[x, y]
                 end
             end
         end
@@ -63,7 +63,7 @@ function _local_bound_correlation_core(chunk, ins::NTuple{2,Int}, squareG::Array
         score = max(score, temp_score)
         _update_odometer!(ind, 2)
     end
-    return score
+    return 2score
 end
 
 function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array{T,2}; marg::Bool = true) where {T,N}
