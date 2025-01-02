@@ -1,7 +1,7 @@
 """
     incompatibility_robustness(A::Vector{Measurement{<:Number}}, measure::String = "g")
 
-Computes the incompatibility robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility robustness of the measurements in the vector `A`.
 Depending on the noise model chosen, the second argument can be
 `"d"` (depolarizing),
 `"r"` (random),
@@ -108,7 +108,7 @@ export incompatibility_robustness
 """
     incompatibility_robustness_depolarizing(A::Vector{Measurement{<:Number}})
 
-Computes the incompatibility depolarizing robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility depolarizing robustness of the measurements in the vector `A`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
@@ -120,7 +120,7 @@ export incompatibility_robustness_depolarizing
 """
     incompatibility_robustness_random(A::Vector{Measurement{<:Number}})
 
-Computes the incompatibility random robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility random robustness of the measurements in the vector `A`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
@@ -132,7 +132,7 @@ export incompatibility_robustness_random
 """
     incompatibility_robustness_probabilistic(A::Vector{Measurement{<:Number}})
 
-Computes the incompatibility probabilistic robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility probabilistic robustness of the measurements in the vector `A`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
@@ -144,7 +144,7 @@ export incompatibility_robustness_probabilistic
 """
     incompatibility_robustness_jointly_measurable(A::Vector{Measurement{<:Number}})
 
-Computes the incompatibility jointly measurable robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility jointly measurable robustness of the measurements in the vector `A`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
@@ -156,7 +156,7 @@ export incompatibility_robustness_jointly_measurable
 """
     incompatibility_robustness_generalized(A::Vector{Measurement{<:Number}})
 
-Computes the incompatibility generalized robustness of the measurements ∈ the vector `A`.
+Computes the incompatibility generalized robustness of the measurements in the vector `A`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """

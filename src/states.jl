@@ -11,7 +11,7 @@ export white_noise
 """
     white_noise!(rho::AbstractMatrix, v::Real)
 
-Modifies `rho` ∈ place to tranform ∈ into `v * rho + (1 - v) * id`
+Modifies `rho` in place to tranform it into `v * rho + (1 - v) * id`
 where `id` is the maximally mixed state.
 """
 function white_noise!(rho::AbstractMatrix, v::Real)

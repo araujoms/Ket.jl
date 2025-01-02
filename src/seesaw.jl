@@ -1,7 +1,7 @@
 """
     seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer)
 
-Maximizes bipartite Bell functional ∈ Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, ∈ the order [oa, ob, ia, ib].
+Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 `d` is an integer determining the local dimension of the strategy.
 
 If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
@@ -29,7 +29,7 @@ function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integ
             _optimise_alice_projectors!(CG, λ, A, B)
             _optimise_bob_projectors!(CG, λ, A, B)
             new_ω = _optimise_state!(CG, λ, A, B)
-            if new_ω - ω <= minimumincrease || i > maxiter
+            if new_ω - ω ≤ minimumincrease || i > maxiter
                 ω = new_ω
                 ψ = state_phiplus_ket(T2, d; coeff = λ)
                 A = [[A[x]] for x ∈ 1:ia] #rather inconvenient format
@@ -50,7 +50,7 @@ function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integ
         while true
             new_ω, ρxa, ρ_B = _optimise_alice_assemblage(CG, scenario, B)
             new_ω, B = _optimise_bob_povm(CG, scenario, ρxa, ρ_B)
-            if new_ω - ω <= minimumincrease || i > maxiter
+            if new_ω - ω ≤ minimumincrease || i > maxiter
                 ω = new_ω
                 ψ, A = _decompose_assemblage(scenario, ρxa, ρ_B)
                 break
@@ -141,7 +141,7 @@ function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T
     for i ∈ 1:d
         @views ψ .+= sqrt(λ[i]) * kron(conj(U[:, i]), U[:, i])
     end
-    invrootλ = map(x -> x >= _rtol(T) ? 1 / sqrt(x) : zero(x), λ)
+    invrootλ = map(x -> x ≥ _rtol(T) ? 1 / sqrt(x) : zero(x), λ)
     W = U * Diagonal(invrootλ) * U'
     A = [[Hermitian(conj(W * ρxa[x][a] * W)) for a ∈ 1:oa-1] for x ∈ 1:ia]
     return ψ, A

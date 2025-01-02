@@ -8,7 +8,9 @@ end
 """
     schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
 
-Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`. If the argument `dims` is omitted equally-sized subsystems are assumed. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
+Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`.
+If the argument `dims` is omitted equally-sized subsystems are assumed.
+Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
 
 Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
 """
@@ -23,7 +25,8 @@ export schmidt_decomposition
 """
     entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
 
-Computes the relative entropy of entanglement of a bipartite pure state `ψ` with subsystem dimensions `dims`. If the argument `dims` is omitted equally-sized subsystems are assumed.
+Computes the relative entropy of entanglement of a bipartite pure state `ψ` with subsystem dimensions `dims`.
+If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
 function entanglement_entropy(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
@@ -36,7 +39,8 @@ export entanglement_entropy
 """
     entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1)
 
-Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. If the argument `dims` is omitted equally-sized subsystems are assumed.
+Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy.
+If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
 function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1) where {T}
     ishermitian(ρ) || throw(ArgumentError("State needs to be Hermitian"))
@@ -135,7 +139,7 @@ end
 Upper bound on the random robustness of `ρ` such that it has a Schmidt number `s`.
 
 If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number ``s``, then there is
-a PSD matrix ``ω`` ∈ the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
+a PSD matrix ``ω`` in the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
 such that ``ω / s`` is separable  against ``AA′|B′B`` and ``Π† ω Π = ρ``, where ``Π = 1_A ⊗ s ψ^+ ⊗ 1_B``,
 and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is tested with the DPS hierarchy,
 with `n` controlling the how many copies of the ``B′B`` subsystem are used.
@@ -154,7 +158,7 @@ function schmidt_number(
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
-    s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
+    s ≥ 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
         return random_robustness(ρ, dims, n; ppt, verbose, solver)[1]
     end
@@ -234,7 +238,7 @@ export random_robustness
 """
     _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
 
-Constrains state `ρ` of dimensions `dims` ∈ JuMP model `model` to respect the DPS constraints of level `n`.
+Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
 
 References:
     Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
@@ -296,7 +300,7 @@ end
 
 function _min_dotprod!(model, ρ, W, solver, verbose)
     JuMP.@variable(model, λ)
-    JuMP.@constraint(model, real(dot(ρ, W)) <= λ)
+    JuMP.@constraint(model, real(dot(ρ, W)) ≤ λ)
     JuMP.@objective(model, Min, λ)
 
     JuMP.set_optimizer(model, solver)
@@ -351,10 +355,10 @@ end
     solver = Hypatia.Optimizer{_solver_type(T)})
 
 Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state that
-can be detected with a witness using only the operators provided ∈ `obs`, and the values of the coefficients
+can be detected with a witness using only the operators provided in `obs`, and the values of the coefficients
 defining such a witness.
 
-More precisely, if a list of observables ``O_i`` is provided ∈ the parameter `obs`, the witness will be of the form
+More precisely, if a list of observables ``O_i`` is provided in the parameter `obs`, the witness will be of the form
 ``∑_i α_i O_i`` and detects ρ only using these observables. For example, using only two-body operators (and lower order)
 one can call
 

@@ -41,7 +41,8 @@ end
 @doc """
     partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems ∈ `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems in `remove`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """ partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, limit, wrapper) ∈
@@ -97,7 +98,7 @@ for (T, limit, wrapper) ∈
                     end
                 end
             end
-            if !isbits(Y[1]) #this is a workaround for a bug ∈ Julia <= 1.10
+            if !isbits(Y[1]) #this is a workaround for a bug ∈ Julia ≤ 1.10
                 if $T == Hermitian
                     LinearAlgebra.copytri!(Y, 'U', true)
                 elseif $T == Symmetric
@@ -113,7 +114,8 @@ export partial_trace
 """
     partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector = _equal_sizes(X)))
 
-Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystem `remove`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
 partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector{<:Integer} = _equal_sizes(X)) =
     partial_trace(X, [remove], dims)
@@ -121,7 +123,8 @@ partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector{<:Integer
 @doc """
     partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems ∈ `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """ partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
@@ -191,7 +194,8 @@ export partial_transpose
 """
     partial_transpose(X::AbstractMatrix, transp::Integer, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystem `transp`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
 partial_transpose(X::AbstractMatrix, transp::Integer, dims::AbstractVector{<:Integer} = _equal_sizes(X)) =
     partial_transpose(X, [transp], dims)
@@ -224,7 +228,8 @@ end
 """
     permute_systems!(X::AbstractVector, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
 function permute_systems!(
     X::AbstractVector{T},
@@ -243,7 +248,8 @@ export permute_systems!
 @doc """
     permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Permutes the order of the subsystems of the square matrix `X`, which is composed by square subsystems of dimensions `dims`, according to the permutation `perm`.
+If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """ permute_systems(
     X::AbstractMatrix,
     perm::AbstractVector,

@@ -15,7 +15,7 @@ export choi
 """
     diamond_norm(J::AbstractMatrix, dims::AbstractVector)
 
-Computes the diamond norm of the supermap `J` given ∈ the Choi-Jamiołkowski representation, with subsystem dimensions `dims`.
+Computes the diamond norm of the supermap `J` given in the Choi-Jamiołkowski representation, with subsystem dimensions `dims`.
 
 Reference: [Diamond norm](https://en.wikipedia.org/wiki/Diamond_norm)
 """

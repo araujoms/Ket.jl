@@ -24,7 +24,7 @@ export ketbra
 """
     proj([T=ComplexF64,] i::Integer, d::Integer = 2)
 
-Produces a projector onto the basis state `i` ∈ dimension `d`.
+Produces a projector onto the basis state `i` in dimension `d`.
 """
 function proj(::Type{T}, i::Integer, d::Integer = 2) where {T<:Number}
     p = Hermitian(zeros(T, d, d))
@@ -50,7 +50,7 @@ export povm
 """
     tensor_to_povm(A::Array{T,4}, o::Vector{Int})
 
-Converts a set of measurements ∈ the common tensor format into a matrix of (hermitian) matrices.
+Converts a set of measurements in the common tensor format into a matrix of (hermitian) matrices.
 By default, the second argument is fixed by the size of `A`.
 It can also contain custom number of outcomes if there are measurements with less outcomes.
 """
@@ -62,7 +62,7 @@ export tensor_to_povm
 """
     povm_to_tensor(Axa::Vector{<:Measurement})
 
-Converts a matrix of (hermitian) matrices into a set of measurements ∈ the common tensor format.
+Converts a matrix of (hermitian) matrices into a set of measurements in the common tensor format.
 """
 function povm_to_tensor(Axa::Vector{Measurement{T}}) where {T<:Number}
     d, o, m = _measurements_parameters(Axa)
@@ -197,7 +197,7 @@ export pauli
 """
     gellmann([T=ComplexF64,], d::Integer = 3)
 
-Constructs the set `G` of generalized Gell-Mann matrices ∈ dimension `d` such that
+Constructs the set `G` of generalized Gell-Mann matrices in dimension `d` such that
 `G[1] = I` and `Tr(G[i]*G[j]) = 2 δ_ij`.
 
 Reference: [Generalizations of Pauli matrices](https://en.wikipedia.org/wiki/Generalizations_of_Pauli_matrices)
@@ -373,13 +373,13 @@ symmetric_projection(dim::Integer, n::Integer; partial::Bool = true) = symmetric
 
 Return the basis of `n` nontrivial operators acting on `n_parties`, by default using Pauli matrices.
 
-For example, `n_body_basis(2, 3)` generate all products of two Paulis and one identity, so
-``{ X ⊗ X ⊗ 1, X ⊗ 1 ⊗ X, ..., X ⊗ Y ⊗ 1, ..., 1 ⊗ Z ⊗ Z}``.
+For example, `n_body_basis(2, 3)` generates all products of two Paulis and one identity, so
+``{X ⊗ X ⊗ 1, X ⊗ 1 ⊗ X, ..., X ⊗ Y ⊗ 1, ..., 1 ⊗ Z ⊗ Z}``.
 
 Instead of Paulis, a basis can be provided by the parameter `sb`, and the identity can be changed with `eye`.
 If `sparse` is true, the resulting basis will use sparse matrices, otherwise it will agree with `sb`.
 
-This function returns a generator, which can then be used e.g. ∈ for loops without fully allocating the
+This function returns a generator, which can then be used e.g. in for loops without fully allocating the
 entire basis at once. If you need a vector, call `collect` on it.
 """
 function n_body_basis(
@@ -389,8 +389,8 @@ function n_body_basis(
     sparse::Bool = true,
     eye::AbstractMatrix = I(size(sb[1], 1))
 )
-    (n >= 0 && n_parties >= 2) || throw(ArgumentError("Number of parties must be ≥ 2 and n ≥ 0."))
-    n <= n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))
+    (n ≥ 0 && n_parties ≥ 2) || throw(ArgumentError("Number of parties must be ≥ 2 and n ≥ 0."))
+    n ≤ n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))
 
     sb = sparse ? [SA.sparse.(sb); [eye]] : [sb; [eye]]
     nb = length(sb) - 1
