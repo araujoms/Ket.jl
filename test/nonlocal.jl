@@ -15,6 +15,13 @@
         @test local_bound(fp1) ≈ local_bound(fp2)
         @test local_bound(fc1) ≈ local_bound(fc2)
         @test local_bound(fc1) ≈ local_bound(fp1)
+        fp1 = rand(T, 2, 2, 2, 3, 4, 5)
+        fp2 = permutedims(fp1, (3, 2, 1, 6, 5, 4))
+        fc1 = tensor_correlation(fp1)
+        fc2 = tensor_correlation(fp2)
+        @test local_bound(fp1) ≈ local_bound(fp2)
+        @test local_bound(fc1) ≈ local_bound(fc2)
+        @test local_bound(fc1) ≈ local_bound(fp1)
     end
     @test local_bound([1 1; 1 -1]; marg = false) == 2
 
