@@ -33,50 +33,56 @@ function _local_bound_correlation(G::Array{T,N}; marg::Bool = true) where {T<:Re
     ins2 = ins
     squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
     tasks = map(chunks) do chunk
-        Threads.@spawn _local_bound_correlation_single(chunk, ins2, squareG2; marg)
+        Threads.@spawn _local_bound_correlation_core(chunk, ins2, squareG2; marg)
     end
     score = maximum(fetch.(tasks))
     return score
 end
 
-function _local_bound_correlation_single(chunk, ins::NTuple{2,Int}, squareG::Array{T,2}; marg::Bool = true) where {T}
+function _local_bound_correlation_core(chunk, ins::NTuple{2,Int}, squareG::Array{T,2}; marg::Bool = true) where {T}
     ia, ib = ins
     score = typemin(T)
     ind = digits(chunk[1] - 1; base = 2, pad = ib - marg)
-    tmp = zeros(T, ia)
-    ax = ones(T, ia)
-    by = ones(T, ib)
+    bx = zeros(T, ia)
+    offset = zeros(T, ia)
+    @views sum!(offset, squareG[:, marg+1:ib])
+    marg && @views offset .-= squareG[:, 1]
+    offset .*= -1
     @inbounds for _ ∈ chunk[1]:chunk[2]
-        by[marg+1:ib] .= 2 .* ind .- 1
-        mul!(tmp, squareG, by)
-        for x ∈ marg+1:ia
-            ax[x] = tmp[x] > zero(T) ? one(T) : -one(T)
+        bx .= offset
+        for y ∈ 1+marg:ib
+            if ind[y-marg] == 1
+                for x ∈ 1:ia
+                    bx[x] += 2 * squareG[x, y]
+                end
+            end
         end
-        temp_score = dot(ax, tmp)
+        temp_score = marg ? bx[1] : abs(bx[1])
+        for x ∈ 2:ia
+            temp_score += abs(bx[x])
+        end
         score = max(score, temp_score)
         _update_odometer!(ind, 2)
     end
     return score
 end
 
-function _local_bound_correlation_single(chunk, ins::NTuple{N,Int}, squareG::Array{T,2}; marg::Bool = true) where {T,N}
+function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array{T,2}; marg::Bool = true) where {T,N}
     score = typemin(T)
     ind = digits(chunk[1] - 1; base = 2, pad = sum(ins[2:N] .- marg))
     sumsizes = [1; cumsum(collect(ins[2:N] .- marg)) .+ 1]
-    prodsizes = ones(Int, N - 1)
-    for i ∈ 1:N-1
-        prodsizes[i] = prod(ins[2:i])
-    end
+    prodsizes = [prod(ins[2:i]) for i ∈ 1:N-1]
     linearindex(v) = 1 + dot(v, prodsizes)
     tmp = zeros(T, ins[1])
     ax = ones(T, ins[1])
     by = [ones(T, ins[i]) for i ∈ 2:N]
+    ins_region = CartesianIndices(ins[2:N])
     @inbounds for _ ∈ chunk[1]:chunk[2]
         tmp .= 0
         for i ∈ 2:N
             by[i-1][marg+1:ins[i]] .= 2 .* ind[sumsizes[i-1]:sumsizes[i]-1] .- 1
         end
-        for y ∈ CartesianIndices(ins[2:N])
+        for y ∈ ins_region
             b = prod(by[i][y[i]] for i ∈ 1:N-1)
             lin_by = linearindex(y.I .- 1)
             for x ∈ 1:ins[1]
@@ -146,10 +152,7 @@ function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N
     ind = _digits_mixed_basis(chunk[1] - 1, bases)
     Galice = zeros(T, outs[1] * ins[1])
     sizes = (outs[2:N]..., ins[2:N]...)
-    prodsizes = ones(Int, 2 * (N - 1))
-    for i ∈ 1:length(prodsizes)
-        prodsizes[i] = prod(sizes[1:i-1])
-    end
+    prodsizes = [prod(sizes[1:i-1]) for i ∈ 1:2N-2]
     linearindex(v) = 1 + dot(v, prodsizes)
     by = zeros(Int, 2 * (N - 1))
     ins_region = CartesianIndices(ins[2:N])
