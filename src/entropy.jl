@@ -3,7 +3,7 @@ _log(base::Real, x::Real) = x > 0 ? log(base, x) : zero(x)
 """
     relative_entropy([base=2,] ρ::AbstractMatrix, σ::AbstractMatrix)
 
-Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between positive semidefinite matrices `ρ` and `σ` using a base `base` logarithm. Note that the support of `ρ` must be contained in the support of `σ` but for efficiency this is not checked.
+Computes the (quantum) relative entropy tr(`ρ` (log `ρ` - log `σ`)) between positive semidefinite matrices `ρ` and `σ` using a base `base` logarithm. Note that the support of `ρ` must be contained ∈ the support of `σ` but for efficiency this is not checked.
 
 Reference: [Quantum relative entropy](https://en.wikipedia.org/wiki/Quantum_relative_entropy).
 """
@@ -35,7 +35,7 @@ export relative_entropy
 """
     relative_entropy([base=2,] p::AbstractVector, q::AbstractVector)
 
-Computes the relative entropy D(`p`||`q`) = Σᵢpᵢlog(pᵢ/qᵢ) between two non-negative vectors `p` and `q` using a base `base` logarithm. Note that the support of `p` must be contained in the support of `q` but for efficiency this is not checked.
+Computes the relative entropy D(`p`||`q`) = Σᵢpᵢlog(pᵢ/qᵢ) between two non-negative vectors `p` and `q` using a base `base` logarithm. Note that the support of `p` must be contained ∈ the support of `q` but for efficiency this is not checked.
 
 Reference: [Relative entropy](https://en.wikipedia.org/wiki/Relative_entropy).
 """
@@ -153,7 +153,7 @@ function conditional_entropy(
     remove = Vector{eltype(csys)}(undef, length(dims) - length(csys))  # To condition on csys we trace out the rest
     counter = 0
     for i ∈ 1:length(dims)
-        if !(i in csys)
+        if !(i ∈ csys)
             counter += 1
             remove[counter] = i
         end

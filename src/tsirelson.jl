@@ -1,8 +1,8 @@
 """
     tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level)
 
-Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written in Collins-Gisin notation.
-`scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
+Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written ∈ Collins-Gisin notation.
+`scenario` is a tuple detailing the number of inputs and outputs, ∈ the order (oa, ob, ..., ia, ib, ...).
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
 function tsirelson_bound(
@@ -30,7 +30,7 @@ export tsirelson_bound
 """
     tsirelson_bound(FC::Matrix, level::Integer)
 
-Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
+Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written ∈ full correlation notation.
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
 function tsirelson_bound(FC::Array{T,N}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T<:Number,N}
@@ -50,7 +50,7 @@ function _npa(::Type{T}, functional, level; solver) where {T<:AbstractFloat}
     model = JuMP.GenericModel{T}()
     moments = QuantumNPA.npa_moment(functional, level)
     dΓ = size(moments)[1]
-    JuMP.@variable(model, Z[1:dΓ, 1:dΓ] in JuMP.PSDCone())
+    JuMP.@variable(model, Z[1:dΓ, 1:dΓ] ∈ JuMP.PSDCone())
     id_matrix = moments[QuantumNPA.Id]
     objective = dot(id_matrix, Z) + functional[QuantumNPA.Id]
     JuMP.@objective(model, Min, objective)

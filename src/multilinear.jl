@@ -41,7 +41,7 @@ end
 @doc """
     partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems in `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial trace of matrix `X` with subsystem dimensions `dims` over the subsystems ∈ `remove`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """ partial_trace(X::AbstractMatrix, remove::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, limit, wrapper) ∈
@@ -58,7 +58,7 @@ for (T, limit, wrapper) ∈
             keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept
             counter = 0
             for i ∈ 1:length(dims)
-                if !(i in remove)
+                if !(i ∈ remove)
                     counter += 1
                     keep[counter] = i
                 end
@@ -97,7 +97,7 @@ for (T, limit, wrapper) ∈
                     end
                 end
             end
-            if !isbits(Y[1]) #this is a workaround for a bug in Julia <= 1.10
+            if !isbits(Y[1]) #this is a workaround for a bug ∈ Julia <= 1.10
                 if $T == Hermitian
                     LinearAlgebra.copytri!(Y, 'U', true)
                 elseif $T == Symmetric
@@ -121,7 +121,7 @@ partial_trace(X::AbstractMatrix, remove::Integer, dims::AbstractVector{<:Integer
 @doc """
     partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems in `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
+Takes the partial transpose of matrix `X` with subsystem dimensions `dims` on the subsystems ∈ `transp`. If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """ partial_transpose(X::AbstractMatrix, transp::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
 for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian)), (:(Symmetric), :(Symmetric))]
@@ -137,7 +137,7 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
             keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept
             counter = 0
             for i ∈ 1:length(dims)
-                if !(i in transp)
+                if !(i ∈ transp)
                     counter += 1
                     keep[counter] = i
                 end

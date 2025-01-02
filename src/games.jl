@@ -1,7 +1,7 @@
 """
     chsh([T=Float64,] d::Integer = 2)
 
-CHSH-d nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+CHSH-d nonlocal game ∈ full probability notation. If `T` is an integer type the game is unnormalized.
 
 Reference: Buhrman and Massar, [arXiv:quant-ph/0409066](https://arxiv.org/abs/quant-ph/0409066).
 """
@@ -24,7 +24,7 @@ export chsh
 """
     cglmp([T=Float64,] d::Integer = 3)
 
-CGLMP nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+CGLMP nonlocal game ∈ full probability notation. If `T` is an integer type the game is unnormalized.
 
 References: [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) for the original game, and [arXiv:2005.13418](https://arxiv.org/abs/2005.13418) for the form presented here.
 """
@@ -47,7 +47,7 @@ export cglmp
 """
     inn22([T=Float64,] n::Integer = 3)
 
-inn22 Bell functional in Collins-Gisin notation. Local bound 1.
+inn22 Bell functional ∈ Collins-Gisin notation. Local bound 1.
 
 Reference: Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
 """
@@ -72,7 +72,7 @@ export inn22
 """
     gyni([T=Float64,] n::Integer)
 
-Guess your neighbour's input nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+Guess your neighbour's input nonlocal game ∈ full probability notation. If `T` is an integer type the game is unnormalized.
 
 Reference: Mafalda et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844).
 """

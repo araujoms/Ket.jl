@@ -12,7 +12,7 @@ end
 """
     random_state([T=ComplexF64,] d::Integer, k::Integer = d)
 
-Produces a uniformly distributed random quantum state in dimension `d` with rank `k`.
+Produces a uniformly distributed random quantum state ∈ dimension `d` with rank `k`.
 
 Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
 """
@@ -28,7 +28,7 @@ export random_state
 """
     random_state_ket([T=ComplexF64,] d::Integer)
 
-Produces a Haar-random quantum state vector in dimension `d`.
+Produces a Haar-random quantum state vector ∈ dimension `d`.
 
 Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
 """
@@ -61,7 +61,7 @@ rmul!(A::AbstractVecOrMat, adjB::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}) =
 """
     random_unitary([T=ComplexF64,] d::Integer)
 
-Produces a Haar-random unitary matrix in dimension `d`.
+Produces a Haar-random unitary matrix ∈ dimension `d`.
 If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
 
 Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).

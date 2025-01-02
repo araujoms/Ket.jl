@@ -1,7 +1,7 @@
 """
     seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer)
 
-Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
+Maximizes bipartite Bell functional ∈ Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, ∈ the order [oa, ob, ia, ib].
 `d` is an integer determining the local dimension of the strategy.
 
 If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
@@ -68,12 +68,12 @@ function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia
     d = size(B[1][1], 1)
 
     model = JuMP.GenericModel{R}()
-    ρxa = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:oa-1] for _ ∈ 1:ia] #assemblage
+    ρxa = [[JuMP.@variable(model, [1:d, 1:d] ∈ JuMP.HermitianPSDCone()) for _ ∈ 1:oa-1] for _ ∈ 1:ia] #assemblage
     ρ_B = JuMP.@variable(model, [1:d, 1:d], Hermitian) #auxiliary quantum state
 
     JuMP.@constraint(model, tr(ρ_B) == 1)
     for x ∈ 1:ia
-        JuMP.@constraint(model, ρ_B - sum(ρxa[x][a] for a ∈ 1:oa-1) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, ρ_B - sum(ρxa[x][a] for a ∈ 1:oa-1) ∈ JuMP.HermitianPSDCone())
     end
 
     ω = _compute_value_assemblage(CG, scenario, ρxa, ρ_B, B)
@@ -91,9 +91,9 @@ function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypati
     d = size(ρ_B, 1)
 
     model = JuMP.GenericModel{R}()
-    B = [[JuMP.@variable(model, [1:d, 1:d] in JuMP.HermitianPSDCone()) for _ ∈ 1:ob-1] for _ ∈ 1:ib] #povm
+    B = [[JuMP.@variable(model, [1:d, 1:d] ∈ JuMP.HermitianPSDCone()) for _ ∈ 1:ob-1] for _ ∈ 1:ib] #povm
     for y ∈ 1:ib
-        JuMP.@constraint(model, I - sum(B[y][b] for b ∈ 1:ob-1) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, I - sum(B[y][b] for b ∈ 1:ob-1) ∈ JuMP.HermitianPSDCone())
     end
 
     ω = _compute_value_assemblage(CG, scenario, ρxa, ρ_B, B)

@@ -11,7 +11,7 @@ export white_noise
 """
     white_noise!(rho::AbstractMatrix, v::Real)
 
-Modifies `rho` in place to tranform in into `v * rho + (1 - v) * id`
+Modifies `rho` ∈ place to tranform ∈ into `v * rho + (1 - v) * id`
 where `id` is the maximally mixed state.
 """
 function white_noise!(rho::AbstractMatrix, v::Real)
@@ -151,7 +151,7 @@ function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T,
             # SD: we could go for an explicit one like for GHZ
             psi .+= tmp
         else
-            # SD: this creates -0.0 in the output
+            # SD: this creates -0.0 ∈ the output
             psi .-= tmp
         end
     end

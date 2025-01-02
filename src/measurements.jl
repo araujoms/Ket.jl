@@ -62,7 +62,7 @@ function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
 end
 mub_prime_power(p::Integer, r::Integer) = mub_prime_power(ComplexF64, p, r)
 
-# auxiliary function to compute the trace in finite fields as an Int64
+# auxiliary function to compute the trace ∈ finite fields as an Int64
 function _tr_ff(a::Nemo.FqFieldElem)
     Int64(Nemo.lift(Nemo.ZZ, Nemo.absolute_tr(a)))
 end

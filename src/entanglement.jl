@@ -62,7 +62,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
 
     JuMP.@variable(model, h)
     JuMP.@objective(model, Min, h / log(Rs(2)))
-    JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs,Ts}(1 + 2 * vec_dim))
+    JuMP.@constraint(model, [h; σvec; ρvec] ∈ Hypatia.EpiTrRelEntropyTriCone{Rs,Ts}(1 + 2 * vec_dim))
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_silent(model)
     JuMP.optimize!(model)
@@ -135,7 +135,7 @@ end
 Upper bound on the random robustness of `ρ` such that it has a Schmidt number `s`.
 
 If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number ``s``, then there is
-a PSD matrix ``ω`` in the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
+a PSD matrix ``ω`` ∈ the extended space ``AA′B′B``, where ``A′`` and ``B^′`` have dimension ``s``,
 such that ``ω / s`` is separable  against ``AA′|B′B`` and ``Π† ω Π = ρ``, where ``Π = 1_A ⊗ s ψ^+ ⊗ 1_B``,
 and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is tested with the DPS hierarchy,
 with `n` controlling the how many copies of the ``B′B`` subsystem are used.
@@ -234,7 +234,7 @@ export random_robustness
 """
     _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
 
-Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
+Constrains state `ρ` of dimensions `dims` ∈ JuMP model `model` to respect the DPS constraints of level `n`.
 
 References:
     Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
@@ -265,14 +265,14 @@ function _dps_constraints!(
         wrapper = Symmetric
     end
 
-    JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
+    JuMP.@variable(model, symmetric_meat[1:d, 1:d] ∈ psd_cone)
     lifted = wrapper(V * symmetric_meat * V')
     JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
     JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt
         for i ∈ 2:n+1
-            JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) in psd_cone)
+            JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) ∈ psd_cone)
         end
     end
 end
@@ -282,15 +282,15 @@ function _fully_decomposable_witness_constraints!(model, dims, W)
     biparts = Combinatorics.partitions(1:nparties, 2)
     dim = prod(dims)
 
-    Ps = [JuMP.@variable(model, [1:dim, 1:dim] in JuMP.HermitianPSDCone()) for _ ∈ 1:length(biparts)]
+    Ps = [JuMP.@variable(model, [1:dim, 1:dim] ∈ JuMP.HermitianPSDCone()) for _ ∈ 1:length(biparts)]
 
     JuMP.@constraint(model, tr(W) == 1)
     # this can be used instead of tr(W) = 1 if we want a GME entanglement quantifier (see ref.)
-    # [JuMP.@constraint(model, (I(dim) - (W - Ps[i])) in JuMP.HermitianPSDCone()) for i in 1:length(biparts)]
+    # [JuMP.@constraint(model, (I(dim) - (W - Ps[i])) ∈ JuMP.HermitianPSDCone()) for i ∈ 1:length(biparts)]
 
     # constraints for W = Q^{T_M} + P^M:
     for (i, part) ∈ enumerate(biparts)
-        JuMP.@constraint(model, Hermitian(partial_transpose(W - Ps[i], part[1], dims)) in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, Hermitian(partial_transpose(W - Ps[i], part[1], dims)) ∈ JuMP.HermitianPSDCone())
     end
 end
 
@@ -351,15 +351,15 @@ end
     solver = Hypatia.Optimizer{_solver_type(T)})
 
 Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state that
-can be detected with a witness using only the operators provided in `obs`, and the values of the coefficients
+can be detected with a witness using only the operators provided ∈ `obs`, and the values of the coefficients
 defining such a witness.
 
-More precisely, if a list of observables ``O_i`` is provided in the parameter `obs`, the witness will be of the form
+More precisely, if a list of observables ``O_i`` is provided ∈ the parameter `obs`, the witness will be of the form
 ``∑_i α_i O_i`` and detects ρ only using these observables. For example, using only two-body operators (and lower order)
 one can call
 
 ```julia-repl
-julia> two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:2))
+julia> two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i ∈ 0:2))
 julia> ppt_mixture(state_ghz(2, 3), [2, 2, 2], two_body_basis)
 ```
 

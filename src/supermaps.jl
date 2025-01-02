@@ -1,4 +1,4 @@
-#extract from T the kind of float to be used in the conic solver
+#extract from T the kind of float to be used ∈ the conic solver
 _solver_type(::Type{T}) where {T<:AbstractFloat} = T
 _solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
 _solver_type(::Type{T}) where {T<:Number} = Float64
@@ -15,7 +15,7 @@ export choi
 """
     diamond_norm(J::AbstractMatrix, dims::AbstractVector)
 
-Computes the diamond norm of the supermap `J` given in the Choi-Jamiołkowski representation, with subsystem dimensions `dims`.
+Computes the diamond norm of the supermap `J` given ∈ the Choi-Jamiołkowski representation, with subsystem dimensions `dims`.
 
 Reference: [Diamond norm](https://en.wikipedia.org/wiki/Diamond_norm)
 """
@@ -29,14 +29,14 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypat
         JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Hermitian)
         JuMP.@variable(model, σ[1:din, 1:din], Hermitian)
         bigσ = Hermitian(kron(σ, I(dout)))
-        JuMP.@constraint(model, bigσ - Y in JuMP.HermitianPSDCone())
-        JuMP.@constraint(model, bigσ + Y in JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, bigσ - Y ∈ JuMP.HermitianPSDCone())
+        JuMP.@constraint(model, bigσ + Y ∈ JuMP.HermitianPSDCone())
     else
         JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Symmetric)
         JuMP.@variable(model, σ[1:din, 1:din], Symmetric)
         bigσ = Symmetric(kron(σ, I(dout)))
-        JuMP.@constraint(model, bigσ - Y in JuMP.PSDCone())
-        JuMP.@constraint(model, bigσ + Y in JuMP.PSDCone())
+        JuMP.@constraint(model, bigσ - Y ∈ JuMP.PSDCone())
+        JuMP.@constraint(model, bigσ + Y ∈ JuMP.PSDCone())
     end
 
     JuMP.@constraint(model, tr(σ) == 1)
