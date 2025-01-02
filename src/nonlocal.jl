@@ -1,12 +1,22 @@
 """
-    local_bound(G::Array{T,N})
+    local_bound(G::Array{T,N}; correlation = N < 4)
 
-Computes the local bound of a multipartite Bell functional `G`, written in full probability notation
-as an `N`-dimensional array.
+Computes the local bound of a multipartite Bell functional `G` given as an `N`-dimensional array.
+If `correlation` is `false`, `G` is assumed to be written in full probability notation.
+If `correlation` is `true`, `G` is assumed to be written in full correlation notation.
 
 Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
 """
-function local_bound(G::Array{T,N2}) where {T<:Real,N2}
+function local_bound(G::Array{T,N}; correlation::Bool = N < 4) where {T<:Real,N}
+    if correlation
+        return _local_bound_correlation(G)
+    else
+        return _local_bound_probability(G)
+    end
+end
+export local_bound
+
+function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     @assert iseven(N2)
     N = N2 ÷ 2
     scenario = size(G)
@@ -32,15 +42,14 @@ function local_bound(G::Array{T,N2}) where {T<:Real,N2}
     ins2 = ins
     squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
     tasks = map(chunks) do chunk
-        Threads.@spawn _local_bound_single(chunk, outs2, ins2, squareG2)
+        Threads.@spawn _local_bound_probability_single(chunk, outs2, ins2, squareG2)
     end
     score = maximum(fetch.(tasks))
 
     return score
 end
-export local_bound
 
-function _local_bound_single(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squareG::Array{T,2}) where {T}
+function _local_bound_probability_single(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squareG::Array{T,2}) where {T}
     oa, ob = outs
     ia, ib = ins
     score = typemin(T)
@@ -59,7 +68,7 @@ function _local_bound_single(chunk, outs::NTuple{2,Int}, ins::NTuple{2,Int}, squ
     return score
 end
 
-function _local_bound_single(chunk, outs::NTuple{N,Int}, ins::NTuple{N,Int}, squareG::Array{T,2}) where {T,N}
+function _local_bound_probability_single(chunk, outs::NTuple{N,Int}, ins::NTuple{N,Int}, squareG::Array{T,2}) where {T,N}
     score = typemin(T)
     bases = reduce(vcat, [outs[i] * ones(Int, ins[i]) for i ∈ 2:length(ins)])
     ind = _digits_mixed_basis(chunk[1] - 1, bases)
