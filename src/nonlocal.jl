@@ -193,7 +193,7 @@ function tensor_collinsgisin(p::AbstractArray{T,N2}, behaviour::Bool = false) wh
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
     CG = zeros(T, ins .* (outs .- 1) .+ 1)
 
-    if ~behaviour
+    if !behaviour
         for x ∈ CartesianIndices(ins)
             for a ∈ CartesianIndices(outs)
                 for a2 ∈ Iterators.product(union.(a.I, outs)...)
@@ -241,7 +241,7 @@ function tensor_probability(
     ins = Tuple(scenario[N+1:2N])
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
-    if ~behaviour
+    if !behaviour
         for x ∈ CartesianIndices(ins)
             for a ∈ CartesianIndices(outs)
                 for a2 ∈ Iterators.product(union.(a.I, outs)...)
@@ -278,7 +278,7 @@ function tensor_probability(FC::AbstractArray{T,N}, behaviour::Bool = false) whe
     # there may be a smarter way to order these loops
     for a2 ∈ cia
         ind = collect(a2.I) .== 2
-        denominator = behaviour ? 1 : prod(m[.~ind]; init = 1)
+        denominator = behaviour ? 1 : prod(m[.!ind]; init = 1)
         for a1 ∈ cia
             s = (-1)^sum(a1.I[ind] .- 1; init = 0)
             for x ∈ cix
@@ -355,7 +355,7 @@ function tensor_correlation(p::AbstractArray{T,N2}, behaviour::Bool = false; mar
             FC[x] = sum((-1)^sum(a[n] - 1 for n ∈ 1:N if x[n] > marg; init = 0) * sum(p[a, x_colon...]) for a ∈ cia)
         end
     end
-    if ~behaviour
+    if !behaviour
         FC ./= 2^N
     elseif marg
         for n ∈ 1:N
