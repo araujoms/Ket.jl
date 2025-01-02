@@ -98,7 +98,7 @@ for (T, limit, wrapper) ∈
                     end
                 end
             end
-            if !isbits(Y[1]) #this is a workaround for a bug ∈ Julia ≤ 1.10
+            if !isbits(Y[1]) #this is a workaround for a bug in Julia ≤ 1.10
                 if $T == Hermitian
                     LinearAlgebra.copytri!(Y, 'U', true)
                 elseif $T == Symmetric

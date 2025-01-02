@@ -89,7 +89,7 @@ function incompatibility_robustness(
     if JuMP.is_solved_and_feasible(model)
         η = JuMP.objective_value(model)
         if return_parent && JuMP.has_duals(model)
-            # the parent POVM is best represented ∈ the tensor format as it has many outcomes
+            # the parent POVM is best represented in the tensor format as it has many outcomes
             G = zeros(T, d, d, o...)
             for (j, c) ∈ zip(CartesianIndices(o), con)
                 G[:, :, j] .= JuMP.dual(c)

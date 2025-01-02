@@ -151,7 +151,7 @@ function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T,
             # SD: we could go for an explicit one like for GHZ
             psi .+= tmp
         else
-            # SD: this creates -0.0 ∈ the output
+            # SD: this creates -0.0 in the output
             psi .-= tmp
         end
     end
