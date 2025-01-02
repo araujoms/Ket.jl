@@ -5,16 +5,21 @@ Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written 
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(CG::Array{T, N}, scenario::AbstractVecOrTuple{<:Integer}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
+function tsirelson_bound(
+    CG::Array{T,N},
+    scenario::AbstractVecOrTuple{<:Integer},
+    level;
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number,N}
     outs = Tuple(scenario[1:N])
-    ins = Tuple(scenario[(N + 1):(2 * N)])
-    Π = [[[QuantumNPA.Id for _ in 1:(outs[n] - 1)] QuantumNPA.projector(n, 1:(outs[n] - 1), 1:ins[n])] for n in 1:N]
+    ins = Tuple(scenario[(N+1):(2*N)])
+    Π = [[[QuantumNPA.Id for _ ∈ 1:(outs[n]-1)] QuantumNPA.projector(n, 1:(outs[n]-1), 1:ins[n])] for n ∈ 1:N]
     cgindex(a, x) = (x .!= 1) .* (a .+ (x .- 2) .* (outs .- 1)) .+ 1
 
     bell_functional = QuantumNPA.Polynomial()
-    for x in CartesianIndices(ins .+ 1)
-        for a in CartesianIndices((x.I .!= 1) .* (outs .- 2) .+ 1)
-            bell_functional += CG[cgindex(a.I, x.I)...] * prod(Π[n][a.I[n], x.I[n]] for n in 1:N)
+    for x ∈ CartesianIndices(ins .+ 1)
+        for a ∈ CartesianIndices((x.I .!= 1) .* (outs .- 2) .+ 1)
+            bell_functional += CG[cgindex(a.I, x.I)...] * prod(Π[n][a.I[n], x.I[n]] for n ∈ 1:N)
         end
     end
 
@@ -28,20 +33,20 @@ export tsirelson_bound
 Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(FC::Array{T, N}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T <: Number, N}
+function tsirelson_bound(FC::Array{T,N}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T<:Number,N}
     ins = size(FC) .- 1
-    O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n in 1:N]
+    O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n ∈ 1:N]
 
     bell_functional = QuantumNPA.Polynomial()
-    for x in CartesianIndices(ins .+ 1)
-        bell_functional += FC[x] * prod(O[n][x[n]] for n in 1:N)
+    for x ∈ CartesianIndices(ins .+ 1)
+        bell_functional += FC[x] * prod(O[n][x[n]] for n ∈ 1:N)
     end
 
     Q = _npa(_solver_type(T), bell_functional, level; solver)
     return Q
 end
 
-function _npa(::Type{T}, functional, level; solver) where {T <: AbstractFloat}
+function _npa(::Type{T}, functional, level; solver) where {T<:AbstractFloat}
     model = JuMP.GenericModel{T}()
     moments = QuantumNPA.npa_moment(functional, level)
     dΓ = size(moments)[1]
@@ -49,8 +54,8 @@ function _npa(::Type{T}, functional, level; solver) where {T <: AbstractFloat}
     id_matrix = moments[QuantumNPA.Id]
     objective = dot(id_matrix, Z) + functional[QuantumNPA.Id]
     JuMP.@objective(model, Min, objective)
-    mons = collect(m for m in QuantumNPA.monomials(functional, moments) if !QuantumNPA.isidentity(m))
-    for m in mons
+    mons = collect(m for m ∈ QuantumNPA.monomials(functional, moments) if !QuantumNPA.isidentity(m))
+    for m ∈ mons
         JuMP.@constraint(model, dot(moments[m], Z) + functional[m] == 0)
     end
     dual_solver = () -> Dualization.DualOptimizer{T}(MOI.instantiate(solver))

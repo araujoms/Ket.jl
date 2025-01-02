@@ -19,7 +19,7 @@ open(joinpath(generated_path, "index.md"), "w") do io
         """
     )
     # Write the contents out below the meta block
-    for line in eachline(joinpath(dirname(@__DIR__), "README.md"))
+    for line ∈ eachline(joinpath(dirname(@__DIR__), "README.md"))
         println(io, line)
     end
 end

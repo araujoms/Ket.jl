@@ -3,7 +3,7 @@ _randn(::Type{Complex{T}}) where {T<:AbstractFloat} = Complex{T}(randn(T), randn
 _randn(::Type{T}) where {T} = randn(T)
 _randn(::Type{T}, dim1::Integer, dims::Integer...) where {T} = _randn!(Array{T}(undef, dim1, dims...))
 function _randn!(A::AbstractArray{T}) where {T}
-    for i in eachindex(A)
+    for i ∈ eachindex(A)
         @inbounds A[i] = _randn(T)
     end
     return A
@@ -52,9 +52,11 @@ size(Q::StewartQ, dim::Integer) = size(Q.q, dim)
 size(Q::StewartQ) = size(Q.q)
 
 lmul!(A::StewartQ, B::AbstractVecOrMat) = lmul!(A.q, lmul!(LinearAlgebra.Diagonal(A.signs), B))
-lmul!(adjA::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}, B::AbstractVecOrMat) = lmul!(LinearAlgebra.Diagonal(adjA.Q.signs), lmul!(adjA.Q.q', B))
+lmul!(adjA::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}, B::AbstractVecOrMat) =
+    lmul!(LinearAlgebra.Diagonal(adjA.Q.signs), lmul!(adjA.Q.q', B))
 rmul!(A::AbstractVecOrMat, B::StewartQ) = rmul!(rmul!(A, B.q), LinearAlgebra.Diagonal(B.signs))
-rmul!(A::AbstractVecOrMat, adjB::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}) = rmul!(rmul!(A, LinearAlgebra.Diagonal(adjB.Q.signs)), adjB.Q.q')
+rmul!(A::AbstractVecOrMat, adjB::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}) =
+    rmul!(rmul!(A, LinearAlgebra.Diagonal(adjB.Q.signs)), adjB.Q.q')
 
 """
     random_unitary([T=ComplexF64,] d::Integer)
@@ -66,14 +68,14 @@ Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
-    @inbounds for j = 1:d
-        for i = j:d
+    @inbounds for j ∈ 1:d
+        for i ∈ j:d
             z[i, j] = _randn(T)
         end
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
-    @inbounds for k = 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
+    @inbounds for k ∈ 1:d #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
         @views x = z[k:d, k]
         τ[k] = LinearAlgebra.reflector!(x)
         s[k] = sign(real(x[1]))
@@ -92,15 +94,15 @@ Reference: Heinosaari et al., [arXiv:1902.04751](https://arxiv.org/abs/1902.0475
 """
 function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T<:Number}
     d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n * k)"))
-    E = [Matrix{T}(undef, (d, d)) for _ = 1:n]
-    for i = 1:n
+    E = [Matrix{T}(undef, (d, d)) for _ ∈ 1:n]
+    for i ∈ 1:n
         G = randn(T, (d, k))
         mul!(E[i], G, G')
     end
     S = sum(E)
     rootinvS = Hermitian(S)^-0.5 #don't worry, the probability of getting a singular S is zero
     mat = Matrix{T}(undef, (d, d))
-    for i = 1:n
+    for i ∈ 1:n
         mul!(mat, rootinvS, E[i])
         mul!(E[i], mat, rootinvS)
     end

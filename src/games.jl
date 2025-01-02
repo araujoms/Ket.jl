@@ -10,9 +10,9 @@ function chsh(::Type{T}, d::Integer = 2) where {T}
 
     normalization = T <: Integer ? 1 : inv(T(d^2))
 
-    for a in 0:(d - 1), b in 0:(d - 1), x in 0:(d - 1), y in 0:(d - 1)
+    for a ∈ 0:(d-1), b ∈ 0:(d-1), x ∈ 0:(d-1), y ∈ 0:(d-1)
         if mod(a + b + x * y, d) == 0
-            G[a + 1, b + 1, x + 1, y + 1] = normalization
+            G[a+1, b+1, x+1, y+1] = normalization
         end
     end
 
@@ -33,9 +33,9 @@ function cglmp(::Type{T}, d::Integer = 3) where {T}
 
     normalization = T <: Integer ? 1 : inv(T(4 * (d - 1)))
 
-    for a in 0:(d - 1), b in 0:(d - 1), x in 0:1, y in 0:1, k in 0:(d - 2)
+    for a ∈ 0:(d-1), b ∈ 0:(d-1), x ∈ 0:1, y ∈ 0:1, k ∈ 0:(d-2)
         if mod(a - b, d) == mod((-1)^mod(x + y, 2) * k + x * y, d)
-            G[a + 1, b + 1, x + 1, y + 1] = normalization * (d - 1 - k)
+            G[a+1, b+1, x+1, y+1] = normalization * (d - 1 - k)
         end
     end
 
@@ -53,12 +53,12 @@ Reference: Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/03051
 """
 function inn22(::Type{T}, n) where {T}
     C = zeros(T, n + 1, n + 1)
-    for x in 1:n
-        for y in 1:n
+    for x ∈ 1:n
+        for y ∈ 1:n
             if x + y <= n + 1
-                C[x + 1, y + 1] = -1
+                C[x+1, y+1] = -1
             elseif x + y == n + 2
-                C[x + 1, y + 1] = 1
+                C[x+1, y+1] = 1
             end
         end
     end
@@ -82,7 +82,7 @@ function gyni(::Type{T}, n::Integer = 3) where {T}
     normalization = T <: Integer ? 1 : inv(T(2^(n - 1)))
 
     nmax = n % 2 == 1 ? n : n - 1
-    for x in CartesianIndices(Tuple(2 * ones(Int, n)))
+    for x ∈ CartesianIndices(Tuple(2 * ones(Int, n)))
         if sum(x.I[1:nmax] .- 1) % 2 == 0
             a = (x.I[2:n]..., x.I[1])
             G[a..., x] = normalization

@@ -1,7 +1,7 @@
 @testset "Multilinear algebra" begin
     @testset "Partial trace      " begin
         d1, d2, d3 = 2, 2, 3
-        for R in (Float64, Double64, Float128, BigFloat), T in (R, Complex{R})
+        for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
             a = randn(T, d1, d1)
             b = randn(T, d2, d2)
             c = randn(T, d3, d3)
@@ -22,7 +22,7 @@
             @test partial_trace(abc, 1, [d1, d2, d3]) ≈ bc * tr(a)
             @test partial_trace(abc, Int[], [d1, d2, d3]) ≈ abc
         end
-        for wrapper in (Symmetric, Hermitian)
+        for wrapper ∈ (Symmetric, Hermitian)
             M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
             x = Matrix(M)
             @test partial_trace(M, 2, [d1, d2, d3]) ≈ partial_trace(x, 2, [d1, d2, d3])
@@ -32,7 +32,7 @@
 
     @testset "Partial transpose  " begin
         d1, d2, d3 = 2, 2, 3
-        for R in (Float64, Double64, Float128, BigFloat), T in (R, Complex{R})
+        for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
             a = randn(T, d1, d1)
             b = randn(T, d2, d2)
             c = randn(T, d3, d3)
@@ -53,7 +53,7 @@
             @test partial_transpose(abc, 1, [d1, d2, d3]) ≈ kron(transpose(a), bc)
             @test partial_transpose(abc, Int[], [d1, d2, d3]) ≈ abc
         end
-        for wrapper in (Symmetric, Hermitian)
+        for wrapper ∈ (Symmetric, Hermitian)
             M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
             x = Matrix(M)
             @test partial_transpose(M, 2, [d1, d2, d3]) ≈ partial_transpose(x, 2, [d1, d2, d3])
@@ -64,7 +64,7 @@
     @testset "Permute systems    " begin
         @testset "Vectors" begin
             d1, d2, d3 = 2, 2, 3
-            for R in (Float64, Double64, Float128, BigFloat), T in (R, Complex{R})
+            for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
                 u = randn(T, d1)
                 v = randn(T, d2)
                 w = randn(T, d3)
@@ -86,7 +86,7 @@
 
         @testset "Square matrices" begin
             d1, d2, d3 = 2, 2, 3
-            for R in (Float64, Double64, Float128, BigFloat), T in (R, Complex{R})
+            for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
                 a = randn(T, d1, d1)
                 b = randn(T, d2, d2)
                 c = randn(T, d3, d3)
@@ -122,7 +122,7 @@
                 p = permutation_matrix([d1, d2, d3], [3, 2, 1])
                 @test permute_systems(abc, [3, 2, 1], [d1, d2, d3]) ≈ p * abc * p'
             end
-            for wrapper in (Symmetric, Hermitian)
+            for wrapper ∈ (Symmetric, Hermitian)
                 M = wrapper(randn(ComplexF64, (d1 * d2 * d3, d1 * d2 * d3)))
                 x = Matrix(M)
                 @test permute_systems(M, [3, 1, 2], [d1, d2, d3]) ≈ permute_systems(x, [3, 1, 2], [d1, d2, d3])
@@ -132,7 +132,7 @@
 
         @testset "Rectangular matrices" begin
             d1, d2, d3 = 2, 3, 4
-            for R in (Float64, Double64, Float128, BigFloat), T in (R, Complex{R})
+            for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
                 a = randn(T, d1, d2)
                 b = randn(T, d1, d3)
                 c = randn(T, d2, d3)

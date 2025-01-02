@@ -14,25 +14,21 @@
     @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), "1 + A B") ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
     τ = Double64(9) / 10
     tilted_chsh_fc = [
-        0 τ  0;
-        τ 1  1;
+        0 τ 0
+        τ 1 1
         0 1 -1
     ]
     @test tsirelson_bound(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
     gyni_cg = tensor_collinsgisin(gyni())
-    @test tsirelson_bound(gyni_cg, 2*ones(Int,6), 3) ≈ 0.25 rtol = 1e-6 #for some reason CI gives a different result
-    Śliwa18 = [0   0   0
-               1   1   0
-               1   1   0;;;
-               0  -2   0
-               1   0   1
-               1   0  -1;;;
-               0   0   2
-               0   1  -1
-               0  -1  -1]
-    @test tsirelson_bound(Śliwa18, 2) ≈ 2*(7-sqrt(17)) rtol = 1e-7
+    @test tsirelson_bound(gyni_cg, 2 * ones(Int, 6), 3) ≈ 0.25 rtol = 1e-6 #for some reason CI gives a different result
+    Śliwa18 = [
+        0 0 0; 1 1 0; 1 1 0;;;
+        0 -2 0; 1 0 1; 1 0 -1;;;
+        0 0 2; 0 1 -1; 0 -1 -1
+    ]
+    @test tsirelson_bound(Śliwa18, 2) ≈ 2 * (7 - sqrt(17)) rtol = 1e-7
 
-    for T in [Float64, Double64, Float128, BigFloat]
+    for T ∈ [Float64, Double64, Float128, BigFloat]
         @test eltype(chsh(T)) <: T
         @test eltype(cglmp(T)) <: T
         @test cglmp(T, 4)[3] == T(1) / 12
@@ -40,7 +36,7 @@
 end
 
 @testset "FP and FC notations" begin
-    for T in [Float64, Double64, Float128, BigFloat]
+    for T ∈ [Float64, Double64, Float128, BigFloat]
         Aax = povm(mub(Complex{T}, 2))
         fc_phiplus = Diagonal([1, 1, 1, -1])
         @test tensor_correlation(state_phiplus(Complex{T}), Aax, 2) ≈ fc_phiplus
@@ -60,7 +56,7 @@ end
 end
 
 @testset "FP and CG notations" begin
-    for T in [Float64, Double64, Float128, BigFloat]
+    for T ∈ [Float64, Double64, Float128, BigFloat]
         Aax = povm(mub(Complex{T}, 2))
         cg_phiplus = [1.0 0.5 0.5 0.5; 0.5 0.5 0.25 0.25; 0.5 0.25 0.5 0.25; 0.5 0.25 0.25 0.0]
         @test tensor_collinsgisin(state_phiplus(Complex{T}), Aax, 2) ≈ cg_phiplus

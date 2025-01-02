@@ -14,7 +14,8 @@
         for R ∈ (Float64, Double64), T ∈ (R, Complex{R}) #Float128 and BigFloat take too long
             Random.seed!(8) #makes all states entangled
             ψ = random_state_ket(T, 6)
-            @test entanglement_entropy(ψ, [2, 3]) ≈ entanglement_entropy(ketbra(ψ), [2, 3])[1] atol = 1.0e-3 rtol = 1.0e-3
+            @test entanglement_entropy(ψ, [2, 3]) ≈ entanglement_entropy(ketbra(ψ), [2, 3])[1] atol = 1.0e-3 rtol =
+                1.0e-3
             ρ = random_state(T, 4)
             h, σ = entanglement_entropy(ρ)
             @test Ket._test_entanglement_entropy_qubit(h, ρ, σ)
@@ -44,12 +45,12 @@
 
             v, W = ppt_mixture(ρ, [2, 2, 2])
             @test isapprox(v, 0.4285, atol = 1.0e-3)
-            full_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:3))
+            full_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i ∈ 0:3))
             v, w = ppt_mixture(ρ, [2, 2, 2], full_body_basis)
             @test isapprox(v, 0.4285, atol = 1.0e-3)
-            @test isapprox(sum(w[i] * full_body_basis[i] for i in eachindex(w)), W, atol = 1.0e-3)
+            @test isapprox(sum(w[i] * full_body_basis[i] for i ∈ eachindex(w)), W, atol = 1.0e-3)
 
-            two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i in 0:2))
+            two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i ∈ 0:2))
             v, w = ppt_mixture(state_w(3), [2, 2, 2], two_body_basis)
             @test isapprox(v, 0.696, atol = 1.0e-3)
         end

@@ -62,7 +62,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
 
     JuMP.@variable(model, h)
     JuMP.@objective(model, Min, h / log(Rs(2)))
-    JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs, Ts}(1 + 2 * vec_dim))
+    JuMP.@constraint(model, [h; σvec; ρvec] in Hypatia.EpiTrRelEntropyTriCone{Rs,Ts}(1 + 2 * vec_dim))
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_silent(model)
     JuMP.optimize!(model)
@@ -98,8 +98,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     R = typeof(h)
     λ, U = eigen(σ)
     g = zeros(R, 4, 4)
-    for j in 1:4
-        for i in 1:(j - 1)
+    for j ∈ 1:4
+        for i ∈ 1:(j-1)
             g[i, j] = (λ[i] - λ[j]) / log(λ[i] / λ[j])
         end
         g[j, j] = λ[j]
@@ -109,8 +109,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     λ2, U2 = eigen(σT)
     phi = partial_transpose(ketbra(U2[:, 1]), 2, [2, 2])
     G = zero(U)
-    for i in 1:4
-        for j in 1:4
+    for i ∈ 1:4
+        for j ∈ 1:4
             G += g[i, j] * ketbra(U[:, i]) * phi * ketbra(U[:, j])
         end
     end
@@ -145,14 +145,14 @@ References:
 Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
 """
 function schmidt_number(
-        ρ::AbstractMatrix{T},
-        s::Integer = 2,
-        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
-        n::Integer = 1;
-        ppt::Bool = true,
-        verbose::Bool = false,
-        solver = Hypatia.Optimizer{_solver_type(T)}
-    ) where {T <: Number}
+    ρ::AbstractMatrix{T},
+    s::Integer = 2,
+    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+    n::Integer = 1;
+    ppt::Bool = true,
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     s >= 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
@@ -198,13 +198,13 @@ export schmidt_number
 Lower bounds the random robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `ppt` indicates whether to include the partial transposition constraints.
 """
 function random_robustness(
-        ρ::AbstractMatrix{T},
-        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
-        n::Integer = 1;
-        ppt::Bool = true,
-        verbose::Bool = false,
-        solver = Hypatia.Optimizer{_solver_type(T)}
-    ) where {T <: Number}
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+    n::Integer = 1;
+    ppt::Bool = true,
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     is_complex = (T <: Complex)
@@ -240,14 +240,14 @@ References:
     Doherty, Parrilo, Spedalieri [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
 """
 function _dps_constraints!(
-        model::JuMP.GenericModel{T},
-        ρ::AbstractMatrix,
-        dims::AbstractVector{<:Integer},
-        n::Integer;
-        ppt::Bool = true,
-        is_complex::Bool = true,
-        isometry::AbstractMatrix = I(size(ρ, 1))
-    ) where {T}
+    model::JuMP.GenericModel{T},
+    ρ::AbstractMatrix,
+    dims::AbstractVector{<:Integer},
+    n::Integer;
+    ppt::Bool = true,
+    is_complex::Bool = true,
+    isometry::AbstractMatrix = I(size(ρ, 1))
+) where {T}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
 
     dA, dB = dims
@@ -267,11 +267,11 @@ function _dps_constraints!(
 
     JuMP.@variable(model, symmetric_meat[1:d, 1:d] in psd_cone)
     lifted = wrapper(V * symmetric_meat * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, 3:(n + 1), ext_dims))
+    JuMP.@expression(model, reduced, partial_trace(lifted, 3:(n+1), ext_dims))
     JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
 
     if ppt
-        for i in 2:(n + 1)
+        for i ∈ 2:(n+1)
             JuMP.@constraint(model, partial_transpose(lifted, 2:i, ext_dims) in psd_cone)
         end
     end
@@ -282,14 +282,14 @@ function _fully_decomposable_witness_constraints!(model, dims, W)
     biparts = Combinatorics.partitions(1:nparties, 2)
     dim = prod(dims)
 
-    Ps = [JuMP.@variable(model, [1:dim, 1:dim] in JuMP.HermitianPSDCone()) for _ in 1:length(biparts)]
+    Ps = [JuMP.@variable(model, [1:dim, 1:dim] in JuMP.HermitianPSDCone()) for _ ∈ 1:length(biparts)]
 
     JuMP.@constraint(model, tr(W) == 1)
     # this can be used instead of tr(W) = 1 if we want a GME entanglement quantifier (see ref.)
     # [JuMP.@constraint(model, (I(dim) - (W - Ps[i])) in JuMP.HermitianPSDCone()) for i in 1:length(biparts)]
 
     # constraints for W = Q^{T_M} + P^M:
-    for (i, part) in enumerate(biparts)
+    for (i, part) ∈ enumerate(biparts)
         JuMP.@constraint(model, Hermitian(partial_transpose(W - Ps[i], part[1], dims)) in JuMP.HermitianPSDCone())
     end
 end
@@ -319,11 +319,11 @@ with the PPT criterion. If the state is a PPT mixture, returns a 0 matrix instea
 Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
-        ρ::AbstractMatrix{T},
-        dims::AbstractVector{<:Integer};
-        verbose::Bool = false,
-        solver = Hypatia.Optimizer{_solver_type(T)}
-    ) where {T <: Number}
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer};
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
     dim = size(ρ, 1)
     prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
 
@@ -366,19 +366,19 @@ julia> ppt_mixture(state_ghz(2, 3), [2, 2, 2], two_body_basis)
 Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
-        ρ::AbstractMatrix{T},
-        dims::AbstractVector{<:Integer},
-        obs::AbstractVector{<:AbstractMatrix};
-        verbose::Bool = false,
-        solver = Hypatia.Optimizer{_solver_type(T)}
-    ) where {T <: Number}
+    ρ::AbstractMatrix{T},
+    dims::AbstractVector{<:Integer},
+    obs::AbstractVector{<:AbstractMatrix};
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
     dim = size(ρ, 1)
     prod(dims) == size(ρ, 1) || throw(ArgumentError("State dimension does not agree with local dimensions."))
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
     JuMP.@variable(model, w_coeffs[1:length(obs)])
-    W = sum(w_coeffs[i] * obs[i] for i in eachindex(w_coeffs))
+    W = sum(w_coeffs[i] * obs[i] for i ∈ eachindex(w_coeffs))
 
     _fully_decomposable_witness_constraints!(model, dims, W)
     _min_dotprod!(model, ρ, W, solver, verbose)

@@ -1,0 +1,10 @@
+# Configuration file for JuliaFormatter.jl
+# For more information, see: https://domluna.github.io/JuliaFormatter.jl/stable/config/
+
+margin = 120
+trailing_comma = false
+remove_extra_newlines = true
+separate_kwargs_with_semicolon = true
+normalize_line_endings = "unix"
+always_for_in = true
+for_in_replacement = "∈"

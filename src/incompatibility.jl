@@ -14,12 +14,12 @@ Returns the parent POVM if `return_parent = true`.
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness(
-        A::Vector{Measurement{T}},
-        measure::String = "g";
-        verbose = false,
-        return_parent = false,
-        solver = Hypatia.Optimizer{_solver_type(T)}
-    ) where {T <: Number}
+    A::Vector{Measurement{T}},
+    measure::String = "g";
+    verbose = false,
+    return_parent = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Number}
     @assert measure in ["d", "r", "p", "jm", "g"]
     d, o, m = _measurements_parameters(A)
     is_complex = T <: Complex
@@ -29,12 +29,12 @@ function incompatibility_robustness(
 
     # variables
     if is_complex
-        X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a in 1:o[x]] for x in 1:m]
+        X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a ∈ 1:o[x]] for x ∈ 1:m]
         if measure in ["jm", "g"]
             N = JuMP.@variable(model, [1:d, 1:d], Hermitian)
         end
     else
-        X = [[JuMP.@variable(model, [1:d, 1:d], Symmetric) for a in 1:o[x]] for x in 1:m]
+        X = [[JuMP.@variable(model, [1:d, 1:d], Symmetric) for a ∈ 1:o[x]] for x ∈ 1:m]
         if measure in ["jm", "g"]
             N = JuMP.@variable(model, [1:d, 1:d], Symmetric)
         end
@@ -44,20 +44,20 @@ function incompatibility_robustness(
     end
 
     # constraints
-    lhs = zero(JuMP.GenericAffExpr{stT, JuMP.GenericVariableRef{stT}})
-    rhs = zero(JuMP.GenericAffExpr{stT, JuMP.GenericVariableRef{stT}})
+    lhs = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
+    rhs = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
     if measure in ["d", "r", "p"]
-        con = JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in cone)
+        con = JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) in cone)
         JuMP.add_to_expression!(lhs, 1)
     else
-        con = JuMP.@constraint(model, [j in CartesianIndices(o)], N - sum(X[x][j.I[x]] for x in 1:m) in cone)
+        con = JuMP.@constraint(model, [j in CartesianIndices(o)], N - sum(X[x][j.I[x]] for x ∈ 1:m) in cone)
         if measure == "jm"
-            JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x in 1:m) in cone)
+            JuMP.@constraint(model, [j in CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) in cone)
         end
         JuMP.add_to_expression!(rhs, 1)
     end
-    for x in 1:m
-        for a in 1:o[x]
+    for x ∈ 1:m
+        for a ∈ 1:o[x]
             JuMP.add_to_expression!(lhs, dot(X[x][a], A[x][a]))
             if measure == "d"
                 JuMP.add_to_expression!(rhs, (tr(A[x][a]) / d) * tr(X[x][a]))
@@ -91,7 +91,7 @@ function incompatibility_robustness(
         if return_parent && JuMP.has_duals(model)
             # the parent POVM is best represented in the tensor format as it has many outcomes
             G = zeros(T, d, d, o...)
-            for (j, c) in zip(CartesianIndices(o), con)
+            for (j, c) ∈ zip(CartesianIndices(o), con)
                 G[:, :, j] .= JuMP.dual(c)
             end
             cleanup!(G)
@@ -112,7 +112,7 @@ Computes the incompatibility depolarizing robustness of the measurements in the 
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
-function incompatibility_robustness_depolarizing(A::Vector{Measurement{T}}; kwargs...) where {T <: Number}
+function incompatibility_robustness_depolarizing(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
     return incompatibility_robustness(A, "d"; kwargs...)
 end
 export incompatibility_robustness_depolarizing
@@ -124,7 +124,7 @@ Computes the incompatibility random robustness of the measurements in the vector
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
-function incompatibility_robustness_random(A::Vector{Measurement{T}}; kwargs...) where {T <: Number}
+function incompatibility_robustness_random(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
     return incompatibility_robustness(A, "r"; kwargs...)
 end
 export incompatibility_robustness_random
@@ -136,7 +136,7 @@ Computes the incompatibility probabilistic robustness of the measurements in the
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
-function incompatibility_robustness_probabilistic(A::Vector{Measurement{T}}; kwargs...) where {T <: Number}
+function incompatibility_robustness_probabilistic(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
     return incompatibility_robustness(A, "p"; kwargs...)
 end
 export incompatibility_robustness_probabilistic
@@ -148,7 +148,7 @@ Computes the incompatibility jointly measurable robustness of the measurements i
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
-function incompatibility_robustness_jointly_measurable(A::Vector{Measurement{T}}; kwargs...) where {T <: Number}
+function incompatibility_robustness_jointly_measurable(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
     return incompatibility_robustness(A, "jm"; kwargs...)
 end
 export incompatibility_robustness_jointly_measurable
@@ -160,7 +160,7 @@ Computes the incompatibility generalized robustness of the measurements in the v
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
-function incompatibility_robustness_generalized(A::Vector{Measurement{T}}; kwargs...) where {T <: Number}
+function incompatibility_robustness_generalized(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
     return incompatibility_robustness(A, "g"; kwargs...)
 end
 export incompatibility_robustness_generalized
