@@ -77,7 +77,6 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     linearindex_offset = 1 - sum(prodsizes) # to avoid y.I .- 1
     linearindex(v) = linearindex_offset + dot(v, prodsizes)
     tmp = zeros(T, ia)
-    ax = ones(T, ia)
     by = [ones(T, ins[i]) for i ∈ 2:N]
     ins_region = CartesianIndices(ins[2:N])
     @inbounds for _ ∈ chunk[1]:chunk[2]
