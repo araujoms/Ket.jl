@@ -24,16 +24,15 @@ function _local_bound_correlation(G::Array{T,N}; marg::Bool = true) where {T<:Re
     largest_party = argmax(num_strategies)
     if largest_party != 1
         perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
-        ins = ins[perm]
+        ins::NTuple{N,Int} = ins[perm]
         G = permutedims(G, perm)
     end
     squareG = reshape(G, ins[1], prod(ins[2:N]))
 
     chunks = _partition(prod((outs .^ (ins.-marg))[2:N]), Threads.nthreads())
-    ins2 = ins
-    squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
+    ins2 = ins #workaround for https://github.com/JuliaLang/julia/issues/15276
     tasks = map(chunks) do chunk
-        Threads.@spawn _local_bound_correlation_core(chunk, ins2, squareG2; marg)
+        Threads.@spawn _local_bound_correlation_core(chunk, ins2, squareG; marg)
     end
     score = maximum(fetch.(tasks))
     return score
@@ -109,20 +108,19 @@ function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     num_strategies = outs .^ ins
     largest_party = argmax(num_strategies)
     if largest_party != 1
-        vperm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
-        outs::NTuple{N,Int} = outs[vperm]
-        ins::NTuple{N,Int} = ins[vperm]
-        G = permutedims(G, [vperm; vperm .+ N])
+        perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
+        outs::NTuple{N,Int} = outs[perm]
+        ins::NTuple{N,Int} = ins[perm]
+        G = permutedims(G, [perm; perm .+ N])
     end
     permutedG = permutedims(G, [1; N + 1; 2:N; N+2:2N])
     squareG = reshape(permutedG, outs[1] * ins[1], prod(outs[2:N]) * prod(ins[2:N]))
 
     chunks = _partition(prod((outs .^ ins)[2:N]), Threads.nthreads())
     outs2 = outs
-    ins2 = ins
-    squareG2 = squareG  #workaround for https://github.com/JuliaLang/julia/issues/15276
+    ins2 = ins #workaround for https://github.com/JuliaLang/julia/issues/15276
     tasks = map(chunks) do chunk
-        Threads.@spawn _local_bound_probability_core(chunk, outs2, ins2, squareG2)
+        Threads.@spawn _local_bound_probability_core(chunk, outs2, ins2, squareG)
     end
     score = maximum(fetch.(tasks))
     return score
