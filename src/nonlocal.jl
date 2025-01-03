@@ -41,7 +41,8 @@ end
 function _local_bound_correlation_core(chunk, ins::NTuple{2,Int}, squareG::Array{T,2}; marg::Bool = true) where {T}
     ia, ib = ins
     score = typemin(T)
-    ind = digits(chunk[1] - 1; base = 2, pad = ib - marg)
+    ind = Vector{Int8}(undef, ib - marg)
+    digits!(ind, chunk[1] - 1; base = 2)
     bx = zeros(T, ia)
     offset = zeros(T, ia)
     @views sum!(offset, squareG[:, marg+1:ib])
@@ -67,13 +68,16 @@ function _local_bound_correlation_core(chunk, ins::NTuple{2,Int}, squareG::Array
 end
 
 function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array{T,2}; marg::Bool = true) where {T,N}
+    ia = ins[1]
     score = typemin(T)
-    ind = digits(chunk[1] - 1; base = 2, pad = sum(ins[2:N] .- marg))
-    sumsizes = [1; cumsum(collect(ins[2:N] .- marg)) .+ 1]
+    ind = Vector{Int8}(undef, sum(ins[2:N]) - N + 1)
+    digits!(ind, chunk[1] - 1; base = 2)
+    sumsizes = [1; cumsum(collect(ins[2:N]) .- marg) .+ 1]
     prodsizes = [prod(ins[2:i]) for i ∈ 1:N-1]
-    linearindex(v) = 1 + dot(v, prodsizes)
-    tmp = zeros(T, ins[1])
-    ax = ones(T, ins[1])
+    linearindex_offset = 1 - sum(prodsizes) # to avoid y.I .- 1
+    linearindex(v) = linearindex_offset + dot(v, prodsizes)
+    tmp = zeros(T, ia)
+    ax = ones(T, ia)
     by = [ones(T, ins[i]) for i ∈ 2:N]
     ins_region = CartesianIndices(ins[2:N])
     @inbounds for _ ∈ chunk[1]:chunk[2]
@@ -83,15 +87,15 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
         end
         for y ∈ ins_region
             b = prod(by[i][y[i]] for i ∈ 1:N-1)
-            lin_by = linearindex(y.I .- 1)
-            for x ∈ 1:ins[1]
+            lin_by = linearindex(y.I)
+            for x ∈ 1:ia
                 tmp[x] += squareG[x, lin_by] * b
             end
         end
-        for x ∈ marg+1:ins[1]
-            ax[x] = tmp[x] > zero(T) ? one(T) : -one(T)
+        temp_score = marg ? tmp[1] : abs(tmp[1])
+        for x ∈ 2:ia
+            temp_score += abs(tmp[x])
         end
-        temp_score = dot(ax, tmp)
         score = max(score, temp_score)
         _update_odometer!(ind, 2)
     end
