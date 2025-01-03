@@ -7,7 +7,7 @@
     @test local_bound(cglmp(Int, 4)) == 9
     @test local_bound(gyni(Int, 3)) == 1
     @test local_bound(gyni(Int, 4)) == 1
-    @test local_bound([1 1; 1 -1]; marg = false) == 2
+    @test local_bound([1 2; 2 -2]; marg = false) == 5
     Random.seed!(0)
     fp1 = rand(0:1, 2, 2, 2, 2, 2, 2, 2, 2)
     fc1 = tensor_correlation(fp1)
