@@ -70,7 +70,7 @@ end
 function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array{T,2}; marg::Bool = true) where {T,N}
     ia = ins[1]
     score = typemin(T)
-    ind = Vector{Int8}(undef, sum(ins[2:N]) - N + 1)
+    ind = Vector{Int8}(undef, sum(ins[2:N]) - marg*(N-1))
     digits!(ind, chunk[1] - 1; base = 2)
     sumsizes = [1; cumsum(collect(ins[2:N]) .- marg) .+ 1]
     prodsizes = ones(Int, N - 1)

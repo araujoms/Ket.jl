@@ -21,6 +21,9 @@
         @test local_bound(fp1) ≈ local_bound(fp2)
         @test local_bound(fc1) ≈ local_bound(fc2)
         @test local_bound(fc1) ≈ local_bound(fp1)
+        bigfc1 = zeros(T, 5, 6)
+        @views bigfc1[2:5, 2:6] .= fc1
+        @test local_bound(fc1; marg = false) ≈ local_bound(bigfc1; marg = true)
         fp1 = rand(T, 2, 2, 2, 3, 4, 5)
         fp2 = permutedims(fp1, (3, 2, 1, 6, 5, 4))
         fc1 = tensor_correlation(fp1)
@@ -28,6 +31,9 @@
         @test local_bound(fp1) ≈ local_bound(fp2)
         @test local_bound(fc1) ≈ local_bound(fc2)
         @test local_bound(fc1) ≈ local_bound(fp1)
+        bigfc1 = zeros(T, 5, 6, 7)
+        @views bigfc1[2:5, 2:6, 2:7] .= fc1
+        @test local_bound(fc1; marg = false) ≈ local_bound(bigfc1; marg = true)
     end
 
     Random.seed!(1337)
