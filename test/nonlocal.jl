@@ -8,7 +8,7 @@
     @test local_bound(gyni(Int, 3)) == 1
     @test local_bound(gyni(Int, 4)) == 1
     for T ∈ [Float64, Double64, Float128, BigFloat]
-        fp1 = rand(T, 2, 2, 3, 4) # randn would mess things up
+        fp1 = randn(T, 2, 2, 3, 4)
         fp2 = permutedims(fp1, (2, 1, 4, 3))
         fc1 = tensor_correlation(fp1)
         fc2 = tensor_correlation(fp2)

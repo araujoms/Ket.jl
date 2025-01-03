@@ -148,8 +148,8 @@ end
 
 function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N,Int}, squareG::Array{T,2}) where {T,N}
     score = typemin(T)
-    bases = reduce(vcat, [fill(outs[i], ins[i]) for i ∈ 2:length(ins)])
-    ind = _digits_mixed_basis(chunk[1] - 1, bases)
+    base = reduce(vcat, [fill(outs[i], ins[i]) for i ∈ 2:N])
+    ind = _digits(chunk[1] - 1; base)
     Galice = zeros(T, outs[1] * ins[1])
     sizes = (outs[2:N]..., ins[2:N]...)
     prodsizes = [prod(sizes[1:i-1]) for i ∈ 1:2N-2]
@@ -173,7 +173,7 @@ function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N
         @views sum!(Galice, squareG[:, offset_ind])
         temp_score = _maxcols!(Galice, outs[1], ins[1])
         score = max(score, temp_score)
-        _update_odometer!(ind, bases)
+        _update_odometer!(ind, base)
     end
     return score
 end
@@ -226,22 +226,22 @@ function _partition(n::T, k::T) where {T<:Integer}
     return parts
 end
 
-function _digits_mixed_basis(ind, bases)
-    N = length(bases)
+function _digits(ind; base)
+    N = length(base)
     digits = zeros(Int, N)
-    @inbounds for i ∈ N:-1:1
-        digits[i] = mod(ind, bases[i])
-        ind = div(ind, bases[i])
+    @inbounds for i ∈ 1:N
+        digits[i] = ind % base[i]
+        ind = ind ÷ base[i]
     end
     return digits
 end
 
-function _update_odometer!(ind::AbstractVector{<:Integer}, bases::AbstractVector{<:Integer})
+function _update_odometer!(ind::AbstractVector{<:Integer}, base::AbstractVector{<:Integer})
     ind[1] += 1
     d = length(ind)
 
     @inbounds for i ∈ 1:d
-        if ind[i] ≥ bases[i]
+        if ind[i] ≥ base[i]
             ind[i] = 0
             i < d ? ind[i+1] += 1 : return
         else
@@ -250,12 +250,12 @@ function _update_odometer!(ind::AbstractVector{<:Integer}, bases::AbstractVector
     end
 end
 
-function _update_odometer!(ind::AbstractVector{<:Integer}, bases::Integer)
+function _update_odometer!(ind::AbstractVector{<:Integer}, base::Integer)
     ind[1] += 1
     d = length(ind)
 
     @inbounds for i ∈ 1:d
-        if ind[i] ≥ bases
+        if ind[i] ≥ base
             ind[i] = 0
             i < d ? ind[i+1] += 1 : return
         else
