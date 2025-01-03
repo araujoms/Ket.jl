@@ -73,7 +73,10 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     ind = Vector{Int8}(undef, sum(ins[2:N]) - N + 1)
     digits!(ind, chunk[1] - 1; base = 2)
     sumsizes = [1; cumsum(collect(ins[2:N]) .- marg) .+ 1]
-    prodsizes = [prod(ins[2:i]) for i ∈ 1:N-1]
+    prodsizes = ones(Int, N - 1)
+    for i ∈ 1:N-1
+        prodsizes[i] = prod(ins[2:i])
+    end
     linearindex_offset = 1 - sum(prodsizes) # to avoid y.I .- 1
     linearindex(v) = linearindex_offset + dot(v, prodsizes)
     tmp = zeros(T, ia)
@@ -85,8 +88,8 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
             by[i-1][marg+1:ins[i]] .= 2 .* ind[sumsizes[i-1]:sumsizes[i]-1] .- 1
         end
         for y ∈ ins_region
-            b::T = prod(by[i][y[i]] for i ∈ 1:N-1)
-            lin_by::Int = linearindex(y.I)
+            b = prod(by[i][y[i]] for i ∈ 1:N-1)
+            lin_by = linearindex(y.I)
             for x ∈ 1:ia
                 tmp[x] += squareG[x, lin_by] * b
             end
@@ -153,7 +156,10 @@ function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N
     ind = _digits(chunk[1] - 1; base)
     Galice = zeros(T, outs[1] * ins[1])
     sizes = (outs[2:N]..., ins[2:N]...)
-    prodsizes = [prod(sizes[1:i-1]) for i ∈ 1:2N-2]
+    prodsizes = ones(Int, 2N - 2)
+    for i ∈ 1:length(prodsizes)
+        prodsizes[i] = prod(sizes[1:i-1])
+    end
     linearindex(v) = 1 + dot(v, prodsizes)
     by = zeros(Int, 2 * (N - 1))
     ins_region = CartesianIndices(ins[2:N])
