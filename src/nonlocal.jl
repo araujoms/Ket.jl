@@ -114,7 +114,7 @@ function _local_bound_correlation_recursive(
 ) where {T<:Real}
     tmp1::Vector{T} = tmp[1]
     score = typemin(T)
-    for _ ∈ 0:2^(m[1]-marg)-1
+    @inbounds for _ ∈ 0:2^(m[1]-marg)-1
         @views ax[1][marg+1:end] .= 2 .* ind[1] .- 1
         mul!(tmp1, A', ax[1])
         temp_score = marg ? tmp1[1] : abs(tmp1[1])
@@ -139,7 +139,7 @@ function _local_bound_correlation_recursive(
 ) where {T<:Real,N}
     tmp1::Array{T,N-1} = tmp[1]
     score = typemin(T)
-    for _ ∈ 0:2^(m[1]-marg)-1
+    @inbounds for _ ∈ 0:2^(m[1]-marg)-1
         @views ax[1][marg+1:end] .= 2 .* ind[1] .- 1
         _tensor_contraction!(tmp1, A, ax[1])
         temp_score = _local_bound_correlation_recursive(tmp1; marg, m = m[2:N], tmp = tmp[2:N-1], ind = ind[2:N-1], ax = ax[2:N-1])
