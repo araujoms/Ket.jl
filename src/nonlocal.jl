@@ -85,8 +85,8 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
             by[i-1][marg+1:ins[i]] .= 2 .* ind[sumsizes[i-1]:sumsizes[i]-1] .- 1
         end
         for y ∈ ins_region
-            b = prod(by[i][y[i]] for i ∈ 1:N-1)
-            lin_by = linearindex(y.I)
+            b::T = prod(by[i][y[i]] for i ∈ 1:N-1)
+            lin_by::Int = linearindex(y.I)
             for x ∈ 1:ia
                 tmp[x] += squareG[x, lin_by] * b
             end
