@@ -85,7 +85,7 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     @inbounds for _ ∈ chunk[1]:chunk[2]
         tmp .= 0
         for i ∈ 2:N
-            by[i-1][marg+1:ins[i]] .= 2 .* ind[sumsizes[i-1]:sumsizes[i]-1] .- 1
+            @views by[i-1][marg+1:ins[i]] .= 2 .* ind[sumsizes[i-1]:sumsizes[i]-1] .- 1
         end
         for y ∈ ins_region
             b = prod(by[i][y[i]] for i ∈ 1:N-1)
