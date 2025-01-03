@@ -7,6 +7,12 @@
     @test local_bound(cglmp(Int, 4)) == 9
     @test local_bound(gyni(Int, 3)) == 1
     @test local_bound(gyni(Int, 4)) == 1
+    @test local_bound([1 1; 1 -1]; marg = false) == 2
+    Random.seed!(0)
+    fp1 = rand(0:1, 2, 2, 2, 2, 2, 2, 2, 2)
+    fc1 = tensor_correlation(fp1)
+    @test local_bound(fc1; correlation = true) ≈ local_bound(fp1)
+    @test local_bound(fp1) == 12
     for T ∈ [Float64, Double64, Float128, BigFloat]
         fp1 = randn(T, 2, 2, 3, 4)
         fp2 = permutedims(fp1, (2, 1, 4, 3))
@@ -23,7 +29,6 @@
         @test local_bound(fc1) ≈ local_bound(fc2)
         @test local_bound(fc1) ≈ local_bound(fp1)
     end
-    @test local_bound([1 1; 1 -1]; marg = false) == 2
 
     Random.seed!(1337)
     cglmp_cg = tensor_collinsgisin(cglmp())

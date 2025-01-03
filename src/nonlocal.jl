@@ -74,7 +74,7 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     digits!(ind, chunk[1] - 1; base = 2)
     sumsizes = [1; cumsum(collect(ins[2:N]) .- marg) .+ 1]
     prodsizes = ones(Int, N - 1)
-    for i ∈ 1:N-1
+    for i ∈ 2:N-1
         prodsizes[i] = prod(ins[2:i])
     end
     linearindex_offset = 1 - sum(prodsizes) # to avoid y.I .- 1
@@ -155,9 +155,13 @@ function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N
     base = reduce(vcat, [fill(outs[i], ins[i]) for i ∈ 2:N])
     ind = _digits(chunk[1] - 1; base)
     Galice = zeros(T, outs[1] * ins[1])
+    sumins = zeros(Int, N-1)
+    for i ∈ 2:N-1
+        sumins[i] = sum(ins[2:i])
+    end
     sizes = (outs[2:N]..., ins[2:N]...)
     prodsizes = ones(Int, 2N - 2)
-    for i ∈ 1:length(prodsizes)
+    for i ∈ 2:length(prodsizes)
         prodsizes[i] = prod(sizes[1:i-1])
     end
     linearindex(v) = 1 + dot(v, prodsizes)
@@ -167,9 +171,8 @@ function _local_bound_probability_core(chunk, outs::NTuple{N,Int}, ins::NTuple{N
     @inbounds for _ ∈ chunk[1]:chunk[2]
         counter = 0
         for y ∈ ins_region
-            by[1] = ind[y[1]]
-            for i ∈ 2:length(y)
-                by[i] = ind[y[i]+ins[i]]
+            for i ∈ 1:length(y)
+                by[i] = ind[y[i]+sumins[i]]
             end
             for i ∈ 1:N-1
                 by[i+N-1] = y[i] - 1
