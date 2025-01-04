@@ -104,13 +104,12 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
 end
 
 function _local_bound_correlation_recursive(
-    A::Array{T,2};
+    A::Array{T,2},
     marg = true,
-    N = 2,
     m = size(A),
-    tmp = [zeros(T, m[i+1:N]...) for i ∈ 1:N-1],
-    ind = [zeros(Int8, m[i] - marg) for i ∈ 1:N-1],
-    ax = [ones(T, m[i]) for i ∈ 1:N-1],
+    tmp = [zeros(T, m[2])],
+    ind = [zeros(Int8, m[1] - marg)],
+    ax = [ones(T, m[1])],
 ) where {T<:Real}
     tmp1::Vector{T} = tmp[1]
     score = typemin(T)
@@ -130,7 +129,7 @@ function _local_bound_correlation_recursive(
 end
 
 function _local_bound_correlation_recursive(
-    A::Array{T,N};
+    A::Array{T,N},
     marg = true,
     m = size(A),
     tmp = [zeros(T, m[i+1:N]...) for i ∈ 1:N-1],
@@ -142,7 +141,7 @@ function _local_bound_correlation_recursive(
     @inbounds for _ ∈ 0:2^(m[1]-marg)-1
         @views ax[1][marg+1:end] .= 2 .* ind[1] .- 1
         _tensor_contraction!(tmp1, A, ax[1])
-        temp_score = _local_bound_correlation_recursive(tmp1; marg, m = m[2:N], tmp = tmp[2:N-1], ind = ind[2:N-1], ax = ax[2:N-1])
+        @views temp_score = _local_bound_correlation_recursive(tmp1, marg, m[2:N], tmp[2:N-1], ind[2:N-1], ax[2:N-1])
         if temp_score > score
             score = temp_score
         end
