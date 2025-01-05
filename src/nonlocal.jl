@@ -10,6 +10,7 @@ Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/a
 function local_bound(G::Array{T,N}; correlation::Bool = N < 4, marg::Bool = true) where {T<:Real,N}
     if correlation
         return _local_bound_correlation(G; marg)
+        # return _local_bound_correlation_recursive(G, marg)
     else
         return _local_bound_probability(G)
     end
@@ -103,32 +104,40 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     return score
 end
 
-function _local_bound_correlation_recursive(
-    A::Array{T,2},
-    marg = true,
-    m = size(A),
-    tmp = [zeros(T, m[2])],
-    ind = [zeros(Int8, m[1] - marg)],
-    ax = [ones(T, m[1])],
-) where {T<:Real}
-    tmp1::Vector{T} = tmp[1]
-    score = typemin(T)
-    @inbounds for _ ∈ 0:2^(m[1]-marg)-1
-        @views ax[1][marg+1:end] .= 2 .* ind[1] .- 1
-        mul!(tmp1, A', ax[1])
-        temp_score = marg ? tmp1[1] : abs(tmp1[1])
-        for x ∈ 2:m[2]
-            temp_score += abs(tmp1[x])
-        end
-        if temp_score > score
-            score = temp_score
-        end
-        _update_odometer!(ind[1], 2)
+Base.@propagate_inbounds function _local_bound_correlation_recursive(A::Vector{T}, marg, m, tmp, ind, ax) where {T<:Real}
+    score = marg ? A[1] : abs(A[1])
+    for x ∈ 2:m[1]
+        score += abs(A[x])
     end
     return score
 end
 
-function _local_bound_correlation_recursive(
+# Base.@propagate_inbounds function _local_bound_correlation_recursive(
+    # A::Matrix{T},
+    # marg = true,
+    # m = size(A),
+    # tmp = [zeros(T, m[2])],
+    # ind = [zeros(Int8, m[1] - marg)],
+    # ax = [ones(T, m[1])],
+# ) where {T<:Real}
+    # tmp1::Vector{T} = tmp[1]
+    # score = typemin(T)
+    # @inbounds for _ ∈ 0:2^(m[1]-marg)-1
+        # @views ax[1][marg+1:end] .= 2 .* ind[1] .- 1
+        # mul!(tmp1, A', ax[1])
+        # temp_score = marg ? tmp1[1] : abs(tmp1[1])
+        # for x ∈ 2:m[2]
+            # temp_score += abs(tmp1[x])
+        # end
+        # if temp_score > score
+            # score = temp_score
+        # end
+        # _update_odometer!(ind[1], 2)
+    # end
+    # return score
+# end
+
+Base.@propagate_inbounds function _local_bound_correlation_recursive(
     A::Array{T,N},
     marg = true,
     m = size(A),
@@ -150,11 +159,15 @@ function _local_bound_correlation_recursive(
     return score
 end
 
+function _tensor_contraction!(tmp, A::Matrix{T}, ax::Vector{T}) where {T<:Real}
+    @inbounds mul!(tmp, A', ax)
+end
+
 # among ci/x orders in the loop and in the indexing,
 # this is the fastest contraction, hence the enumeration order
-function _tensor_contraction!(tmp, A::Array{T,N}, ax) where {T<:Real,N}
+function _tensor_contraction!(tmp, A::Array{T,N}, ax::Vector{T}) where {T<:Real,N}
     tmp .= 0
-    for ci ∈ CartesianIndices(tmp), x ∈ eachindex(ax)
+    @inbounds for ci ∈ CartesianIndices(tmp), x ∈ eachindex(ax)
         tmp[ci] += A[x, ci] * ax[x]
     end
 end
