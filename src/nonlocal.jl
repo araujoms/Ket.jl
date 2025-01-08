@@ -50,7 +50,7 @@ function _local_bound_correlation_recursive!(
     offset_end::Array{T,N-1} = offset[N-1]
     sum!(offset_end, A)
     A .*= 2
-    marg && offset_end .-= selectdim(A, N, 1) # note this is twice the original A
+    marg && (offset_end .-= selectdim(A, N, 1)) # note this is twice the original A
     offset_end .*= -1
     score = typemin(T)
     for _ ∈ chunk[1]:chunk[2]
