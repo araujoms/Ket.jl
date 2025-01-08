@@ -50,7 +50,7 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive_top(
     digits!(ind[N-1], chunk[1] - 1; base = 2)
     tmp_end::Array{T,N - 1} = tmp[N-1]
     offset_end::Array{T,N - 1} = offset[N-1]
-    _compute_offset!(offset_end, A)
+    _compute_offset!(offset_end, A, marg)
     score = typemin(T)
     A2 = 2 * A
     @inbounds for _ ∈ chunk[1]:chunk[2]
@@ -76,7 +76,7 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
 ) where {T<:Real,N}
     tmp_end::Array{T,N - 1} = tmp[N-1]
     offset_end::Array{T,N - 1} = offset[N-1]
-    _compute_offset!(offset_end, A)
+    _compute_offset!(offset_end, A, marg)
     score = typemin(T)
     A2 = 2 * A
     @inbounds for _ ∈ 0:2^(m[N]-marg)-1
@@ -110,7 +110,7 @@ function _tensor_contraction!(tmp, A::Array{T,N}, ind, marg) where {T<:Number,N}
     end
 end
 
-function _compute_offset!(offset_end, A)
+function _compute_offset!(offset_end, A, marg)
     sum!(offset_end, A)
     if marg
         for ci ∈ CartesianIndices(offset_end)
