@@ -51,8 +51,8 @@ function _local_bound_correlation_recursive!(
     sum!(offset_end, A)
     A .*= 2
     if marg
-        for ci ∈ CartesianIndices(offset_end)
-            offset_end[ci] -= A[ci, 1]
+        @inbounds for ci ∈ CartesianIndices(offset_end)
+            offset_end[ci] -= A[ci, 1] # note this is twice the original A
         end
     end
     offset_end .*= -1
@@ -78,7 +78,7 @@ function _local_bound_correlation_recursive!(A::Vector, chunk, marg, m, tmp, off
 end
 
 function _tensor_contraction!(tmp, A::Array{T,N}, ind, marg) where {T<:Number,N}
-    for x ∈ eachindex(ind)
+    @inbounds for x ∈ eachindex(ind)
         if ind[x] == 1
             for ci ∈ CartesianIndices(tmp)
                 tmp[ci] += A[ci, x+marg]
