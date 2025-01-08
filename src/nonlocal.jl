@@ -159,16 +159,27 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
     return score
 end
 
-function _tensor_contraction!(tmp, A::Matrix{T}, ax::Vector{T}) where {T<:Real}
-    @inbounds mul!(tmp, A, ax)
-end
+#function _tensor_contraction!(tmp, A::Matrix{T}, ax::Vector{T}) where {T<:Real}
+#    @inbounds mul!(tmp, A, ax)
+#end
 
 # among ci/x orders in the loop and in the indexing,
 # this is the fastest contraction, hence the enumeration order
-function _tensor_contraction!(tmp, A::Array{T,N}, ax::Vector{T}) where {T<:Real,N}
+#function _tensor_contraction!(tmp, A::Array{T,N}, ax::Vector{T}) where {T<:Real,N}
+#    tmp .= 0
+#    @inbounds for x in eachindex(ax), ci in CartesianIndices(tmp)
+#        tmp[ci] += A[ci, x] * ax[x]
+#    end
+#end
+
+function _tensor_contraction!(tmp, A::Array{T,N}, ax) where {T<:Number,N}
     tmp .= 0
-    @inbounds for x in eachindex(ax), ci in CartesianIndices(tmp)
-        tmp[ci] += A[ci, x] * ax[x]
+    @inbounds for x ∈ eachindex(ax)
+        if ax[x] == 1
+            for ci ∈ CartesianIndices(tmp)
+                tmp[ci] += A[ci, x]
+            end
+        end
     end
 end
 
