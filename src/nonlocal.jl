@@ -104,7 +104,7 @@ function _local_bound_correlation_core(chunk, ins::NTuple{N,Int}, squareG::Array
     return score
 end
 
-Base.@propagate_inbounds function _local_bound_correlation_recursive(A::Vector{T}, marg, m, tmp, ind, ax) where {T<:Real}
+Base.@propagate_inbounds function _local_bound_correlation_recursive(A::Vector{T}, marg, m, tmp, offset, ind, ax) where {T<:Real}
     score = marg ? A[1] : abs(A[1])
     for x ∈ 2:m[1]
         score += abs(A[x])
@@ -150,20 +150,21 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
     marg = true,
     m = size(A),
     tmp = [zeros(T, m[1:i]...) for i ∈ 1:N-1],
+    offset = [zeros(T, m[1:i]...) for i ∈ 1:N-1],
     ind = [zeros(Int8, m[i] - marg) for i ∈ 2:N],
     ax = [ones(T, m[i]) for i ∈ 2:N],
 ) where {T<:Real,N}
     tmp_end::Array{T,N-1} = tmp[N-1]
-    offset = similar(tmp_end)
-    sum!(offset, A)
-    offset .*= -1
+    offset_end::Array{T,N-1} = offset[N-1]
+    sum!(offset_end, A)
+    offset_end .*= -1
     score = typemin(T)
     A2 = 2*A
     @inbounds for _ ∈ 0:2^(m[N]-marg)-1
         @views ax[N-1][marg+1:end] .= ind[N-1]
-        tmp_end .= offset
+        tmp_end .= offset_end
         _tensor_contraction!(tmp_end, A2, ax[N-1])
-        @views temp_score = _local_bound_correlation_recursive(tmp_end, marg, m[1:N-1], tmp[1:N-2], ind[1:N-2], ax[1:N-2])
+        @views temp_score = _local_bound_correlation_recursive(tmp_end, marg, m[1:N-1], tmp[1:N-2], offset[1:N-2], ind[1:N-2], ax[1:N-2])
         if temp_score > score
             score = temp_score
         end
