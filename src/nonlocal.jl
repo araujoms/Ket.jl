@@ -44,31 +44,20 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive_top(
     A::Array{T,N};
     marg = true
 ) where {T<:Real,N}
-    tmp = [zeros(T, m[1:i]...) for i ∈ 1:N-1]
-    offset = [zeros(T, m[1:i]...) for i ∈ 1:N-1]
+    tmp = [zeros(T, m[1:i]) for i ∈ 1:N-1]
+    offset = [zeros(T, m[1:i]) for i ∈ 1:N-1]
     ind = [zeros(Int8, m[i] - marg) for i ∈ 2:N]
     digits!(ind[N-1], chunk[1] - 1; base = 2)
-    ax = [ones(T, m[i]) for i ∈ 2:N]
     tmp_end::Array{T,N - 1} = tmp[N-1]
     offset_end::Array{T,N - 1} = offset[N-1]
-    sum!(offset_end, A)
-    offset_end .*= -1
+    _compute_offset!(offset_end, A)
     score = typemin(T)
     A2 = 2 * A
-    CI = CartesianIndices(tmp_end)
     @inbounds for _ ∈ chunk[1]:chunk[2]
-        @views ax[N-1][marg+1:end] .= ind[N-1]
         tmp_end .= offset_end
-        _tensor_contraction!(tmp_end, A2, ax[N-1], CI)
-        @views temp_score = _local_bound_correlation_recursive(
-            tmp_end,
-            marg,
-            m[1:N-1],
-            tmp[1:N-2],
-            offset[1:N-2],
-            ind[1:N-2],
-            ax[1:N-2]
-        )
+        _tensor_contraction!(tmp_end, A2, ind[N-1], marg)
+        @views temp_score =
+            _local_bound_correlation_recursive(tmp_end, marg, m[1:N-1], tmp[1:N-2], offset[1:N-2], ind[1:N-2])
         if temp_score > score
             score = temp_score
         end
@@ -83,29 +72,18 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
     m,
     tmp,
     offset,
-    ind,
-    ax
+    ind
 ) where {T<:Real,N}
     tmp_end::Array{T,N - 1} = tmp[N-1]
     offset_end::Array{T,N - 1} = offset[N-1]
-    sum!(offset_end, A)
-    offset_end .*= -1
+    _compute_offset!(offset_end, A)
     score = typemin(T)
     A2 = 2 * A
-    CI = CartesianIndices(tmp_end)
     @inbounds for _ ∈ 0:2^(m[N]-marg)-1
-        @views ax[N-1][marg+1:end] .= ind[N-1]
         tmp_end .= offset_end
-        _tensor_contraction!(tmp_end, A2, ax[N-1], CI)
-        @views temp_score = _local_bound_correlation_recursive(
-            tmp_end,
-            marg,
-            m[1:N-1],
-            tmp[1:N-2],
-            offset[1:N-2],
-            ind[1:N-2],
-            ax[1:N-2]
-        )
+        _tensor_contraction!(tmp_end, A2, ind[N-1], marg)
+        @views temp_score =
+            _local_bound_correlation_recursive(tmp_end, marg, m[1:N-1], tmp[1:N-2], offset[1:N-2], ind[1:N-2])
         if temp_score > score
             score = temp_score
         end
@@ -114,15 +92,7 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
     return score
 end
 
-Base.@propagate_inbounds function _local_bound_correlation_recursive(
-    A::Vector{T},
-    marg,
-    m,
-    tmp,
-    offset,
-    ind,
-    ax
-) where {T<:Real}
+Base.@propagate_inbounds function _local_bound_correlation_recursive(A::Vector, marg, m, tmp, offset, ind)
     score = marg ? A[1] : abs(A[1])
     for x ∈ 2:m[1]
         score += abs(A[x])
@@ -130,14 +100,24 @@ Base.@propagate_inbounds function _local_bound_correlation_recursive(
     return score
 end
 
-function _tensor_contraction!(tmp, A::Array{T,N}, ax, CI) where {T<:Number,N}
-    @inbounds for x ∈ eachindex(ax)
-        if ax[x] == 1
-            for ci ∈ CI
-                tmp[ci] += A[ci, x]
+function _tensor_contraction!(tmp, A::Array{T,N}, ind, marg) where {T<:Number,N}
+    @inbounds for x ∈ eachindex(ind)
+        if ind[x] == 1
+            for ci ∈ CartesianIndices(tmp)
+                tmp[ci] += A[ci, x+marg]
             end
         end
     end
+end
+
+function _compute_offset!(offset_end, A)
+    sum!(offset_end, A)
+    if marg
+        for ci ∈ CartesianIndices(offset_end)
+            offset_end[ci] -= 2 * A[ci, 1]
+        end
+    end
+    offset_end .*= -1
 end
 
 function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
