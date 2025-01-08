@@ -42,19 +42,15 @@ function _local_bound_correlation_recursive!(
     chunk,
     marg = true,
     m = size(A),
-    tmp = [zeros(T, m[1:i]...) for i ∈ 1:N-1],
-    offset = [zeros(T, m[1:i]...) for i ∈ 1:N-1],
+    tmp = [zeros(T, m[1:i]) for i ∈ 1:N-1],
+    offset = [zeros(T, m[1:i]) for i ∈ 1:N-1],
     ind = [zeros(Int8, m[i] - marg) for i ∈ 2:N],
 ) where {T<:Real,N}
     tmp_end::Array{T,N-1} = tmp[N-1]
     offset_end::Array{T,N-1} = offset[N-1]
     sum!(offset_end, A)
     A .*= 2
-    if marg
-        @inbounds for ci ∈ CartesianIndices(offset_end)
-            offset_end[ci] -= A[ci, 1] # note this is twice the original A
-        end
-    end
+    marg && offset_end .-= selectdim(A, N, 1) # note this is twice the original A
     offset_end .*= -1
     score = typemin(T)
     for _ ∈ chunk[1]:chunk[2]
@@ -77,7 +73,7 @@ function _local_bound_correlation_recursive!(A::Vector, chunk, marg, m, tmp, off
     return score
 end
 
-function _tensor_contraction!(tmp, A::Array{T,N}, ind, marg) where {T<:Number,N}
+function _tensor_contraction!(tmp, A, ind, marg)
     @inbounds for x ∈ eachindex(ind)
         if ind[x] == 1
             for ci ∈ CartesianIndices(tmp)
