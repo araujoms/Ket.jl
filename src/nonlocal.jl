@@ -52,7 +52,7 @@ function _local_bound_correlation_recursive!(
     A .*= 2
     marg && (offset_end .-= selectdim(A, N, 1)) # note this is twice the original A
     offset_end .*= -1
-    chunk[1] > 0 && digits!(ind[N-1], chunk[1]; base = 2)
+    chunk[1] > 0 && digits!(ind[N-1], chunk[1] - 1; base = 2)
     score = typemin(T)
     for _ ∈ chunk[1]:chunk[2]
         tmp_end .= offset_end
