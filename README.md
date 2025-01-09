@@ -15,3 +15,13 @@ Highlights:
 * Generate kets with `ket`.
 
 For the full list of functions see the [documentation](https://araujoms.github.io/Ket.jl/dev/api/).
+
+## Installation
+
+Ket is a registered Julia package, so it can be installed by typing
+
+```
+]add Ket
+```
+
+into the Julia REPL.
