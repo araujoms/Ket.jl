@@ -27,9 +27,51 @@ end
 export white_noise!
 
 """
+    state_bell_ket([T=ComplexF64,] a::Integer, b::Integer, d::Integer = 2)
+
+Produces the ket of the generalized Bell state ψ_`ab` of local dimension `d`.
+"""
+function state_bell_ket(::Type{T}, a::Integer, b::Integer, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T<:Number}
+    ψ = zeros(T, d^2)
+    ω = _root_unity(T, d)
+    val = T(0)
+    for i ∈ 0:d-1
+        exponent = mod(i * b, d)
+        if exponent == 0
+            val = 1
+        elseif 4exponent == d
+            val = im
+        elseif 2exponent == d
+            val = -1
+        elseif 4exponent == 3d
+            val = -im
+        else
+            val = ω^exponent
+        end
+        ψ[d*i+mod(a + i, d)+1] = val * coeff
+    end
+    return ψ
+end
+state_bell_ket(a, b, d::Integer = 2) = state_bell_ket(ComplexF64, a, b, d)
+export state_bell_ket
+
+"""
+    state_bell([T=ComplexF64,] a::Integer, b::Integer, d::Integer = 2, v::Real = 1)
+
+Produces the generalized Bell state ψ_`ab` of local dimension `d` with visibility `v`.
+"""
+function state_bell(::Type{T}, a::Integer, b::Integer, d::Integer = 2, v::Real = 1) where {T<:Number}
+    ρ = ketbra(state_bell_ket(T, a, b, d; coeff = one(T)))
+    parent(ρ) ./= d
+    return white_noise!(ρ, v)
+end
+state_bell(a, b, d::Integer = 2) = state_bell(ComplexF64, a, b, d)
+export state_bell
+
+"""
     state_phiplus_ket([T=ComplexF64,] d::Integer = 2)
 
-Produces the vector of the maximally entangled state Φ⁺ of local dimension `d`.
+Produces the ket of the maximally entangled state Φ⁺ of local dimension `d`.
 """
 function state_phiplus_ket(::Type{T}, d::Integer = 2; kwargs...) where {T<:Number}
     return state_ghz_ket(T, d, 2; kwargs...)
@@ -53,7 +95,7 @@ export state_phiplus
 """
     state_psiminus_ket([T=ComplexF64,] d::Integer = 2)
 
-Produces the vector of the maximally entangled state ψ⁻ of local dimension `d`.
+Produces the ket of the maximally entangled state ψ⁻ of local dimension `d`.
 """
 function state_psiminus_ket(::Type{T}, d::Integer = 2; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^2)
@@ -79,7 +121,7 @@ export state_psiminus
 """
     state_ghz_ket([T=ComplexF64,] d::Integer = 2, N::Integer = 3; coeff = 1/√d)
 
-Produces the vector of the GHZ state local dimension `d`.
+Produces the ket of the GHZ state with `N` parties and local dimension `d`.
 """
 function state_ghz_ket(::Type{T}, d::Integer = 2, N::Integer = 3; coeff = inv(_sqrt(T, d))) where {T<:Number}
     psi = zeros(T, d^N)
@@ -93,7 +135,7 @@ export state_ghz_ket
 """
     state_ghz([T=ComplexF64,] d::Integer = 2, N::Integer = 3; v::Real = 1, coeff = 1/√d)
 
-Produces the GHZ state of local dimension `d` with visibility `v`.
+Produces the GHZ state with `N` parties, local dimension `d`, and visibility `v`.
 """
 function state_ghz(::Type{T}, d::Integer = 2, N::Integer = 3; v::Real = 1, kwargs...) where {T<:Number}
     return white_noise!(ketbra(state_ghz_ket(T, d, N; kwargs...)), v)
@@ -102,20 +144,20 @@ state_ghz(d::Integer = 2, N::Integer = 3; kwargs...) = state_ghz(ComplexF64, d, 
 export state_ghz
 
 """
-    state_w_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√d)
+    state_w_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√N)
 
-Produces the vector of the `N`-partite W state.
+Produces the ket of the `N`-partite W state.
 """
 function state_w_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, N))) where {T<:Number}
     psi = zeros(T, 2^N)
-    psi[2 .^ (0:N-1) .+ 1] .= coeff
+    psi[2 .^ (0:N-1).+1] .= coeff
     return psi
 end
 state_w_ket(N::Integer = 3; kwargs...) = state_w_ket(ComplexF64, N; kwargs...)
 export state_w_ket
 
 """
-    state_w([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
+    state_w([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√N)
 
 Produces the `N`-partite W state with visibility `v`.
 """
@@ -136,13 +178,13 @@ end
 export isotropic
 
 """
-    state_super_singlet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√N!)
+    state_supersinglet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√N!)
 
-Produces the vector of the `N`-partite `N`-level singlet state.
+Produces the ket of the `N`-partite `N`-level singlet state.
 
 Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
-function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T<:Number}
+function state_supersinglet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T, factorial(N)))) where {T<:Number}
     psi = zeros(T, N^N)
     for per ∈ Combinatorics.permutations(1:N)
         tmp = kron(ket.((T,), per, (N,))...)
@@ -158,21 +200,21 @@ function state_super_singlet_ket(::Type{T}, N::Integer = 3; coeff = inv(_sqrt(T,
     psi .*= coeff
     return psi
 end
-state_super_singlet_ket(N::Integer = 3; kwargs...) = state_super_singlet_ket(ComplexF64, N; kwargs...)
-export state_super_singlet_ket
+state_supersinglet_ket(N::Integer = 3; kwargs...) = state_supersinglet_ket(ComplexF64, N; kwargs...)
+export state_supersinglet_ket
 
 """
-    state_super_singlet([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
+    state_supersinglet([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
 
 Produces the `N`-partite `N`-level singlet state with visibility `v`.
 This state is invariant under simultaneous rotations on all parties: `(U⊗…⊗U)ρ(U⊗…⊗U)'=ρ`.
 
 Reference: Adán Cabello, [arXiv:quant-ph/0203119](https://arxiv.org/abs/quant-ph/0203119)
 """
-function state_super_singlet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Number}
-    rho = ketbra(state_super_singlet_ket(T, N; coeff = one(T)))
+function state_supersinglet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Number}
+    rho = ketbra(state_supersinglet_ket(T, N; coeff = one(T)))
     parent(rho) ./= factorial(N)
     return white_noise!(rho, v)
 end
-state_super_singlet(N::Integer = 3; kwargs...) = state_super_singlet(ComplexF64, N; kwargs...)
-export state_super_singlet
+state_supersinglet(N::Integer = 3; kwargs...) = state_supersinglet(ComplexF64, N; kwargs...)
+export state_supersinglet

@@ -34,7 +34,7 @@ end
 mub_prime(p::Integer) = mub_prime(ComplexF64, p)
 
 function mub_prime_power(::Type{T}, p::Integer, r::Integer) where {T<:Number}
-    d = Int(p^r)
+    d = p^r
     γ = _root_unity(T, p)
     inv_sqrt_d = inv(_sqrt(T, d))
     B = [zeros(T, d, d) for _ ∈ 1:d+1]
@@ -78,7 +78,7 @@ Reference: Durt, Englert, Bengtsson, Życzkowski, [arXiv:1004.3348](https://arxi
 function mub(::Type{T}, d::Integer) where {T<:Number}
     # the dimension d can be any integer greater than two
     @assert d ≥ 2
-    f = collect(Nemo.factor(Int(d))) # Nemo.factor requires d to be an Int64 (or UInt64)
+    f = collect(Nemo.factor(d))
     p = f[1][1]
     r = f[1][2]
     if length(f) > 1 # different prime factors

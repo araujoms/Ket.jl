@@ -104,13 +104,15 @@ random_probability
 ## States
 
 ```@docs
+state_bell_ket
+state_bell
 state_phiplus_ket
 state_phiplus
 isotropic
 state_psiminus_ket
 state_psiminus
-state_super_singlet_ket
-state_super_singlet
+state_supersinglet_ket
+state_supersinglet
 state_ghz_ket
 state_ghz
 state_w_ket
@@ -128,9 +130,7 @@ choi
 ## Internal functions
 
 ```@docs
+Ket._dps_constraints!
 Ket._partition
 Ket._fiducial_WH
-Ket._idx
-Ket._tidx
-Ket._idxperm
 ```
