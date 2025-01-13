@@ -86,7 +86,7 @@ random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
 
 """
-    random_povm([T=ComplexF64,] d::Integer, n::Integer, r::Integer)
+    random_povm([T=ComplexF64,] d::Integer, n::Integer, k::Integer)
 
 Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k, d)`.
 
@@ -94,17 +94,17 @@ Reference: Heinosaari et al., [arXiv:1902.04751](https://arxiv.org/abs/1902.0475
 """
 function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T<:Number}
     d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n * k)"))
-    E = [Matrix{T}(undef, (d, d)) for _ ∈ 1:n]
+    G = [randn(T, d, k) for _ ∈ 1:n]
+    S = zeros(T, d, d)
     for i ∈ 1:n
-        G = randn(T, (d, k))
-        mul!(E[i], G, G')
+        mul!(S, G[i], G[i]', true, true)
     end
-    S = sum(E)
     rootinvS = Hermitian(S)^-0.5 #don't worry, the probability of getting a singular S is zero
-    mat = Matrix{T}(undef, (d, d))
+    E = [Matrix{T}(undef, d, d) for _ ∈ 1:n]
+    temp = Matrix{T}(undef, d, k)
     for i ∈ 1:n
-        mul!(mat, rootinvS, E[i])
-        mul!(E[i], mat, rootinvS)
+        mul!(temp, rootinvS, G[i])
+        mul!(E[i], temp, temp')
     end
     return Hermitian.(E)
 end
