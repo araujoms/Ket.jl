@@ -6,8 +6,9 @@ Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the see
 
 If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
 
-References: Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032),
-section II.B.1 of Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551)
+References:
+- Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032)
+- Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551) (Sec. II.B.1)
 """
 function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer) where {T<:Real}
     R = _solver_type(T)

@@ -3,7 +3,7 @@
 
 CHSH-d nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
 
-Reference: Buhrman and Massar, [arXiv:quant-ph/0409066](https://arxiv.org/abs/quant-ph/0409066).
+Reference: Buhrman and Massar, [arXiv:quant-ph/0409066](https://arxiv.org/abs/quant-ph/0409066)
 """
 function chsh(::Type{T}, d::Integer = 2) where {T}
     G = zeros(T, d, d, d, d)
@@ -26,7 +26,9 @@ export chsh
 
 CGLMP nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
 
-References: [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) for the original game, and [arXiv:2005.13418](https://arxiv.org/abs/2005.13418) for the form presented here.
+References:
+- Collins, Gisin, Linden, Massar, Popescu, [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) (original game)
+- Araújo, Hirsch, Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418) (form presented here)
 """
 function cglmp(::Type{T}, d::Integer = 3) where {T}
     G = zeros(T, d, d, 2, 2)
@@ -49,7 +51,7 @@ export cglmp
 
 inn22 Bell functional in Collins-Gisin notation. Local bound 1.
 
-Reference: Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
+Reference: Cezary Śliwa, [arXiv:quant-ph/0305190](https://arxiv.org/abs/quant-ph/0305190)
 """
 function inn22(::Type{T}, n) where {T}
     C = zeros(T, n + 1, n + 1)
@@ -75,7 +77,7 @@ export inn22
 Guess your neighbour's input nonlocal game in full probability notation.
 If `T` is an integer type the game is unnormalized.
 
-Reference: Mafalda et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844).
+Reference: Almeida et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844)
 """
 function gyni(::Type{T}, n::Integer = 3) where {T}
     G = zeros(T, 2 * ones(Int, 2 * n)...)

@@ -5,7 +5,7 @@ Computes the local bound of a multipartite Bell functional `G` given as an `N`-d
 If `correlation` is `false`, `G` is assumed to be written in full probability notation.
 If `correlation` is `true`, `G` is assumed to be written in correlation notation, with or without marginals depending on `marg`.
 
-Reference: Araújo, Hirsch, and Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418).
+Reference: Araújo, Hirsch, Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418)
 """
 function local_bound(G::Array{T,N}; correlation::Bool = N < 4, marg::Bool = true) where {T<:Real,N}
     if correlation

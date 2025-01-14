@@ -12,7 +12,7 @@ Produces the Schmidt decomposition of `ψ` with subsystem dimensions `dims`.
 If the argument `dims` is omitted equally-sized subsystems are assumed.
 Returns the (sorted) Schmidt coefficients λ and isometries U, V such that kron(U', V')*`ψ` is of Schmidt form.
 
-Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition).
+Reference: [Schmidt decomposition](https://en.wikipedia.org/wiki/Schmidt_decomposition)
 """
 function schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
@@ -76,7 +76,8 @@ end
 """
     _svec(M::AbstractMatrix, ::Type{T})
 
-Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `T`. The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,T),svec(N,T)⟩.
+Produces the scaled vectorized version of a Hermitian matrix `M` with coefficient type `T`.
+The transformation preserves inner products, i.e., ⟨M,N⟩ = ⟨svec(M,T),svec(N,T)⟩.
 """
 function _svec(M::AbstractMatrix, ::Type{T}) where {T} #the weird stuff here is to make it work with JuMP variables
     d = size(M, 1)
@@ -145,8 +146,8 @@ and ``ψ^+`` is a non-normalized maximally entangled state. Separabiity is teste
 with `n` controlling the how many copies of the ``B'B`` subsystem are used.
 
 References:
-- Hulpke, Bruss, Lewenstein, Sanpera [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
-- Weilenmann, Dive, Trillo, Aguilar, Navascués [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
+- Hulpke, Bruss, Lewenstein, Sanpera, [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+- Weilenmann, Dive, Trillo, Aguilar, Navascués, [arXiv:1912.10056](https://arxiv.org/abs/1912.10056)
 """
 function schmidt_number(
     ρ::AbstractMatrix{T},
@@ -319,7 +320,7 @@ Lower bound on the white noise such that ρ is still a genuinely multipartite en
 The set of GME states is approximated by the set of PPT mixtures, so the entanglement across the bipartitions is decided
 with the PPT criterion. If the state is a PPT mixture, returns a 0 matrix instead of a witness.
 
-Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+Reference: Jungnitsch, Moroder, Gühne, [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
     ρ::AbstractMatrix{T},
@@ -366,7 +367,7 @@ julia> two_body_basis = collect(Iterators.flatten(n_body_basis(i, 3) for i ∈ 0
 julia> ppt_mixture(state_ghz(2, 3), [2, 2, 2], two_body_basis)
 ```
 
-Reference: Jungnitsch, Moroder, Guehne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
+Reference: Jungnitsch, Moroder, Gühne [arXiv:quant-ph/0401118](https://arxiv.org/abs/quant-ph/0401118)
 """
 function ppt_mixture(
     ρ::AbstractMatrix{T},

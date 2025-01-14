@@ -14,7 +14,7 @@ end
 
 Produces a uniformly distributed random quantum state in dimension `d` with rank `k`.
 
-Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
+Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101)
 """
 function random_state(::Type{T}, d::Integer, k::Integer = d) where {T}
     x = _randn(T, d, k)
@@ -30,7 +30,7 @@ export random_state
 
 Produces a Haar-random quantum state vector in dimension `d`.
 
-Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101).
+Reference: Życzkowski and Sommers, [arXiv:quant-ph/0012101](https://arxiv.org/abs/quant-ph/0012101)
 """
 function random_state_ket(::Type{T}, d::Integer) where {T}
     psi = _randn(T, d)
@@ -64,7 +64,7 @@ rmul!(A::AbstractVecOrMat, adjB::LinearAlgebra.AdjointQ{<:Any,<:StewartQ}) =
 Produces a Haar-random unitary matrix in dimension `d`.
 If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
 
-Reference: Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034).
+Reference: Gilbert W. Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034)
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
@@ -90,7 +90,7 @@ export random_unitary
 
 Produces a random POVM of dimension `d` with `n` outcomes and rank `min(k, d)`.
 
-Reference: Heinosaari et al., [arXiv:1902.04751](https://arxiv.org/abs/1902.04751).
+Reference: Heinosaari et al., [arXiv:1902.04751](https://arxiv.org/abs/1902.04751)
 """
 function random_povm(::Type{T}, d::Integer, n::Integer, k::Integer = d) where {T<:Number}
     d ≤ n * k || throw(ArgumentError("We need d ≤ n*k, but got d = $(d) and n*k = $(n * k)"))

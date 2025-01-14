@@ -73,7 +73,7 @@ end
 Construction of the standard complete set of MUBs.
 The output contains 1+minᵢ pᵢ^rᵢ bases, where `d` = ∏ᵢ pᵢ^rᵢ.
 
-Reference: Durt, Englert, Bengtsson, Życzkowski, [arXiv:1004.3348](https://arxiv.org/abs/1004.3348).
+Reference: Durt, Englert, Bengtsson, Życzkowski, [arXiv:1004.3348](https://arxiv.org/abs/1004.3348)
 """
 function mub(::Type{T}, d::Integer) where {T<:Number}
     # the dimension d can be any integer greater than two
@@ -222,7 +222,9 @@ end
 
 Computes the fiducial Weyl-Heisenberg vector of dimension `d`.
 
-Reference: Appleby, Yadsan-Appleby, Zauner, [arXiv:1209.1813](http://arxiv.org/abs/1209.1813), http://www.gerhardzauner.at/sicfiducials.html
+References:
+- Appleby, Yadsan-Appleby, Zauner, [arXiv:1209.1813](http://arxiv.org/abs/1209.1813)
+- http://www.gerhardzauner.at/sicfiducials.html
 """
 function _fiducial_WH(::Type{T}, d::Integer) where {T}
     if d == 1
