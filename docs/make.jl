@@ -1,6 +1,5 @@
 using Ket
 using Documenter
-using MATLAB
 
 DocMeta.setdocmeta!(Ket, :DocTestSetup, :(using Ket); recursive = true)
 
