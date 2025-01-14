@@ -30,6 +30,7 @@ into the Julia REPL.
 
 Julia:
 <!--- [BellPolytopes.jl](https://github.com/ZIB-IOL/BellPolytopes.jl)-->
+- [QuantumClifford.jl](https://github.com/QuantumSavory/QuantumClifford.jl)
 <!--- [QuantumInformation.jl](https://github.com/iitis/QuantumInformation.jl) (abandoned)-->
 - [QuantumOptics.jl](https://github.com/qojulia/QuantumOptics.jl)
 - [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl)
