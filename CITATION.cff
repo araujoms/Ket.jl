@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Araújo
+    given-names: Mateus
+    orcid: https://orcid.org/0000-0003-0155-354X
+  - family-names: Brown
+    given-names: Peter
+    orcid: https://orcid.org/0000-0001-9593-0136
+  - family-names: Designolle
+    given-names: Sébastien
+    orcid: https://orcid.org/0000-0003-0303-3556
+  - family-names: de Gois
+    given-names: Carlos
+    orcid: https://orcid.org/0000-0001-9377-4168
+  - family-names: Porto
+    given-names: Lucas
+    orcid: todo
+  - family-names: Quintino
+    given-names: Marco Túlio
+    orcid: https://orcid.org/0000-0003-1332-3477
+title: "Ket.jl: a Julia toolbox for quantum information, nonlocality, and entanglement"
+version: 0.3.0
+identifiers:
+  - type: doi
+    value: todo
+date-released: 2025-01-09
