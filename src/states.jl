@@ -71,7 +71,7 @@ export state_bell
 """
     state_phiplus_ket([T=ComplexF64,] d::Integer = 2)
 
-Produces the ket of the maximally entangled state Φ⁺ of local dimension `d`.
+Produces the ket of the maximally entangled state ϕ⁺ of local dimension `d`.
 """
 function state_phiplus_ket(::Type{T}, d::Integer = 2; kwargs...) where {T<:Number}
     return state_ghz_ket(T, d, 2; kwargs...)
@@ -82,7 +82,7 @@ export state_phiplus_ket
 """
     state_phiplus([T=ComplexF64,] d::Integer = 2; v::Real = 1)
 
-Produces the maximally entangled state Φ⁺ of local dimension `d` with visibility `v`.
+Produces the maximally entangled state ϕ⁺ of local dimension `d` with visibility `v`.
 """
 function state_phiplus(::Type{T}, d::Integer = 2; v::Real = 1) where {T<:Number}
     rho = ketbra(state_phiplus_ket(T, d; coeff = one(T)))
