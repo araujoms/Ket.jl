@@ -4,7 +4,7 @@ using Documenter
 DocMeta.setdocmeta!(Ket, :DocTestSetup, :(using Ket); recursive = true)
 
 generated_path = joinpath(@__DIR__, "src")
-base_url = "https://github.com/araujoms/Ket.jl/blob/master/"
+base_url = "https://github.com/dev-ket/Ket.jl/blob/master/"
 isdir(generated_path) || mkdir(generated_path)
 
 open(joinpath(generated_path, "index.md"), "w") do io
@@ -26,11 +26,11 @@ end
 makedocs(;
     modules = [Ket],
     authors = "Mateus Araújo et al.",
-    repo = "https://github.com/araujoms/Ket.jl/blob/{commit}{path}#{line}",
+    repo = "https://github.com/dev-ket/Ket.jl/blob/{commit}{path}#{line}",
     sitename = "Ket.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://araujoms.github.io/Ket.jl",
+        canonical = "https://dev-ket.github.io/Ket.jl",
         edit_link = "master",
         assets = String[],
         sidebar_sitename = false
@@ -39,6 +39,6 @@ makedocs(;
     checkdocs = :exports
 )
 
-deploydocs(; repo = "github.com/araujoms/Ket.jl", devbranch = "master", push_preview = true)
+deploydocs(; repo = "github.com/dev-ket/Ket.jl", devbranch = "master", push_preview = true)
 
 # makedocs(; sitename = "Ket", format = Documenter.HTML(; prettyurls = get(ENV, "CI", nothing) == "true"))
