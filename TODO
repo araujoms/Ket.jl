@@ -2,7 +2,7 @@ SD - NL robustness
 SD - steering robustness
 SD - entanglement robustnesses (separable...)
 SD - KetSparse (future)
-MT - Random Channels, Random Isometries, Random Random (?)
+MT - Random Channels, Random Random (?)
 MT - Section for Channels/Superoperators (add Choi map, etc etc)
 SD - Properly add measurements/states from https://gitlab.com/tqo/sqma/ (add general 2-designs)
 CG - In _dps_constraints! bypass new variables when n = 1, as then only PPT is needed (minor technical issue)

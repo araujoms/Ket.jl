@@ -24,11 +24,20 @@
     end
     @testset "Unitaries" begin
         U = random_unitary(3)
+        V = random_isometry(3,2)
         @test eltype(U) <: ComplexF64
+        @test eltype(V) <: ComplexF64
         for R ∈ (Float64, Double64, Float128, BigFloat), T ∈ (R, Complex{R})
+            V1 = random_isometry(T, 3, 1)
+            V2 = random_isometry(T, 3, 2)
+            Random.seed!(1337)
+            V3 = random_isometry(T, 3, 3)
+            Random.seed!(1337)
             U = random_unitary(T, 3)
+            @test V3 == Matrix(U)
             @test U * U' ≈ I(3)
-            @test eltype(U) <: T
+            @test V2' * V2 ≈ I(2)
+            @test V1' * V1 ≈ I(1)
         end
     end
     @testset "Probability" begin

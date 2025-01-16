@@ -68,10 +68,8 @@ Reference: Gilbert W. Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/071
 """
 function random_unitary(::Type{T}, d::Integer) where {T<:Number}
     z = Matrix{T}(undef, d, d)
-    @inbounds for j ∈ 1:d
-        for i ∈ j:d
-            z[i, j] = _randn(T)
-        end
+    @inbounds for j ∈ 1:d, i ∈ j:d
+        z[i, j] = _randn(T)
     end
     τ = Vector{T}(undef, d)
     s = Vector{T}(undef, d)
@@ -84,6 +82,33 @@ function random_unitary(::Type{T}, d::Integer) where {T<:Number}
 end
 random_unitary(d::Integer) = random_unitary(ComplexF64, d)
 export random_unitary
+
+"""
+    random_isometry([T=ComplexF64,] d::Integer, k::Integer)
+
+Produces a Haar-random unitary matrix in dimension `d`.
+If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
+
+Reference: Gilbert W. Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034)
+"""
+function random_isometry(::Type{T}, d::Integer, k::Integer) where {T<:Number}
+    z = Matrix{T}(undef, d, k)
+    @inbounds for j ∈ 1:k, i ∈ j:d
+        z[i, j] = _randn(T)
+    end
+    τ = Vector{T}(undef, k)
+    s = Vector{T}(undef, k)
+    @inbounds for j ∈ 1:k #this is a partial QR decomposition where we don't apply the reflection to the rest of the matrix
+        @views x = z[j:d, j]
+        τ[j] = LinearAlgebra.reflector!(x)
+        s[j] = sign(real(x[1]))
+    end
+    return Matrix(LinearAlgebra.QRPackedQ(z, τ)) * Diagonal(s)
+end
+#rather inefficient but until https://github.com/JuliaLang/LinearAlgebra.jl/issues/1172
+#is solved this is the best we can do
+random_isometry(d::Integer, k::Integer) = random_isometry(ComplexF64, d, k)
+export random_isometry
 
 """
     random_povm([T=ComplexF64,] d::Integer, n::Integer, k::Integer)
