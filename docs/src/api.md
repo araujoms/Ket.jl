@@ -117,6 +117,8 @@ state_ghz_ket
 state_ghz
 state_w_ket
 state_w
+state_dicke_ket
+state_dicke
 white_noise
 white_noise!
 ```

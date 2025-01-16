@@ -204,7 +204,7 @@ state_supersinglet_ket(N::Integer = 3; kwargs...) = state_supersinglet_ket(Compl
 export state_supersinglet_ket
 
 """
-    state_supersinglet([T=ComplexF64,] N::Integer = 3; v::Real = 1, coeff = 1/√d)
+    state_supersinglet([T=ComplexF64,] N::Integer = 3; v::Real = 1)
 
 Produces the `N`-partite `N`-level singlet state with visibility `v`.
 This state is invariant under simultaneous rotations on all parties: `(U⊗…⊗U)ρ(U⊗…⊗U)'=ρ`.
@@ -218,3 +218,39 @@ function state_supersinglet(::Type{T}, N::Integer = 3; v::Real = 1) where {T<:Nu
 end
 state_supersinglet(N::Integer = 3; kwargs...) = state_supersinglet(ComplexF64, N; kwargs...)
 export state_supersinglet
+
+"""
+    state_dicke_ket([T=ComplexF64,] k::Integer, N::Integer; coeff = 1/√Cᴺₖ)
+
+Produces the ket of the `N`-partite Dicke state with `k` excitations.
+
+Reference: Robert H. Dicke [doi:10.1103/PhysRev.93.99](https://doi.org/10.1103/PhysRev.93.99)
+"""
+function state_dicke_ket(::Type{T}, k::Integer, N::Integer; coeff = inv(_sqrt(T, binomial(N, k)))) where {T<:Number}
+    psi = zeros(T, 2^N)
+    ind = zeros(Int8, N)
+    @inbounds for i in eachindex(psi)
+        if sum(ind) == k
+            psi[i] = coeff
+        end
+        _update_odometer!(ind, 2)
+    end
+    return psi
+end
+state_dicke_ket(k::Integer, N::Integer; kwargs...) = state_dicke_ket(ComplexF64, k, N; kwargs...)
+export state_dicke_ket
+
+"""
+    state_dicke([T=ComplexF64,] k::Integer, N::Integer; v::Real = 1)
+
+Produces the `N`-partite Dicke state with `k` excitations.
+
+Reference: Robert H. Dicke [doi:10.1103/PhysRev.93.99](https://doi.org/10.1103/PhysRev.93.99)
+"""
+function state_dicke(::Type{T}, k::Integer, N::Integer; v::Real = 1) where {T<:Number}
+    rho = ketbra(state_dicke_ket(T, k, N; coeff = one(T)))
+    parent(rho) ./= binomial(N, k)
+    return white_noise!(rho, v)
+end
+state_dicke(k::Integer, N::Integer; kwargs...) = state_dicke(ComplexF64, k, N; kwargs...)
+export state_dicke
