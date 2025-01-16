@@ -254,3 +254,58 @@ function state_dicke(::Type{T}, k::Integer, N::Integer; v::Real = 1) where {T<:N
 end
 state_dicke(k::Integer, N::Integer; kwargs...) = state_dicke(ComplexF64, k, N; kwargs...)
 export state_dicke
+
+"""
+    state_horodecki33([T=ComplexF64,] a::Real)
+
+Produces the 3 × 3 bipartite PPT-entangled Horodecki state with parameter `a`.
+
+Reference: Paweł Horodecki, [arXiv:quant-ph/9703004](https://arxiv.org/abs/quant-ph/9703004)
+"""
+function state_horodecki33(::Type{T}, a::Real; v::Real = 1) where {T<:Number}
+    @assert 0 ≤ a ≤ 1 "Parameter `a` must be in [0, 1]"
+    x = (1 + a) / 2
+    y = sqrt(1 - a^2) / 2
+    rho = T[
+        a 0 0 0 a 0 0 0 a
+        0 a 0 0 0 0 0 0 0
+        0 0 a 0 0 0 0 0 0
+        0 0 0 a 0 0 0 0 0
+        a 0 0 0 a 0 0 0 a
+        0 0 0 0 0 a 0 0 0
+        0 0 0 0 0 0 x 0 y
+        0 0 0 0 0 0 0 a 0
+        a 0 0 0 a 0 y 0 x
+    ]
+    rho ./= 8a + 1
+    return white_noise!(Hermitian(rho), v)
+end
+state_horodecki33(a::Real) = state_horodecki33(ComplexF64, a)
+export state_horodecki33
+
+"""
+    state_horodecki24([T=ComplexF64,] b::Real)
+
+Produces the 2 × 4 bipartite PPT-entangled Horodecki state with parameter `b`.
+
+Reference: Paweł Horodecki, [arXiv:quant-ph/9703004](https://arxiv.org/abs/quant-ph/9703004)
+"""
+function state_horodecki24(::Type{T}, b::Real; v::Real = 1) where {T<:Number}
+    @assert 0 ≤ b ≤ 1 "Parameter `b` must be in [0, 1]"
+    x = (1 + b) / 2
+    y = sqrt(1 - b^2) / 2
+    rho = T[
+        b 0 0 0 0 b 0 0
+        0 b 0 0 0 0 b 0
+        0 0 b 0 0 0 0 b
+        0 0 0 b 0 0 0 0
+        0 0 0 0 x 0 0 y
+        b 0 0 0 0 b 0 0
+        0 b 0 0 0 0 b 0
+        0 0 b 0 y 0 0 x
+    ]
+    rho ./= 7b + 1
+    return white_noise!(Hermitian(rho), v)
+end
+state_horodecki24(b::Real) = state_horodecki24(ComplexF64, b)
+export state_horodecki24

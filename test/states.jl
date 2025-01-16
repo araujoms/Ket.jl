@@ -25,5 +25,19 @@
         rho = state_supersinglet(T, 3)
         @test U * rho * U' ≈ rho
         @test kron(I(5),shift(5,3)*clock(5,2))*state_phiplus_ket(5) ≈ state_bell_ket(3,2,5)
+        rho = state_horodecki33(T, 1)
+        ref = Matrix{T}(I, 9, 9)
+        ref[1:4:9, 1:4:9] .= 1
+        ref ./= 9
+        @test rho ≈ ref
+        @test minimum(eigvals(partial_transpose(rho, 1))) ≥ 0
+        rho = state_horodecki24(T, 1)
+        ref = Matrix{T}(I, 8, 8)
+        ref[1:5:8, 1:5:8] .= 1
+        ref[2:5:8, 2:5:8] .= 1
+        ref[3:5:8, 3:5:8] .= 1
+        ref ./= 8
+        @test rho ≈ ref
+        @test minimum(eigvals(partial_transpose(rho, 1, [2, 4]))) ≥ 0
     end
 end

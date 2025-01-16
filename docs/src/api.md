@@ -119,6 +119,8 @@ state_w_ket
 state_w
 state_dicke_ket
 state_dicke
+state_horodecki33
+state_horodecki24
 white_noise
 white_noise!
 ```
