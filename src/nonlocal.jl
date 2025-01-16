@@ -407,9 +407,9 @@ export tensor_probability
 """
     tensor_correlation(p::AbstractArray{T, N2}, behaviour::Bool = false; marg::Bool = true)
 
-Converts a 2 x ... x 2 x m x ... x m probability array into
-- an m x ... x m correlation array (no marginals)
-- an (m+1) x ... x (m+1) correlation array (marginals).
+Converts a 2 × … × 2 × m × … × m probability array into
+- an m × … × m correlation array (no marginals)
+- an (m+1) × … × (m+1) correlation array (marginals).
 If `behaviour` is `true` do the transformation for behaviours. Doesn't assume normalization.
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
