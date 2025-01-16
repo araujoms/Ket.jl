@@ -86,8 +86,7 @@ export random_unitary
 """
     random_isometry([T=ComplexF64,] d::Integer, k::Integer)
 
-Produces a Haar-random unitary matrix in dimension `d`.
-If `T` is a real type the output is instead a Haar-random (real) orthogonal matrix.
+Produces a Haar-random isometry with `d` rows and `k` columns.
 
 Reference: Gilbert W. Stewart, [doi:10.1137/0717034](https://doi.org/10.1137/0717034)
 """

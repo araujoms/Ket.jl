@@ -97,6 +97,7 @@ diamond_norm
 random_state
 random_state_ket
 random_unitary
+random_isometry
 random_povm
 random_probability
 ```
