@@ -1,5 +1,9 @@
 # List of functions
 
+```@docs
+Ket
+```
+
 ## Basic
 
 ```@docs
@@ -45,6 +49,7 @@ ppt_mixture
 ## Measurements
 
 ```@docs
+Measurement
 sic_povm
 test_sic
 test_povm
@@ -129,6 +134,7 @@ white_noise!
 ## Supermaps
 
 ```@docs
+applykraus
 choi
 ```
 

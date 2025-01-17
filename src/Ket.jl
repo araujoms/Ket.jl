@@ -1,3 +1,6 @@
+"""
+Toolbox for quantum information, nonlocality, and entanglement.
+"""
 module Ket
 
 using LinearAlgebra
@@ -15,11 +18,11 @@ import QuantumNPA
 const MOI = JuMP.MOI
 
 include("basic.jl")
+include("measurements.jl")
 include("states.jl")
 include("nonlocal.jl")
 include("random.jl")
 include("games.jl")
-include("measurements.jl")
 include("incompatibility.jl")
 include("entropy.jl")
 include("norms.jl")

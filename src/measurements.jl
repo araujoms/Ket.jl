@@ -133,7 +133,81 @@ function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
 end
 export test_mub
 
-# SIC POVMs
+# POVMs
+"""
+    Measurement{T}
+
+Alias for `Vector{Hermitian{T,Matrix{T}}}`
+"""
+const Measurement{T} = Vector{Hermitian{T,Matrix{T}}}
+export Measurement
+
+"""
+    povm(B::Vector{<:AbstractMatrix{T}})
+
+Creates a set of (projective) measurements from a set of bases given as unitary matrices.
+"""
+function povm(B::Vector{<:AbstractMatrix})
+    return [[ketbra(B[x][:, a]) for a ∈ 1:size(B[x], 2)] for x ∈ eachindex(B)]
+end
+export povm
+
+"""
+    tensor_to_povm(A::Array{T,4}, o::Vector{Int})
+
+Converts a set of measurements in the common tensor format into a matrix of (hermitian) matrices.
+By default, the second argument is fixed by the size of `A`.
+It can also contain custom number of outcomes if there are measurements with less outcomes.
+"""
+function tensor_to_povm(Aax::Array{T,4}, o::Vector{Int} = fill(size(Aax, 3), size(Aax, 4))) where {T}
+    return [[Hermitian(Aax[:, :, a, x]) for a ∈ 1:o[x]] for x ∈ axes(Aax, 4)]
+end
+export tensor_to_povm
+
+"""
+    povm_to_tensor(Axa::Vector{<:Measurement})
+
+Converts a matrix of (hermitian) matrices into a set of measurements in the common tensor format.
+"""
+function povm_to_tensor(Axa::Vector{Measurement{T}}) where {T<:Number}
+    d, o, m = _measurements_parameters(Axa)
+    Aax = zeros(T, d, d, maximum(o), m)
+    for x ∈ eachindex(Axa)
+        for a ∈ eachindex(Axa[x])
+            Aax[:, :, a, x] .= Axa[x][a]
+        end
+    end
+    return Aax
+end
+export povm_to_tensor
+
+function _measurements_parameters(Axa::Vector{Measurement{T}}) where {T<:Number}
+    @assert !isempty(Axa)
+    # dimension on which the measurements act
+    d = size(Axa[1][1], 1)
+    # tuple of outcome numbers
+    o = Tuple(length.(Axa))
+    # number of inputs, i.e., of mesurements
+    m = length(Axa)
+    return d, o, m
+end
+_measurements_parameters(Aa::Measurement) = _measurements_parameters([Aa])
+
+"""
+    test_povm(A::Vector{<:AbstractMatrix{T}})
+
+Checks if the measurement defined by A is valid (hermitian, semi-definite positive, and normalized).
+"""
+function test_povm(E::Vector{<:AbstractMatrix{T}}) where {T<:Number}
+    !all(ishermitian.(E)) && return false
+    d = size(E[1], 1)
+    !(sum(E) ≈ I(d)) && return false
+    for i ∈ 1:length(E)
+        minimum(eigvals(E[i])) < -_rtol(T) && return false
+    end
+    return true
+end
+export test_povm
 
 """
     sic_povm([T=ComplexF64,] d::Integer)

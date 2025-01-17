@@ -30,16 +30,13 @@ into the Julia REPL.
 ## Related libraries
 
 Julia:
-<!--- [BellPolytopes.jl](https://github.com/ZIB-IOL/BellPolytopes.jl)-->
+
 - [QuantumClifford.jl](https://github.com/QuantumSavory/QuantumClifford.jl)
-<!--- [QuantumInformation.jl](https://github.com/iitis/QuantumInformation.jl) (abandoned)-->
 - [QuantumOptics.jl](https://github.com/qojulia/QuantumOptics.jl)
 - [QuantumToolbox.jl](https://github.com/qutip/QuantumToolbox.jl)
 - [Yao.jl](https://github.com/QuantumBFS/Yao.jl)
 
 Python:
-<!--- [qutip](https://github.com/qutip/qutip)-->
-<!--- [qutip-qip](https://github.com/qutip/qutip-qip)-->
 - [toqito](https://github.com/vprusso/toqito)
 
 MATLAB:

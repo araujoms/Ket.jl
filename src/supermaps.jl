@@ -4,6 +4,16 @@ _solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
 _solver_type(::Type{T}) where {T<:Number} = Float64
 
 """
+    applykraus(K::Vector{<:AbstractMatrix}, M::AbstractMatrix)
+
+Applies the CP map given by the Kraus operators `K` to the matrix `M`.
+"""
+function applykraus(K::Vector{<:AbstractMatrix}, M::AbstractMatrix)
+    return sum(Hermitian(Ki * M * Ki') for Ki ∈ K)
+end
+export applykraus
+
+"""
     choi(K::Vector{<:AbstractMatrix})
 
 Constructs the Choi-Jamiołkowski representation of the CP map given by the Kraus operators `K`.
