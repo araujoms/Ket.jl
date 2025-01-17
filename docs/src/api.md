@@ -114,7 +114,6 @@ state_bell_ket
 state_bell
 state_phiplus_ket
 state_phiplus
-isotropic
 state_psiminus_ket
 state_psiminus
 state_supersinglet_ket

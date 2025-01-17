@@ -4,6 +4,8 @@
         ψ = state_phiplus_ket(T)
         @test ψ == inv(sqrt(R(2))) * (ket(1, 4) + ket(4, 4))
         @test ketbra(ψ) ≈ state_phiplus(T)
+        v = R(8)/10
+        @test v*ketbra(ψ) + (1-v)*I/4 ≈ state_phiplus(T; v)
         ψ = state_psiminus_ket(T)
         @test ψ == inv(sqrt(R(2))) * (ket(2, 4) - ket(3, 4))
         @test ketbra(ψ) ≈ state_psiminus(T)

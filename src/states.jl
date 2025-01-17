@@ -168,16 +168,6 @@ state_w(N::Integer = 3; kwargs...) = state_w(ComplexF64, N; kwargs...)
 export state_w
 
 """
-    isotropic(v::Real, d::Integer = 2)
-
-Produces the isotropic state of local dimension `d` with visibility `v`.
-"""
-function isotropic(v::T, d::Integer = 2) where {T<:Real}
-    return state_phiplus(T, d; v)
-end
-export isotropic
-
-"""
     state_supersinglet_ket([T=ComplexF64,] N::Integer = 3; coeff = 1/√N!)
 
 Produces the ket of the `N`-partite `N`-level singlet state.
