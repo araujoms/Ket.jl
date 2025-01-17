@@ -37,6 +37,7 @@
             atol = 1.0e-3,
             rtol = 1.0e-3
         )
+        Random.seed!(1337)
         @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) ≤ 0
     end
     @testset "GME entanglement" begin
