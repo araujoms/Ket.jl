@@ -1,6 +1,7 @@
 [![Banner](https://dev-ket.github.io/Ket.jl/dev/assets/ket-jl-logo-dark-wide.svg)](https://dev-ket.github.io/Ket.jl/dev/)
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://dev-ket.github.io/Ket.jl/dev/)
+[![DOI](https://zenodo.org/badge/787951811.svg)](https://doi.org/10.5281/zenodo.14674642)
 
 Ket is a toolbox for quantum information, nonlocality, and entanglement written in the Julia programming language. All its functions are designed to work with generic types, allowing one to use `Int64` or `Float64` for efficiency, or arbitrary precision types when needed. Wherever possible they can be also used for optimization with [JuMP](https://jump.dev/JuMP.jl/stable/). And everything is optimized to the last microsecond.
 
@@ -10,7 +11,7 @@ Highlights:
 * Work with bipartite entanglement by computing the relative entropy of entanglement, random robustness, or Schmidt number via `entanglement_entropy`, `random_robustness`, and `schmidt_number`. Under the hood these functions use the DPS hierarchy, which is also available in isolation via `_dps_constraints!`.
 * Generate MUBs and SIC-POVMs through `mub` and `sic_povm`.
 * Generate uniformly-distributed random states, unitaries, and POVMs with `random_state`, `random_unitary`, and `random_povm`.
-* Generate well-known families of quantum states, such as the Bell states, the GHZ state, the W state, and the super-singlet via `state_bell`, `state_ghz`, `state_w`, and `state_supersinglet`.
+* Generate well-known families of quantum states, such as the Bell states, the GHZ state, the W state, the Dicke states, and the super-singlet via `state_bell`, `state_ghz`, `state_w`, `state_dicke`, and `state_supersinglet`.
 * Work with multilinear algebra via utility functions such as `partial_trace`, `partial_transpose`, and `permute_systems`.
 * Generate kets with `ket`.
 

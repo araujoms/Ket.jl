@@ -26,5 +26,5 @@ title: "Ket.jl: a Julia toolbox for quantum information, nonlocality, and entang
 version: 0.3.0
 identifiers:
   - type: doi
-    value: todo
+    value: 10.5281/zenodo.14674642
 date-released: 2025-01-09
