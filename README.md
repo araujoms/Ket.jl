@@ -1,7 +1,7 @@
 [![Banner](https://dev-ket.github.io/Ket.jl/dev/assets/ket-jl-logo-dark-wide.svg)](https://dev-ket.github.io/Ket.jl/dev/)
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://dev-ket.github.io/Ket.jl/dev/)
-[![DOI](https://zenodo.org/badge/787951811.svg)](https://doi.org/10.5281/zenodo.14674642)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14674642.svg)](https://doi.org/10.5281/zenodo.14674642)
 
 Ket is a toolbox for quantum information, nonlocality, and entanglement written in the Julia programming language. All its functions are designed to work with generic types, allowing one to use `Int64` or `Float64` for efficiency, or arbitrary precision types when needed. Wherever possible they can be also used for optimization with [JuMP](https://jump.dev/JuMP.jl/stable/). And everything is optimized to the last microsecond.
 
