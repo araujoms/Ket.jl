@@ -33,7 +33,7 @@ function _local_bound_correlation(G::Array{T,N}; marg::Bool = true) where {T<:Re
     tasks = map(chunks) do chunk
         Threads.@spawn _local_bound_correlation_recursive!(copy(G2), chunk, marg)
     end
-    score = maximum(fetch.(tasks))
+    score::T = maximum(fetch.(tasks))
     return score
 end
 
@@ -108,7 +108,7 @@ function _local_bound_probability(G::Array{T,N2}) where {T<:Real,N2}
     tasks = map(chunks) do chunk
         Threads.@spawn _local_bound_probability_core(chunk, outs2, ins2, squareG)
     end
-    score = maximum(fetch.(tasks))
+    score::T = maximum(fetch.(tasks))
     return score
 end
 
