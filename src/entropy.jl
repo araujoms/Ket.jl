@@ -43,7 +43,7 @@ Reference: [Relative entropy](https://en.wikipedia.org/wiki/Relative_entropy)
 """
 function relative_entropy(base::Real, p::AbstractVector{T}, q::AbstractVector{T}) where {T<:Real}
     if length(p) != length(q)
-        throw(ArgumentError("`p` and q must have the same length."))
+        throw(ArgumentError("p and q must have the same length."))
     end
     if any(p .< T(0)) || any(q .< T(0))
         throw(ArgumentError("p and q must be non-negative."))
