@@ -10,7 +10,7 @@
         end
     end
     @testset "SIC POVMs" begin
-        for T ∈ [Float64, Double64, Float128, BigFloat], d ∈ 1:7
+        for T ∈ [Float64, Double64, Float128, BigFloat], d ∈ 1:9
             @test test_sic(sic_povm(Complex{T}, d))
         end
     end
