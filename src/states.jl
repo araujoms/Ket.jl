@@ -36,19 +36,7 @@ function state_bell_ket(::Type{T}, a::Integer, b::Integer, d::Integer = 2; coeff
     ω = _root_unity(T, d)
     val = T(0)
     for i ∈ 0:d-1
-        exponent = mod(i * b, d)
-        if exponent == 0
-            val = 1
-        elseif 4exponent == d
-            val = im
-        elseif 2exponent == d
-            val = -1
-        elseif 4exponent == 3d
-            val = -im
-        else
-            val = ω^exponent
-        end
-        ψ[d*i+mod(a + i, d)+1] = val * coeff
+        ψ[d*i+mod(a + i, d)+1] = coeff * _phase(ω, i * b, d)
     end
     return ψ
 end

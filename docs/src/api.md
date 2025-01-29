@@ -12,6 +12,7 @@ ketbra
 proj
 shift
 clock
+shiftclock
 pauli
 gellmann
 gellmann!

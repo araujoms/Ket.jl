@@ -34,7 +34,6 @@ end
 proj(i::Integer, d::Integer = 2) = proj(Bool, i, d)
 export proj
 
-
 """
     shift([T=ComplexF64,] d::Integer, p::Integer = 1)
 
@@ -45,7 +44,7 @@ Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generali
 function shift(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     X = zeros(T, d, d)
     for i ∈ 0:d-1
-        X[mod(i + p, d)+1, i+1] = 1
+        X[(i + p)%d+1, i+1] = 1
     end
     return X
 end
@@ -53,33 +52,56 @@ shift(d::Integer, p::Integer = 1) = shift(ComplexF64, d, p)
 export shift
 
 """
-    clock([T=ComplexF64,] d::Integer, p::Integer = 1)
+    clock([T=ComplexF64,] d::Integer, q::Integer = 1)
 
-Constructs the clock operator Z of dimension `d` to the power `p`.
+Constructs the clock operator Z of dimension `d` to the power `q`.
 
 Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
 """
-function clock(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
+function clock(::Type{T}, d::Integer, q::Integer = 1) where {T<:Number}
     z = zeros(T, d)
     ω = _root_unity(T, d)
     for i ∈ 0:d-1
-        exponent = mod(i * p, d)
-        if exponent == 0
-            z[i+1] = 1
-        elseif 4exponent == d
-            z[i+1] = im
-        elseif 2exponent == d
-            z[i+1] = -1
-        elseif 4exponent == 3d
-            z[i+1] = -im
-        else
-            z[i+1] = ω^exponent
-        end
+        z[i+1] = _phase(ω, i * q, d)
     end
     return Diagonal(z)
 end
 clock(d::Integer, p::Integer = 1) = clock(ComplexF64, d, p)
 export clock
+
+"""
+    shiftclock(v::AbstractVector, p::Integer, q::Integer)
+
+Produces X^`p` * Z^`q` * `v`, where X and Z are the shift and clock operators of dimension length(`v`).
+
+Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generalized_Clifford_algebra)
+"""
+function shiftclock(v::AbstractVector{T}, p, q) where {T}
+    d = length(v)
+    w = Vector{T}(undef, d)
+    ω = _root_unity(T, d)
+    @inbounds for i ∈ 0:d-1
+        w[(i+p)%d+1] = v[i+1] * _phase(ω, i * q, d)
+    end
+    return w
+end
+export shiftclock
+
+function _phase(ω::T, exp::Integer, d::Integer) where {T}
+    expmod = exp % d
+    if expmod == 0
+        phase = T(1)
+    elseif 4expmod == d
+        phase = T(im)
+    elseif 2expmod == d
+        phase = T(-1)
+    elseif 4expmod == 3d
+        phase = T(-im)
+    else
+        phase = ω^expmod
+    end
+    return phase
+end
 
 """
     pauli([T=ComplexF64,], ind::Vector{<:Integer})

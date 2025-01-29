@@ -21,6 +21,8 @@
             @test clock(T, 3) ≈ Diagonal([1, exp(2 * T(π) * im / 3), exp(-2 * T(π) * im / 3)])
             @test shift(T, 3, 2) == shift(T, 3)^2
             @test clock(T, 3, 2) ≈ clock(T, 3)^2
+            v = randn(T, 5)
+            @test shiftclock(v, 1, 2) ≈ shift(T, 5, 1)*clock(T, 5, 2)*v
         end
     end
     @testset "Pauli" begin
