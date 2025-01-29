@@ -219,9 +219,10 @@ end
 function _digits(ind; base)
     N = length(base)
     digits = zeros(Int, N)
-    @inbounds for i ∈ 1:N
-        digits[i] = ind % base[i]
-        ind = ind ÷ base[i]
+    i = 0
+    @inbounds while (ind != 0 && i ≤ N - 1)
+        i += 1
+        ind, digits[i] = divrem(ind, base[i])
     end
     return digits
 end
