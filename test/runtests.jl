@@ -8,6 +8,7 @@ using Quadmath
 using Test
 import Random
 import SCS
+import JuMP
 
 include("basic.jl")
 include("entropy.jl")
