@@ -44,10 +44,10 @@ function _local_bound_correlation_recursive!(
     m = size(A),
     tmp = [zeros(T, m[1:i]) for i ∈ 1:N-1],
     offset = [zeros(T, m[1:i]) for i ∈ 1:N-1],
-    ind = [zeros(Int8, m[i] - marg) for i ∈ 2:N],
+    ind = [zeros(Int8, m[i] - marg) for i ∈ 2:N]
 ) where {T<:Real,N}
-    tmp_end::Array{T,N-1} = tmp[N-1]
-    offset_end::Array{T,N-1} = offset[N-1]
+    tmp_end::Array{T,N - 1} = tmp[N-1]
+    offset_end::Array{T,N - 1} = offset[N-1]
     sum!(offset_end, A)
     A .*= 2
     marg && (offset_end .-= selectdim(A, N, 1)) # note this is twice the original A
@@ -57,7 +57,15 @@ function _local_bound_correlation_recursive!(
     for _ ∈ chunk[1]:chunk[2]
         tmp_end .= offset_end
         _tensor_contraction!(tmp_end, A, ind[N-1], marg)
-        @views temp_score = _local_bound_correlation_recursive!(tmp_end, (0, 2^(m[N-1]-marg)-1), marg, m[1:N-1], tmp[1:N-2], offset[1:N-2], ind[1:N-2])
+        @views temp_score = _local_bound_correlation_recursive!(
+            tmp_end,
+            (0, 2^(m[N-1] - marg) - 1),
+            marg,
+            m[1:N-1],
+            tmp[1:N-2],
+            offset[1:N-2],
+            ind[1:N-2]
+        )
         if temp_score > score
             score = temp_score
         end
@@ -276,17 +284,18 @@ function tensor_collinsgisin(p::AbstractArray{T,N2}, behaviour::Bool = false) wh
         for x ∈ CartesianIndices(ins)
             for a ∈ CartesianIndices(outs)
                 for a2 ∈ Iterators.product(union.(a.I, outs)...)
-                    ndiff = abs(sum(a.I .!= outs) - sum(a2 .!= outs))
-                    CG[cgindex(a.I, x.I)...] += (-1)^ndiff * p[a2..., x]
+                    signdiff = isodd(sum(a.I .!= outs) - sum(a2 .!= outs))
+                    CG[cgindex(a.I, x.I)...] += (-1)^signdiff * p[a2..., x]
                 end
             end
         end
     else
         for x ∈ CartesianIndices(ins)
             for a ∈ CartesianIndices(outs)
+                normalization = T(1) / _normalization_tensor(outs, ins, a.I)
                 cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
                 for a2 ∈ CartesianIndices(cgiterators)
-                    CG[cgindex(a.I, x.I)...] += p[a2, x] / prod(ins[BitVector(a.I .== outs)])
+                    CG[cgindex(a.I, x.I)...] += p[a2, x] * normalization
                 end
             end
         end
@@ -302,6 +311,16 @@ function tensor_collinsgisin(rho::Hermitian, Aax::Vector{<:Measurement}, N::Inte
     return tensor_collinsgisin(rho, fill(Aax, N)...)
 end
 export tensor_collinsgisin
+
+function _normalization_tensor(outs::NTuple{N,Int}, ins::NTuple{N,Int}, var::NTuple{N,Int}) where {N}
+    normalization = 1
+    @inbounds for i ∈ 1:N
+        if var[i] == outs[i]
+            normalization *= ins[i]
+        end
+    end
+    return normalization
+end
 
 """
     tensor_probability(CG::Array, scenario::AbstractVecOrTuple, behaviour::Bool = false)
@@ -324,7 +343,7 @@ function tensor_probability(
         for x ∈ CartesianIndices(ins)
             for a ∈ CartesianIndices(outs)
                 for a2 ∈ Iterators.product(union.(a.I, outs)...)
-                    p[a, x] += CG[cgindex(a2, x.I)...] / prod(ins[BitVector(a2 .== outs)])
+                    p[a, x] += CG[cgindex(a2, x.I)...] / _normalization_tensor(outs, ins, a2)
                 end
             end
         end
@@ -333,8 +352,8 @@ function tensor_probability(
             for a ∈ CartesianIndices(outs)
                 cgiterators = map((i, j) -> i == j ? (1:j) : (i:i), a.I, outs)
                 for a2 ∈ CartesianIndices(cgiterators)
-                    ndiff = abs(sum(a.I .!= outs) - sum(a2.I .!= outs))
-                    p[a, x] += (-1)^ndiff * CG[cgindex(a2.I, x.I)...]
+                    signdiff = isodd(sum(a.I .!= outs) - sum(a2.I .!= outs))
+                    p[a, x] += (-1)^signdiff * CG[cgindex(a2.I, x.I)...]
                 end
             end
         end

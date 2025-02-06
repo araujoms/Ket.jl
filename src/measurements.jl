@@ -299,11 +299,11 @@ References:
 function _fiducial_WH(::Type{T}, d::Integer) where {T}
     R = real(T)
     if d == 1
-        return T[R(1)]
+        return T[1]
     elseif d == 2
         return T[sqrt((1 + 1 / sqrt(R(3))) / 2), exp(im * R(π) / 4) * sqrt((1 - 1 / sqrt(R(3))) / 2)]
     elseif d == 3
-        return T[R(0), R(1), R(1)]
+        return T[0, 1, 1]
     elseif d == 4
         a = sqrt(R(5))
         r = sqrt(R(2))
