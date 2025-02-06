@@ -18,7 +18,6 @@ gellmann
 gellmann!
 partial_trace
 partial_transpose
-permute_systems!
 permute_systems
 cleanup!
 symmetric_projection

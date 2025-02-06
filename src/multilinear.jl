@@ -54,7 +54,7 @@ for (T, limit, wrapper) ∈
             dims::AbstractVector{<:Integer} = _equal_sizes(X)
         )
             isempty(remove) && return X
-            length(remove) == length(dims) && return fill(tr(X), 1, 1)
+            length(remove) == length(dims) && return $wrapper([eltype(X)(tr(X));;])
 
             keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept
             counter = 0
@@ -135,7 +135,7 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
             dims::AbstractVector{<:Integer} = _equal_sizes(X)
         )
             isempty(transp) && return X
-            length(transp) == length(dims) && return transpose(X)
+            length(transp) == length(dims) && return $wrapper(collect(transpose(X)))
 
             keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept
             counter = 0
@@ -214,24 +214,25 @@ end
 function _idxperm!(p::Vector{<:Integer}, perm::Vector{<:Integer}, dims::Vector{<:Integer})
     pdims = dims[perm]
 
-    ti = Vector{Int}(undef, length(dims))
+    ti = similar(dims)
+    pti = similar(dims)
 
     for i ∈ eachindex(p)
         _tidx!(ti, i, dims)
-        permute!(ti, perm)
-        j = _idx(ti, pdims)
+        pti .= @view ti[perm]
+        j = _idx(pti, pdims)
         p[j] = i
     end
     return p
 end
 
 """
-    permute_systems!(X::AbstractVector, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
+    permute_systems(X::AbstractVector, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
 
-Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` in-place according to the permutation `perm`.
+Permutes the order of the subsystems of vector `X` with subsystem dimensions `dims` according to the permutation `perm`.
 If the argument `dims` is omitted two equally-sized subsystems are assumed.
 """
-function permute_systems!(
+function permute_systems(
     X::AbstractVector{T},
     perm::AbstractVector{<:Integer},
     dims::AbstractVector{<:Integer} = _equal_sizes(X)
@@ -240,10 +241,9 @@ function permute_systems!(
     X == 1:length(X) && return _idxperm!(X, perm, dims)
 
     p = _idxperm(perm, dims)
-    permute!(X, p)
-    return X
+    return X[p]
 end
-export permute_systems!
+export permute_systems
 
 @doc """
     permute_systems(X::AbstractMatrix, perm::AbstractVector, dims::AbstractVector = _equal_sizes(X))
