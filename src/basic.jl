@@ -252,24 +252,24 @@ function _orthonormal_range_svd!(
     dec = svd!(A; alg = alg)
     tol = isnothing(tol) ? maximum(dec.S) * _eps(T) * minimum(size(A)) : tol
     rank = sum(dec.S .> tol)
-    dec.U[:, 1:rank]
+    return dec.U[:, 1:rank]
 end
 
 _orthonormal_range_svd(A::AbstractMatrix; tol::Union{Real,Nothing} = nothing) =
-    _orthonormal_range_svd!(deepcopy(A); tol)
+    _orthonormal_range_svd!(copy(A); tol)
 
 function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,Nothing} = nothing) where {T<:Number,M}
     dec = qr(A)
     tol = isnothing(tol) ? maximum(abs.(dec.R)) * _eps(T) : tol
     rank = sum(abs.(Diagonal(dec.R)) .> tol)
-    SA.sparse(@view dec.Q[dec.rpivinv, 1:rank])
+    return SA.sparse(@view dec.Q[dec.rpivinv, 1:rank])
 end
 
 """
     orthonormal_range(A::AbstractMatrix{T}; mode::Integer=-1, tol::T=nothing) where {T<:Number}
 
 Orthonormal basis for the range of `A`. When `A` is sparse and `T` is `Float64` or `ComplexF64` (or `mode = 0`), uses a QR factorization and returns a sparse result,
-otherwise uses an SVD and returns a dense matrix (`mode = 1`). Input `A` will be overwritten during the factorization.
+otherwise uses an SVD and returns a dense matrix (`mode = 1`).
 Tolerance `tol` is used to compute the rank and is automatically set if not provided.
 """
 function orthonormal_range(
@@ -279,7 +279,7 @@ function orthonormal_range(
 ) where {T<:Number}
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
     if mode == -1
-        if (T <: SA.CHOLMOD.VTypes) && SA.issparse(A)
+        if (T <: Float64 || T <: ComplexF64) && SA.issparse(A)
             mode = 0
         elseif SA.issparse(A)
             A = Matrix(A)
@@ -309,7 +309,7 @@ function symmetric_projector(::Type{T}, dim::Integer, n::Integer) where {T}
     return P
 end
 export symmetric_projector
-symmetric_projector(dim::Integer, n::Integer) = symmetric_projection(Float64, dim, n)
+symmetric_projector(dim::Integer, n::Integer) = symmetric_projector(Float64, dim, n)
 
 """
     symmetric_isometry(dim::Integer, n::Integer)
@@ -331,16 +331,14 @@ symmetric_isometry(dim::Integer, n::Integer) = symmetric_isometry(Float64, dim, 
     n::Integer,
     n_parties::Integer;
     sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
-    sparse::Bool = true,
     eye::AbstractMatrix = I(size(sb[1], 1))
 
-Return the basis of `n` nontrivial operators acting on `n_parties`, by default using Pauli matrices.
+Return the basis of `n` nontrivial operators acting on `n_parties`, by default using sparse Pauli matrices.
 
 For example, `n_body_basis(2, 3)` generates all products of two Paulis and one identity, so
 ``{X ⊗ X ⊗ 1, X ⊗ 1 ⊗ X, ..., X ⊗ Y ⊗ 1, ..., 1 ⊗ Z ⊗ Z}``.
 
 Instead of Paulis, a basis can be provided by the parameter `sb`, and the identity can be changed with `eye`.
-If `sparse` is true, the resulting basis will use sparse matrices, otherwise it will agree with `sb`.
 
 This function returns a generator, which can then be used e.g. in for loops without fully allocating the
 entire basis at once. If you need a vector, call `collect` on it.
@@ -348,19 +346,20 @@ entire basis at once. If you need a vector, call `collect` on it.
 function n_body_basis(
     n::Integer,
     n_parties::Integer;
-    sb::AbstractVector{<:AbstractMatrix} = [pauli(1), pauli(2), pauli(3)],
-    sparse::Bool = true,
-    eye::AbstractMatrix = I(size(sb[1], 1))
+    sb::AbstractVector{<:AbstractMatrix} = SA.sparse.([pauli(1), pauli(2), pauli(3)]),
+    eye::AbstractMatrix = SA.sparse(one(eltype(sb[1]))*I, size(sb[1]))
 )
     (n ≥ 0 && n_parties ≥ 2) || throw(ArgumentError("Number of parties must be ≥ 2 and n ≥ 0."))
     n ≤ n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))
 
-    sb = sparse ? [SA.sparse.(sb); [eye]] : [sb; [eye]]
+    sb = [sb; [eye]]
+    display(sb)
     nb = length(sb) - 1
     idx_eye = length(sb)
-    (
-        Base.kron(sb[t]...) for p ∈ Combinatorics.with_replacement_combinations(1:nb, n) for
+    basis = (
+        kron(sb[t]...) for p ∈ Combinatorics.with_replacement_combinations(1:nb, n) for
         t ∈ Combinatorics.multiset_permutations([p; repeat([idx_eye], n_parties - n)], n_parties)
     )
+    return basis
 end
 export n_body_basis
