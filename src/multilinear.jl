@@ -267,7 +267,7 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
             perm == 1:length(perm) && return X
 
             p = _idxperm(perm, dims)
-            return rows_only ? $wrapper(X[p, 1:end]) : $wrapper(X[p, p])
+            return rows_only ? $wrapper(X[p, :]) : $wrapper(X[p, p])
         end
     end
 end
@@ -294,13 +294,14 @@ Unitary that permutes subsystems of dimension `dims` according to the permutatio
 If `dims` is an Integer, assumes there are `length(perm)` subsystems of equal dimensions `dims`.
 """
 function permutation_matrix(
+    ::Type{T},
     dims::Union{Integer,AbstractVector{<:Integer}},
-    perm::AbstractVector{<:Integer};
-    is_sparse::Bool = true
-)
+    perm::AbstractVector{<:Integer}
+) where {T}
     dims = dims isa Integer ? fill(dims, length(perm)) : dims
     d = prod(dims)
-    id = is_sparse ? SA.sparse(I, (d, d)) : I(d)
-    permute_systems(id, perm, dims; rows_only = true)
+    id = SA.sparse(one(T)*I, (d, d))
+    return permute_systems(id, perm, dims; rows_only = true)
 end
+permutation_matrix(dims, perm) = permutation_matrix(Bool, dims, perm)
 export permutation_matrix

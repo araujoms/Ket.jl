@@ -44,7 +44,7 @@ Reference: [Generalized Clifford algebra](https://en.wikipedia.org/wiki/Generali
 function shift(::Type{T}, d::Integer, p::Integer = 1) where {T<:Number}
     X = zeros(T, d, d)
     for i ∈ 0:d-1
-        X[(i + p)%d+1, i+1] = 1
+        X[(i+p)%d+1, i+1] = 1
     end
     return X
 end
@@ -266,9 +266,9 @@ function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,
 end
 
 """
-    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=nothing, tol::T=nothing, sp::Bool=true) where {T<:Number}
+    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=-1, tol::T=nothing) where {T<:Number}
 
-Orthonormal basis for the range of `A`. When `A` is sparse (or `mode = 0`), uses a QR factorization and returns a sparse result,
+Orthonormal basis for the range of `A`. When `A` is sparse and `T` is `Float64` or `ComplexF64` (or `mode = 0`), uses a QR factorization and returns a sparse result,
 otherwise uses an SVD and returns a dense matrix (`mode = 1`). Input `A` will be overwritten during the factorization.
 Tolerance `tol` is used to compute the rank and is automatically set if not provided.
 """
@@ -278,39 +278,54 @@ function orthonormal_range(
     tol::Union{Real,Nothing} = nothing
 ) where {T<:Number}
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
-    mode == -1 && (mode = SA.issparse(A) ? 0 : 1)
-
+    if mode == -1
+        if (T <: SA.CHOLMOD.VTypes) && SA.issparse(A)
+            mode = 0
+        elseif SA.issparse(A)
+            A = Matrix(A)
+            mode = 1
+        else
+            mode = 1
+        end
+    end
     return (mode == 0 ? _orthonormal_range_qr(A; tol) : _orthonormal_range_svd(A; tol))
 end
 export orthonormal_range
 
 """
-    symmetric_projection(dim::Integer, n::Integer; partial::Bool=true)
+    symmetric_projector(dim::Integer, n::Integer)
 
-Orthogonal projection onto the symmetric subspace of `n` copies of a `dim`-dimensional space. By default (`partial=true`)
-it returns an isometry (say, `V`) encoding the symmetric subspace. If `partial=false`, then it
-returns the actual projection `V * V'`.
+Computes the projector onto the symmetric subspace of `n` copies of a `dim`-dimensional space.
 
 Reference: [Watrous' book](https://cs.uwaterloo.ca/~watrous/TQI/), Sec. 7.1.1
 """
-function symmetric_projection(::Type{T}, dim::Integer, n::Integer; partial::Bool = true) where {T}
-    is_sparse = T <: SA.CHOLMOD.VTypes #sparse qr decomposition fails for anything other than Float64 or ComplexF64
-    P = is_sparse ? SA.spzeros(T, dim^n, dim^n) : zeros(T, dim^n, dim^n)
+function symmetric_projector(::Type{T}, dim::Integer, n::Integer) where {T}
+    P = SA.spzeros(T, dim^n, dim^n)
     perms = Combinatorics.permutations(1:n)
     for perm ∈ perms
-        P .+= permutation_matrix(dim, perm; is_sparse)
+        P .+= permutation_matrix(T, dim, perm)
     end
     P ./= length(perms)
-    if partial
-        V = orthonormal_range(P)
-        size(V, 2) != binomial(n + dim - 1, dim - 1) && throw(AssertionError("Rank computation failed"))
-        return V
-    end
     return P
 end
-export symmetric_projection
-symmetric_projection(dim::Integer, n::Integer; partial::Bool = true) = symmetric_projection(Float64, dim, n; partial)
+export symmetric_projector
+symmetric_projector(dim::Integer, n::Integer) = symmetric_projection(Float64, dim, n)
 
+"""
+    symmetric_isometry(dim::Integer, n::Integer)
+
+Computes an isometry that encodes the symmetric subspace of `n` copies of a `dim`-dimensional space. Specifically, it maps a vector space of dimension `binomial(n + dim -1, dim -1)` onto the symmetric subspace of the symmetric subspace of the vector space of dimension `dim^n`.
+
+Reference: [Watrous' book](https://cs.uwaterloo.ca/~watrous/TQI/), Sec. 7.1.1
+"""
+function symmetric_isometry(::Type{T}, dim::Integer, n::Integer; partial::Bool = true) where {T}
+    P = symmetric_projector(T, dim, n)
+    V = orthonormal_range(P)
+    size(V, 2) != binomial(n + dim - 1, dim - 1) && throw(AssertionError("Rank computation failed"))
+    return V
+end
+export symmetric_isometry
+symmetric_isometry(dim::Integer, n::Integer) = symmetric_isometry(Float64, dim, n)
 """
     n_body_basis(
     n::Integer,

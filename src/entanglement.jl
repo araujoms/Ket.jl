@@ -259,7 +259,7 @@ function _dps_constraints!(
 
     # Dimension of the extension space w/ bosonic symmetries: A dim. + `n` copies of B
     d = dA * binomial(n + dB - 1, n)
-    V = kron(I(dA), symmetric_projection(T, dB, n; partial = true)) # Bosonic subspace isometry
+    V = kron(I(dA), symmetric_isometry(T, dB, n)) # Bosonic subspace isometry
 
     if is_complex
         psd_cone = JuMP.HermitianPSDCone()

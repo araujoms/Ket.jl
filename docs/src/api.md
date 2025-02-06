@@ -20,7 +20,8 @@ partial_trace
 partial_transpose
 permute_systems
 cleanup!
-symmetric_projection
+symmetric_projector
+symmetric_isometry
 orthonormal_range
 permutation_matrix
 n_body_basis
