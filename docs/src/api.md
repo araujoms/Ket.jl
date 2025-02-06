@@ -85,6 +85,7 @@ seesaw
 tensor_probability
 tensor_collinsgisin
 tensor_correlation
+nonlocality_robustness
 ```
 
 ## Norms

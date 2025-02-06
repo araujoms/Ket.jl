@@ -494,3 +494,113 @@ function tensor_correlation(rho::Hermitian, Aax::Vector{<:Measurement}, N::Integ
     return tensor_correlation(rho, fill(Aax, N)...; marg)
 end
 export tensor_correlation
+
+"""
+    nonlocality_robustness(FP::Array, measure::String = "g")
+
+Computes the nonlocality robustness of the behaviour `FP`.
+Depending on the noise model chosen, the second argument can be
+`"r"` (random),
+`"l"` (local),
+`"g"` (generalized).
+"""
+function nonlocality_robustness(
+    FP::Array{T,N2},
+    measure::String = "g";
+    verbose = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Real,N2}
+    @assert measure ∈ ["r", "l", "g"]
+
+    @assert iseven(N2)
+    N = N2 ÷ 2
+    scenario = size(FP)
+    outs::NTuple{N, Int} = scenario[1:N]
+    ins::NTuple{N, Int} = scenario[N+1:2N]
+
+    normalization = sum(FP[CartesianIndices(outs), ones(Int, ins)...])
+
+    num_strategies = outs .^ ins
+    exploding_party = findfirst(x -> x == 0, num_strategies)
+    largest_party = exploding_party == nothing ? argmax(num_strategies) : exploding_party
+    if largest_party != 1
+        perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
+        outs = outs[perm]
+        ins = ins[perm]
+        num_strategies = num_strategies[perm]
+        FP = permutedims(FP, [perm; perm .+ N])
+    end
+    total_num_strategies = prod(num_strategies[2:N])
+
+    stT = _solver_type(T)
+    model = JuMP.GenericModel{stT}()
+
+    JuMP.@variable(model, η)
+    JuMP.@variable(model, π[1:total_num_strategies])
+    p = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
+
+    last_p = [JuMP.@expression(model, π[λ] - sum(p[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
+    local_model = Array{JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}},N2}(undef, size(FP))
+    for i ∈ eachindex(local_model)
+        local_model[i] = JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}}(0.0)
+    end
+
+    if measure == "l"
+        JuMP.@variable(model, ξ[1:total_num_strategies])
+        q = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
+
+        last_q = [JuMP.@expression(model, ξ[λ] - sum(q[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
+        local_noise = Array{JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}},N2}(undef, size(FP))
+        for i ∈ eachindex(local_model)
+            local_noise[i] = JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}}(0.0)
+        end
+    end
+
+    base = reduce(vcat, [fill(outs[i], ins[i]) for i ∈ 2:N])
+    strategy = Vector{Int}(undef, sum(ins[2:N]))
+    b = Vector{Int}(undef, N - 1)
+    for λ ∈ 1:total_num_strategies
+        strategy = _digits(λ - 1; base)
+        for y ∈ CartesianIndices(ins[2:N])
+            shift = 0
+            for i ∈ 2:N
+                b[i-1] = strategy[shift+y.I[i-1]] + 1
+                shift += ins[i]
+            end
+            for x ∈ 1:ins[1]
+                for a ∈ 1:outs[1]-1
+                    JuMP.add_to_expression!(local_model[a, b..., x, y.I...], p[λ][a, x])
+                    measure == "l" && JuMP.add_to_expression!(local_noise[a, b..., x, y.I...], q[λ][a, x])
+                end
+                JuMP.add_to_expression!(local_model[outs[1], b..., x, y.I...], last_p[λ, x])
+                measure == "l" && JuMP.add_to_expression!(local_noise[outs[1], b..., x, y.I...], last_q[λ, x])
+            end
+        end
+    end
+
+    if measure == "r"
+        JuMP.@constraint(model, η * FP .+ (1 - η) * normalization / prod(outs) == local_model)
+    else
+        if measure == "l"
+            JuMP.@constraint(model, η * FP + local_noise == local_model)
+            JuMP.@constraint(model, last_q .≥ 0)
+        elseif measure == "g"
+            JuMP.@constraint(model, η * FP - local_model .≤ 0)
+        end
+        JuMP.@constraint(model, sum(π) == normalization)
+    end
+    JuMP.@constraint(model, last_p .≥ 0)
+    JuMP.@constraint(model, η ≤ 1)
+
+    JuMP.@objective(model, Max, η)
+
+    JuMP.set_optimizer(model, solver)
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+    if JuMP.is_solved_and_feasible(model)
+        return JuMP.objective_value(model)
+    else
+        return "Something went wrong: $(JuMP.raw_status(model))"
+    end
+end
+export nonlocality_robustness
