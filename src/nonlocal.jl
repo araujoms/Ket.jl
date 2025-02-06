@@ -323,7 +323,7 @@ function _normalization_tensor(outs::NTuple{N,Int}, ins::NTuple{N,Int}, var::NTu
 end
 
 """
-    tensor_probability(CG::Array, scenario::AbstractVecOrTuple, behaviour::Bool = false)
+    tensor_probability(CG::Array, scenario::Tuple, behaviour::Bool = false)
 
 Takes a multipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
@@ -331,12 +331,12 @@ If `behaviour` is `true` do instead the transformation for behaviours. Doesn't a
 """
 function tensor_probability(
     CG::AbstractArray{T,N},
-    scenario::AbstractVecOrTuple{<:Integer},
+    scenario::Tuple,
     behaviour::Bool = false
 ) where {T,N}
-    p = zeros(_solver_type(T), scenario...)
-    outs = Tuple(scenario[1:N])
-    ins = Tuple(scenario[N+1:2N])
+    p = zeros(_solver_type(T), scenario)
+    outs = scenario[1:N]
+    ins = scenario[N+1:2N]
     cgindex(a, x) = (a .!= outs) .* (a .+ (x .- 1) .* (outs .- 1)) .+ 1
 
     if !behaviour
@@ -368,7 +368,7 @@ Takes a bipartite Bell functional `FC` in full correlator notation and transform
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
 function tensor_probability(FC::AbstractArray{T,N}, behaviour::Bool = false) where {T,N}
-    o = Tuple(fill(2, N))
+    o = ntuple(i->2, N)
     m = size(FC) .- 1
     FP = zeros(T, o..., m...)
     cia = CartesianIndices(o)
@@ -378,7 +378,7 @@ function tensor_probability(FC::AbstractArray{T,N}, behaviour::Bool = false) whe
         ind = collect(a2.I) .== 2
         denominator = behaviour ? 1 : prod(m[.!ind]; init = 1)
         for a1 ∈ cia
-            s = (-1)^sum(a1.I[ind] .- 1; init = 0)
+            s = (-1)^(sum(a1.I[ind]; init = 0) - sum(ind))
             for x ∈ cix
                 FP[a1, x] += s * FC[[a2[n] == 1 ? 1 : x[n] + 1 for n ∈ 1:N]...] / denominator
             end
