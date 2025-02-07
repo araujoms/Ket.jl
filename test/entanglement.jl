@@ -40,6 +40,17 @@
         Random.seed!(1337)
         @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) ≤ 0
     end
+    @testset "Inner DPS hierarchy" begin
+        for R ∈ (Float64, Float32, BigFloat, Double64)
+            # Legendre
+            @test Ket._jacobi_polynomial_zeros(R, 1, 0, 0) ≈ [0]
+            @test Ket._jacobi_polynomial_zeros(R, 2, 0, 0) ≈ [-1 / sqrt(3), 1 / sqrt(3)]
+            #Chebyshev
+            @test Ket._jacobi_polynomial_zeros(R, 1, -1/2, -1/2) ≈ [0]
+            @test Ket._jacobi_polynomial_zeros(R, 2, -1/2, -1/2) ≈ [-1 / sqrt(2), 1 / sqrt(2)]
+            @test Ket._jacobi_polynomial_zeros(R, 3, -1/2, -1/2) ≈ [-sqrt(3) / 2, 0, sqrt(3) / 2]
+        end
+    end
     @testset "GME entanglement" begin
         for R ∈ (Float64, Double64)
             ρ = state_ghz(R, 2, 3)

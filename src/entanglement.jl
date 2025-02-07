@@ -253,6 +253,9 @@ export entanglement_robustness
     _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
 
 Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
+The extensions can be symmetric real matrices (`is_complex = false`) or Hermitian PSD.
+With `ppt = true`, the extended part is constrained to be PPT for every bipartition.
+Use `isometry` to specify a ``V`` to be applied in the constraint ``ρ == V' * tr_{B_2 ... B_n}(Ξ) V``.
 
 Reference: Doherty, Parrilo, Spedalieri, [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
 """
@@ -418,3 +421,32 @@ function ppt_mixture(
     end
 end
 export ppt_mixture
+
+"""
+    _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
+
+Zeros of the Jacobi polynomials.
+"""
+function _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
+    @assert N > 0 "Polynomial degree must be non-negative."
+    @assert α > -1 && β > -1 "Parameters must be greater than -1."
+
+    a = Vector{T}(undef, N)
+    b = Vector{T}(undef, N - 1)
+    α = T(α)
+    β = T(β)
+
+    a[1] = (β - α) / (α + β + 2)
+    for i ∈ 2:N
+        a[i] = (β^2 - α^2) / ((2 * (i - 1) + α + β) * (2 * (i - 1) + α + β + 2))
+    end
+
+    if N > 1
+        b[1] = (2 / (2 + α + β)) * sqrt((α + 1) * (β + 1) / (2 + α + β + 1))
+        for i ∈ 2:N-1
+            b[i] = sqrt((4i * (i + α) * (i + β) * (i + α + β)) / ((2i + α + β)^2 * (2i + α + β + 1) * (2i + α + β - 1)))
+        end
+    end
+
+   return eigvals!(SymTridiagonal(a, b))
+end
