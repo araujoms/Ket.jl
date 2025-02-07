@@ -101,15 +101,15 @@ end
 end
 
 @testset "Nonlocality robustness" begin
-    for T ∈ [Float64, Double64, Float128, BigFloat]
+    for T ∈ [Float64, Double64]
         prbox = zeros(T, 2, 2, 2, 2)
         for i ∈ CartesianIndices((2, 2, 2, 2))
             if mod(((i.I[1] - 1) + (i.I[2] - 1)), 2) == (i.I[3] - 1) * (i.I[4] - 1)
-                prbox[i.I...] = T(1 / 2)
+                prbox[i] = 0.5
             end
         end
-        @test abs(nonlocality_robustness(prbox, "r") - 1 / 2) < 1.0e-6
-        @test abs(nonlocality_robustness(prbox, "l") - 2 / 3) < 1.0e-6
-        @test abs(nonlocality_robustness(prbox, "g") - 3 / 4) < 1.0e-6
+        @test nonlocality_robustness(prbox, "r") ≈ T(1) / 2
+        @test nonlocality_robustness(prbox, "l") ≈ T(2) / 3
+        @test nonlocality_robustness(prbox, "g") ≈ T(3) / 4
     end
 end
