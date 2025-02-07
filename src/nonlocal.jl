@@ -503,6 +503,8 @@ Depending on the noise model chosen, the second argument can be
 `"r"` (random),
 `"l"` (local),
 `"g"` (generalized).
+
+Reference: Baek, Ryu, Lee, [arxiv:2311.07077](https://arxiv.org/abs/2311.07077)
 """
 function nonlocality_robustness(
     FP::Array{T,N2},
@@ -578,7 +580,6 @@ function nonlocality_robustness(
             end
         end
     end
-    display(local_model)
 
     if measure == "r"
         JuMP.@constraint(model, η * FP .+ (1 - η) * normalization / prod(outs) == local_model)
