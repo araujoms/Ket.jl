@@ -279,7 +279,7 @@ function orthonormal_range(
 ) where {T<:Number}
     mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
     if mode == -1
-        if (T <: Float64 || T <: ComplexF64) && SA.issparse(A)
+        if (T <: SA.CHOLMOD.VTypes) && SA.issparse(A)
             mode = 0
         elseif SA.issparse(A)
             A = Matrix(A)
