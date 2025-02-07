@@ -8,7 +8,7 @@ Ket is a toolbox for quantum information, nonlocality, and entanglement written 
 Highlights:
 
 * Work with multipartite Bell inequalities, computing their local bounds and Tsirelson bounds with `local_bound` and `tsirelson_bound`, and transforming between Collins-Gisin, probability, and correlator representations with `tensor_collinsgisin`, `tensor_probability`, and `tensor_correlation`.
-* Work with bipartite entanglement by computing the relative entropy of entanglement, random robustness, or Schmidt number via `entanglement_entropy`, `random_robustness`, and `schmidt_number`. Under the hood these functions use the DPS hierarchy, which is also available in isolation via `_dps_constraints!`.
+* Work with bipartite entanglement by computing the relative entropy of entanglement, entanglement robustness, or Schmidt number via `entanglement_entropy`, `entanglement_robustness`, and `schmidt_number`. Under the hood these functions use the DPS hierarchy, which is also available in isolation via `_dps_constraints!`.
 * Generate MUBs and SIC-POVMs through `mub` and `sic_povm`.
 * Generate uniformly-distributed random states, unitaries, and POVMs with `random_state`, `random_unitary`, and `random_povm`.
 * Generate well-known families of quantum states, such as the Bell states, the GHZ state, the W state, the Dicke states, and the super-singlet via `state_bell`, `state_ghz`, `state_w`, `state_dicke`, and `state_supersinglet`.

@@ -137,7 +137,7 @@ end
         verbose::Bool = false,
         solver = Hypatia.Optimizer{_solver_type(T)})
 
-Upper bound on the random robustness of `ρ` such that it has a Schmidt number `s`.
+Upper bound on the white noise robustness of `ρ` such that it has a Schmidt number `s`.
 
 If a state ``ρ`` with local dimensions ``d_A`` and ``d_B`` has Schmidt number ``s``, then there is
 a PSD matrix ``ω`` in the extended space ``AA'B'B``, where ``A'`` and ``B'`` have dimension ``s``,
@@ -161,7 +161,7 @@ function schmidt_number(
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     s ≥ 1 || throw(ArgumentError("Schmidt number must be ≥ 1"))
     if s == 1
-        return random_robustness(ρ, dims, n; ppt, verbose, solver)[1]
+        return entanglement_robustness(ρ, dims, n; ppt, verbose, solver)[1]
     end
 
     is_complex = (T <: Complex)
@@ -192,7 +192,7 @@ end
 export schmidt_number
 
 """
-    random_robustness(
+    entanglement_robustness(
     ρ::AbstractMatrix{T},
     dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
     n::Integer = 1;
@@ -202,7 +202,7 @@ export schmidt_number
 
 Lower bounds the random robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `ppt` indicates whether to include the partial transposition constraints.
 """
-function random_robustness(
+function entanglement_robustness(
     ρ::AbstractMatrix{T},
     dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
     n::Integer = 1;
@@ -234,7 +234,7 @@ function random_robustness(
         return "Something went wrong: $(JuMP.raw_status(model))"
     end
 end
-export random_robustness
+export entanglement_robustness
 
 """
     _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)

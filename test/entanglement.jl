@@ -24,7 +24,7 @@
     @testset "DPS hierarchy" begin
         for R ∈ (Float64, Double64), T ∈ (R, Complex{R})
             ρ = state_ghz(T, 2, 2)
-            s, W = random_robustness(ρ)
+            s, W = entanglement_robustness(ρ)
             @test eltype(W) == T
             @test s ≈ 0.5 atol = 1.0e-5 rtol = 1.0e-5
             @test dot(ρ, W) ≈ -s atol = 1.0e-5 rtol = 1.0e-5

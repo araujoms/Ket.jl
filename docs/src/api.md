@@ -42,7 +42,7 @@ conditional_entropy
 ```@docs
 schmidt_decomposition
 entanglement_entropy
-random_robustness
+entanglement_robustness
 schmidt_number
 ppt_mixture
 ```
