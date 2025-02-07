@@ -44,8 +44,9 @@ function incompatibility_robustness(
     end
 
     # constraints
-    lhs = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
-    rhs = zero(JuMP.GenericAffExpr{stT,JuMP.GenericVariableRef{stT}})
+    jumpT = typeof(real(X[1][1][1]))
+    lhs = zero(jumpT)
+    rhs = zero(jumpT)
     if measure ∈ ["d", "r", "p"]
         con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ cone)
         JuMP.add_to_expression!(lhs, 1)
