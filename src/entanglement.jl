@@ -196,31 +196,44 @@ export schmidt_number
     ρ::AbstractMatrix{T},
     dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
     n::Integer = 1;
+    noise::String = "white"
     ppt::Bool = true,
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)})
 
-Lower bounds the random robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `ppt` indicates whether to include the partial transposition constraints.
+Lower bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints.
 """
 function entanglement_robustness(
     ρ::AbstractMatrix{T},
     dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
     n::Integer = 1;
+    noise::String = "white",
     ppt::Bool = true,
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
-
+    @assert noise ∈ ["white", "separable", "general"]
     is_complex = (T <: Complex)
     wrapper = is_complex ? Hermitian : Symmetric
+    psd_cone = is_complex ? JuMP.PSDCone() : JuMP.HermitianPSDCone()
+    d = size(ρ, 1)
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
-    JuMP.@variable(model, λ)
-    noisy_state = wrapper(ρ + λ * I(size(ρ, 1)))
+    if noise == "white"
+        JuMP.@variable(model, λ)
+        noisy_state = wrapper(ρ + λ * I(d))
+        JuMP.@objective(model, Min, λ)
+    else
+        JuMP.@variable(model, σ[1:d, 1:d] ∈ psd_cone)
+        noisy_state = wrapper(ρ + σ)
+        JuMP.@objective(model, Min, tr(σ) / d)
+        if noise == "separable"
+            _dps_constraints!(model, σ, dims, n; witness = false, ppt, is_complex)
+        end
+    end
     _dps_constraints!(model, noisy_state, dims, n; ppt, is_complex)
-    JuMP.@objective(model, Min, λ)
 
     JuMP.set_optimizer(model, solver)
     #JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
@@ -248,6 +261,7 @@ function _dps_constraints!(
     ρ::AbstractMatrix,
     dims::AbstractVector{<:Integer},
     n::Integer;
+    witness::Bool = true,
     ppt::Bool = true,
     is_complex::Bool = true,
     isometry::AbstractMatrix = I(size(ρ, 1))
@@ -269,10 +283,14 @@ function _dps_constraints!(
         wrapper = Symmetric
     end
 
-    JuMP.@variable(model, symmetric_meat[1:d, 1:d] ∈ psd_cone)
+    symmetric_meat = JuMP.@variable(model, [1:d, 1:d] ∈ psd_cone)
     lifted = wrapper(V * symmetric_meat * V')
-    JuMP.@expression(model, reduced, partial_trace(lifted, 3:n+1, ext_dims))
-    JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
+    reduced = JuMP.@expression(model, partial_trace(lifted, 3:n+1, ext_dims))
+    if witness
+        JuMP.@constraint(model, witness_constraint, ρ == wrapper(isometry' * reduced * isometry))
+    else
+        JuMP.@constraint(model, ρ == wrapper(isometry' * reduced * isometry))
+    end
 
     if ppt
         for i ∈ 2:n+1
