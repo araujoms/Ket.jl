@@ -23,11 +23,26 @@
     end
     @testset "DPS hierarchy" begin
         for R ∈ (Float64, Double64), T ∈ (R, Complex{R})
+            # outer DPS:
             ρ = state_ghz(T, 2, 2)
             s, W = entanglement_robustness(ρ)
             @test eltype(W) == T
             @test s ≈ 0.5 atol = 1.0e-5 rtol = 1.0e-5
             @test dot(ρ, W) ≈ -s atol = 1.0e-5 rtol = 1.0e-5
+            # inner DPS:
+            s, W = entanglement_robustness(ρ, [2, 2], 2; ppt = false, inner = true)
+            @test eltype(W) == T
+            @test s ≈ 0.5 atol = 1.0e-5 rtol = 1.0e-5
+            @test dot(ρ, W) ≈ -s atol = 1.0e-5 rtol = 1.0e-5
+        end
+        for R ∈ (Float64, Float32, BigFloat, Double64)
+            # Legendre
+            @test Ket._jacobi_polynomial_zeros(R, 1, 0, 0) ≈ [0]
+            @test Ket._jacobi_polynomial_zeros(R, 2, 0, 0) ≈ [-1 / sqrt(3), 1 / sqrt(3)]
+            #Chebyshev
+            @test Ket._jacobi_polynomial_zeros(R, 1, -1/2, -1/2) ≈ [0]
+            @test Ket._jacobi_polynomial_zeros(R, 2, -1/2, -1/2) ≈ [-1 / sqrt(2), 1 / sqrt(2)]
+            @test Ket._jacobi_polynomial_zeros(R, 3, -1/2, -1/2) ≈ [-sqrt(3) / 2, 0, sqrt(3) / 2]
         end
         d = 3
         @test isapprox(schmidt_number(state_ghz(ComplexF64, d, 2), 2), 1 / 15, atol = 1.0e-3, rtol = 1.0e-3)
@@ -39,17 +54,6 @@
         )
         Random.seed!(1337)
         @test schmidt_number(random_state(Float64, 6), 2, [2, 3], 1; solver = SCS.Optimizer) ≤ 0
-    end
-    @testset "Inner DPS hierarchy" begin
-        for R ∈ (Float64, Float32, BigFloat, Double64)
-            # Legendre
-            @test Ket._jacobi_polynomial_zeros(R, 1, 0, 0) ≈ [0]
-            @test Ket._jacobi_polynomial_zeros(R, 2, 0, 0) ≈ [-1 / sqrt(3), 1 / sqrt(3)]
-            #Chebyshev
-            @test Ket._jacobi_polynomial_zeros(R, 1, -1/2, -1/2) ≈ [0]
-            @test Ket._jacobi_polynomial_zeros(R, 2, -1/2, -1/2) ≈ [-1 / sqrt(2), 1 / sqrt(2)]
-            @test Ket._jacobi_polynomial_zeros(R, 3, -1/2, -1/2) ≈ [-sqrt(3) / 2, 0, sqrt(3) / 2]
-        end
     end
     @testset "GME entanglement" begin
         for R ∈ (Float64, Double64)

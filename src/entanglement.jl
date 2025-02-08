@@ -198,10 +198,13 @@ export schmidt_number
     n::Integer = 1;
     noise::String = "white"
     ppt::Bool = true,
+    inner::Bool = false,
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)})
 
-Lower bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy. Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints.
+Lower (or upper) bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy (or inner DPS, when `inner = true`). Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints.
+
+Returns the robustness and a witness W (note that for `inner = true`, this might not be a valid entanglement witness).
 """
 function entanglement_robustness(
     ρ::AbstractMatrix{T},
@@ -209,31 +212,33 @@ function entanglement_robustness(
     n::Integer = 1;
     noise::String = "white",
     ppt::Bool = true,
+    inner::Bool = false,
     verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
     @assert noise ∈ ["white", "separable", "general"]
+
     is_complex = (T <: Complex)
-    wrapper = is_complex ? Hermitian : Symmetric
-    psd_cone = is_complex ? JuMP.PSDCone() : JuMP.HermitianPSDCone()
+    psd_cone, wrapper = _cone_and_wrapper(is_complex)
+    _sep! = inner ? _inner_dps_constraints! : _dps_constraints!
     d = size(ρ, 1)
 
     model = JuMP.GenericModel{_solver_type(T)}()
 
     if noise == "white"
         JuMP.@variable(model, λ)
-        noisy_state = wrapper(ρ + λ * I(d))
+        noisy_state = wrapper(ρ + λ * I(d))   
         JuMP.@objective(model, Min, λ)
     else
         JuMP.@variable(model, σ[1:d, 1:d] ∈ psd_cone)
         noisy_state = wrapper(ρ + σ)
         JuMP.@objective(model, Min, tr(σ) / d)
         if noise == "separable"
-            _dps_constraints!(model, σ, dims, n; ppt, is_complex)
+            _sep!(model, σ, dims, n; ppt, is_complex)
         end
     end
-    _dps_constraints!(model, noisy_state, dims, n; witness = true, ppt, is_complex)
+    _sep!(model, noisy_state, dims, n; witness = true, ppt, is_complex)
 
     JuMP.set_optimizer(model, solver)
     #JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
@@ -250,11 +255,12 @@ end
 export entanglement_robustness
 
 """
-    _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true)
+    _dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true, isometry::AbstractMatrix = I(size(ρ, 1)))
 
 Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the DPS constraints of level `n`.
+Dimensions are specified in `dims = [dA, dB]` and the extensions will be done on the second subsystem.
 The extensions can be symmetric real matrices (`is_complex = false`) or Hermitian PSD.
-With `ppt = true`, the extended part is constrained to be PPT for every bipartition.
+With `ppt = true`, PPT constraints are enforced for transposed subsystems 2:i, for i ∈ 2:n+1.
 Use `isometry` to specify a ``V`` to be applied in the constraint ``ρ == V' * tr_{B_2 ... B_n}(Ξ) V``.
 
 Reference: Doherty, Parrilo, Spedalieri, [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
@@ -278,14 +284,7 @@ function _dps_constraints!(
     # Dimension of the extension space w/ bosonic symmetries: A dim. + `n` copies of B
     d = dA * binomial(n + dB - 1, n)
     V = kron(I(dA), symmetric_isometry(T, dB, n)) # Bosonic subspace isometry
-
-    if is_complex
-        psd_cone = JuMP.HermitianPSDCone()
-        wrapper = Hermitian
-    else
-        psd_cone = JuMP.PSDCone()
-        wrapper = Symmetric
-    end
+    psd_cone, wrapper = _cone_and_wrapper(is_complex)
 
     if schmidt
         JuMP.@variable(model, symmetric_meat[1:d, 1:d] ∈ psd_cone)
@@ -307,6 +306,92 @@ function _dps_constraints!(
     end
 end
 
+"""
+    _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
+
+Zeros of the Jacobi polynomials.
+"""
+function _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
+    N > 0 || throw(ArgumentError("Polynomial degree must be non-negative."))
+    α > -1 && β > -1 || throw(ArgumentError("Parameters must be greater than -1."))
+
+    a = Vector{T}(undef, N)
+    b = Vector{T}(undef, N - 1)
+    α = T(α)
+    β = T(β)
+
+    a[1] = (β - α) / (α + β + 2)
+    for i ∈ 2:N
+        a[i] = (β^2 - α^2) / ((2 * (i - 1) + α + β) * (2 * (i - 1) + α + β + 2))
+    end
+
+    if N > 1
+        b[1] = (2 / (2 + α + β)) * sqrt((α + 1) * (β + 1) / (2 + α + β + 1))
+        for i ∈ 2:N-1
+            b[i] = sqrt((4i * (i + α) * (i + β) * (i + α + β)) / ((2i + α + β)^2 * (2i + α + β + 1) * (2i + α + β - 1)))
+        end
+    end
+
+   return eigvals!(SymTridiagonal(a, b))
+end
+
+function _cone_and_wrapper(is_complex::Bool)
+    if is_complex
+        return JuMP.HermitianPSDCone(), Hermitian
+    end
+    return JuMP.PSDCone(), Symmetric
+end
+
+"""
+    _inner_dps_constraints!(model::JuMP.GenericModel, ρ::AbstractMatrix, dims::AbstractVector{<:Integer}, n::Integer; ppt::Bool = true, is_complex::Bool = true, isometry::AbstractMatrix = I(size(ρ, 1)))
+
+Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the Inner DPS constraints of level `n`.
+Dimensions are specified in `dims = [dA, dB]` and the extensions will be done on the second subsystem.
+The extensions can be symmetric real matrices (`is_complex = false`) or Hermitian PSD.
+With `ppt = true`, the extended part is constrained to be PPT for the [1:⌈n/2⌉+1, rest] partition.
+
+References: Navascués, Owari, Plenio [arXiv:0906.2735](https://arxiv.org/abs/0906.2735) and [arXiv:0906.2731](https://arxiv.org/abs/0906.2731)
+"""
+function _inner_dps_constraints!(
+    model::JuMP.GenericModel{T},
+    ρ::AbstractMatrix,
+    dims::AbstractVector{<:Integer},
+    n::Integer;
+    witness::Bool = false,
+    ppt::Bool = true,
+    is_complex::Bool = true,
+    kwargs...
+) where {T}
+    ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
+
+    dA, dB = dims
+    ext_dims = [dA; repeat([dB], n)]
+
+    d = dA * binomial(n + dB - 1, n)
+    V = kron(I(dA), symmetric_isometry(T, dB, n))
+    psd_cone, wrapper = _cone_and_wrapper(is_complex)
+
+    Ξ = JuMP.@variable(model, [1:d, 1:d] ∈ psd_cone)
+    # lifted = JuMP.@expression(model, wrapper(V * Ξ * V'))
+    lifted = wrapper(V * Ξ * V')
+    σ = JuMP.@expression(model, wrapper(partial_trace(lifted, 3:n+1, ext_dims)))
+
+    ϵ = n / (n + dB)
+    # the inner dps with ppt seems to perform rather poorly...
+    if ppt
+        jm = minimum(1 .- Ket._jacobi_polynomial_zeros(T, Int(floor(n / 2) + 1), dB - 2, n % 2))
+        ϵ = 1 - jm * dB / (2 * (dB - 1))
+        # the transposed bipartition here matters, see refs.
+        JuMP.@constraint(model, partial_transpose(lifted, 1:(ceil(Int, n / 2) + 1), ext_dims) ∈ psd_cone)
+    end
+    # if σ is a state in DPS_n then this is separable:
+    if witness
+        JuMP.@constraint(model, witness_constraint, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / dB)))
+    else
+        JuMP.@constraint(model, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / dB)))
+    end
+end
+
 function _fully_decomposable_witness_constraints!(model, dims, W)
     nparties = length(dims)
     biparts = Combinatorics.partitions(1:nparties, 2)
@@ -324,7 +409,7 @@ function _fully_decomposable_witness_constraints!(model, dims, W)
     end
 end
 
-function _min_dotprod!(model, ρ, W, solver, verbose)
+function _minimize_dotprod!(model, ρ, W, solver, verbose)
     JuMP.@variable(model, λ)
     JuMP.@constraint(model, real(dot(ρ, W)) ≤ λ)
     JuMP.@objective(model, Min, λ)
@@ -362,7 +447,7 @@ function ppt_mixture(
     JuMP.@variable(model, W[1:dim, 1:dim], Hermitian)
 
     _fully_decomposable_witness_constraints!(model, dims, W)
-    _min_dotprod!(model, ρ, W, solver, verbose)
+    _minimize_dotprod!(model, ρ, W, solver, verbose)
 
     if JuMP.is_solved_and_feasible(model)
         JuMP.objective_value(model) ≤ 0 ? W = JuMP.value.(W) : W = zeros(T, size(W))
@@ -411,7 +496,7 @@ function ppt_mixture(
     W = sum(w_coeffs[i] * obs[i] for i ∈ eachindex(w_coeffs))
 
     _fully_decomposable_witness_constraints!(model, dims, W)
-    _min_dotprod!(model, ρ, W, solver, verbose)
+    _minimize_dotprod!(model, ρ, W, solver, verbose)
 
     if JuMP.is_solved_and_feasible(model)
         JuMP.objective_value(model) ≤ 0 ? w_coeffs = JuMP.value.(w_coeffs) : w_coeffs = zeros(T, size(w_coeffs))
@@ -421,32 +506,3 @@ function ppt_mixture(
     end
 end
 export ppt_mixture
-
-"""
-    _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
-
-Zeros of the Jacobi polynomials.
-"""
-function _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
-    @assert N > 0 "Polynomial degree must be non-negative."
-    @assert α > -1 && β > -1 "Parameters must be greater than -1."
-
-    a = Vector{T}(undef, N)
-    b = Vector{T}(undef, N - 1)
-    α = T(α)
-    β = T(β)
-
-    a[1] = (β - α) / (α + β + 2)
-    for i ∈ 2:N
-        a[i] = (β^2 - α^2) / ((2 * (i - 1) + α + β) * (2 * (i - 1) + α + β + 2))
-    end
-
-    if N > 1
-        b[1] = (2 / (2 + α + β)) * sqrt((α + 1) * (β + 1) / (2 + α + β + 1))
-        for i ∈ 2:N-1
-            b[i] = sqrt((4i * (i + α) * (i + β) * (i + α + β)) / ((2i + α + β)^2 * (2i + α + β + 1) * (2i + α + β - 1)))
-        end
-    end
-
-   return eigvals!(SymTridiagonal(a, b))
-end

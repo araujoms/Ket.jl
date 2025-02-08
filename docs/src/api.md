@@ -143,6 +143,7 @@ choi
 
 ```@docs
 Ket._dps_constraints!
+Ket._inner_dps_constraints!
 Ket._partition
 Ket._fiducial_WH
 ```
