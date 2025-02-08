@@ -176,7 +176,7 @@ function schmidt_number(
     noisy_state = wrapper(ρ + λ * I(size(ρ, 1)))
     JuMP.@objective(model, Min, λ)
 
-    _dps_constraints!(model, noisy_state, lifted_dims, n; ppt, is_complex, isometry = V)
+    _dps_constraints!(model, noisy_state, lifted_dims, n; schmidt = true, ppt, is_complex, isometry = V)
     JuMP.@constraint(model, tr(model[:symmetric_meat]) == s * (tr(ρ) + λ * size(ρ, 1)))
 
     JuMP.set_optimizer(model, solver)
@@ -230,10 +230,10 @@ function entanglement_robustness(
         noisy_state = wrapper(ρ + σ)
         JuMP.@objective(model, Min, tr(σ) / d)
         if noise == "separable"
-            _dps_constraints!(model, σ, dims, n; witness = false, ppt, is_complex)
+            _dps_constraints!(model, σ, dims, n; ppt, is_complex)
         end
     end
-    _dps_constraints!(model, noisy_state, dims, n; ppt, is_complex)
+    _dps_constraints!(model, noisy_state, dims, n; witness = true, ppt, is_complex)
 
     JuMP.set_optimizer(model, solver)
     #JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
@@ -261,7 +261,8 @@ function _dps_constraints!(
     ρ::AbstractMatrix,
     dims::AbstractVector{<:Integer},
     n::Integer;
-    witness::Bool = true,
+    witness::Bool = false,
+    schmidt::Bool = false,
     ppt::Bool = true,
     is_complex::Bool = true,
     isometry::AbstractMatrix = I(size(ρ, 1))
@@ -283,7 +284,11 @@ function _dps_constraints!(
         wrapper = Symmetric
     end
 
-    symmetric_meat = JuMP.@variable(model, [1:d, 1:d] ∈ psd_cone)
+    if schmidt
+        JuMP.@variable(model, symmetric_meat[1:d, 1:d] ∈ psd_cone)
+    else
+        symmetric_meat = JuMP.@variable(model, [1:d, 1:d] ∈ psd_cone)
+    end
     lifted = wrapper(V * symmetric_meat * V')
     reduced = JuMP.@expression(model, partial_trace(lifted, 3:n+1, ext_dims))
     if witness
