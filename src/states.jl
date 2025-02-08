@@ -205,6 +205,7 @@ Produces the ket of the `N`-partite Dicke state with `k` excitations.
 Reference: Robert H. Dicke [doi:10.1103/PhysRev.93.99](https://doi.org/10.1103/PhysRev.93.99)
 """
 function state_dicke_ket(::Type{T}, k::Integer, N::Integer; coeff = inv(_sqrt(T, binomial(N, k)))) where {T<:Number}
+    N > 0 && 0 ≤ k ≤ N || throw(ArgumentError("Invalid number of excitations"))
     psi = zeros(T, 2^N)
     ind = zeros(Int8, N)
     @inbounds for i in eachindex(psi)
