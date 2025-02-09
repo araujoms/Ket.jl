@@ -19,13 +19,58 @@ For the full list of functions see the [documentation](https://dev-ket.github.io
 
 ## Installation
 
-Ket is a registered Julia package, so it can be installed by typing
+To use Ket, you must first install Julia by following the instruction in the [official Julia page](https://julialang.org/downloads/).
 
+Ket is a registered Julia package, so it can be installed by typing the following command in the Julia REPL:
 ```
 ]add Ket
 ```
+This will install the latest released version. For the development version with the latest updates, use `]add Ket#master` instead.
 
-into the Julia REPL.
+## Usage
+
+After Ket is installed, you can type
+```
+using Ket
+```
+in your REPL.
+You will then be able to call any function from the [list of functions](https://dev-ket.github.io/Ket.jl/dev/api/) and to interactively run the examples found in the documentation.
+
+The easiest way to learn how to use a function is by consulting the list of functions or typing `?` followed by the name of the function in the REPL.
+You will then be able to see the expected inputs and optional parameters.
+For example, by entering `?schmidt_decomposition` you will get:
+```
+  schmidt_decomposition(ψ::AbstractVector, dims::AbstractVector{<:Integer} = _equal_sizes(ψ))
+
+  Produces the Schmidt decomposition of ψ with subsystem dimensions dims. If the argument dims is omitted
+  equally-sized subsystems are assumed. Returns the (sorted) Schmidt coefficients λ and isometries U, V such that
+  kron(U', V')*ψ is of Schmidt form.
+
+  Reference: Schmidt decomposition (https://en.wikipedia.org/wiki/Schmidt_decomposition)
+```
+which is pretty self-explanatory.
+
+There are two other types of arguments which are useful to know. Some functions start with a *type* argument, for example:
+```
+ket([T=ComplexF64,] i::Integer, d::Integer = 2)
+```
+This first argument (in square brackets) defines the return type, and it can be used to control the precision of the computations. If you do not know what this is, you can just ignore it, and a sensible default value will be used.
+
+Lastly, some functions have keyword parameters, which are listed after a `;`, for instance:
+```
+entanglement_robustness(
+ρ::AbstractMatrix{T},
+dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+n::Integer = 1;
+noise::String = "white"
+ppt::Bool = true,
+inner::Bool = false,
+verbose::Bool = false,
+solver = Hypatia.Optimizer{_solver_type(T)})
+```
+These must be set by their names, so for example `entanglement_robustness(ρ; noise = "separable")` is a valid call for any matrix ρ.
+
+If all of this sounds like Greek to you, we recommend you to check out some [basic Julia tutorials](https://julialang.org/learning/) and come back afterwards.
 
 ## Related libraries
 
