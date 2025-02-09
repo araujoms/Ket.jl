@@ -1,5 +1,6 @@
 using Ket
 using Documenter
+using Literate
 
 DocMeta.setdocmeta!(Ket, :DocTestSetup, :(using Ket); recursive = true)
 
@@ -23,6 +24,17 @@ open(joinpath(generated_path, "index.md"), "w") do io
     end
 end
 
+# Compile examples in `docs/src/examples` with Literate:
+examples_dir = joinpath(@__DIR__, "src", "examples")
+examples = filter(x -> endswith(x, ".jl"), readdir(examples_dir))
+generated_examples = []
+for example in examples
+    example_path = joinpath(examples_dir, example)
+    literate_output = Literate.markdown(example_path, examples_dir)
+    push!(generated_examples, "examples/$(splitext(example)[1]).md")
+end
+
+# Generate menu and pages:
 makedocs(;
     modules = [Ket],
     authors = "Mateus Araújo et al.",
@@ -35,7 +47,11 @@ makedocs(;
         assets = String[],
         sidebar_sitename = false
     ),
-    pages = ["Home" => "index.md", "List of functions" => "api.md"],
+    pages = [
+        "Home" => "index.md",
+        "List of functions" => "api.md",
+        "Examples" => generated_examples,
+    ],
     checkdocs = :exports
 )
 
