@@ -64,6 +64,26 @@ function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integ
 end
 export seesaw
 
+"""
+    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer, n_trials::Integer)
+
+Select the best out of `n_trials` runs of `seesaw`.
+"""
+function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer, n_trials::Integer) where {T<:Real}
+    v0, ψ0, A0, B0 = seesaw(CG, scenario, d)
+    for _ in 2:n_trials
+        v, ψ, A, B = seesaw(CG, scenario, d) # could be made faster with a seesaw! implementation
+        if v > v0
+            v0 = v
+            ψ0 .= ψ
+            A0 .= A
+            B0 .= B
+        end
+    end
+    return v0, ψ0, A0, B0
+end
+export seesaw
+
 function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
     oa, ob, ia, ib = scenario
     d = size(B[1][1], 1)
