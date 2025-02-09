@@ -50,13 +50,11 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
     is_complex = (T <: Complex)
     Rs = _solver_type(T)
     Ts = is_complex ? Complex{Rs} : Rs
+    psd_cone, wrapper, hermitian_space = _sdp_parameters(is_complex)
+
     model = JuMP.GenericModel{Rs}()
 
-    if is_complex
-        JuMP.@variable(model, σ[1:d, 1:d], Hermitian)
-    else
-        JuMP.@variable(model, σ[1:d, 1:d], Symmetric)
-    end
+    JuMP.@variable(model, σ[1:d, 1:d], hermitian_space)
     _dps_constraints!(model, σ, dims, n; is_complex)
     JuMP.@constraint(model, tr(σ) == 1)
 
@@ -70,7 +68,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
     JuMP.set_optimizer(model, Hypatia.Optimizer{Rs})
     JuMP.set_silent(model)
     JuMP.optimize!(model)
-    return JuMP.objective_value(model), Hermitian(JuMP.value.(σ))
+    return JuMP.objective_value(model), wrapper(JuMP.value.(σ))
 end
 
 """
@@ -122,8 +120,8 @@ function _test_entanglement_entropy_qubit(h, ρ, σ)
     G = Hermitian(G)
     x = real(pinv(vec(G)) * vec(σ - ρ))
     ρ2 = σ - x * G
-    ρ_matches = isapprox(ρ2, ρ; rtol = sqrt(Base.rtoldefault(R)))
-    h_matches = isapprox(h, relative_entropy(ρ2, σ); rtol = sqrt(Base.rtoldefault(R)))
+    ρ_matches = isapprox(ρ2, ρ; rtol = sqrt(_rtol(R)))
+    h_matches = isapprox(h, relative_entropy(ρ2, σ); rtol = sqrt(_rtol(R)))
     return ρ_matches && h_matches
 end
 
@@ -220,7 +218,7 @@ function entanglement_robustness(
     @assert noise ∈ ["white", "separable", "general"]
 
     is_complex = (T <: Complex)
-    psd_cone, wrapper = _cone_and_wrapper(is_complex)
+    psd_cone, wrapper, = _sdp_parameters(is_complex)
     _sep! = inner ? _inner_dps_constraints! : _dps_constraints!
     d = size(ρ, 1)
 
@@ -228,12 +226,12 @@ function entanglement_robustness(
 
     if noise == "white"
         JuMP.@variable(model, λ)
-        noisy_state = wrapper(ρ + λ * I(d))   
+        noisy_state = wrapper(ρ + λ * I(d))
         JuMP.@objective(model, Min, λ)
     else
         JuMP.@variable(model, σ[1:d, 1:d] ∈ psd_cone)
         noisy_state = wrapper(ρ + σ)
-        JuMP.@objective(model, Min, real(tr(σ)) / d)
+        JuMP.@objective(model, Min, tr(σ) / d)
         if noise == "separable"
             _sep!(model, σ, dims, n; ppt, is_complex)
         end
@@ -284,7 +282,7 @@ function _dps_constraints!(
     # Dimension of the extension space w/ bosonic symmetries: A dim. + `n` copies of B
     d = dA * binomial(n + dB - 1, n)
     V = kron(I(dA), symmetric_isometry(T, dB, n)) # Bosonic subspace isometry
-    psd_cone, wrapper = _cone_and_wrapper(is_complex)
+    psd_cone, wrapper, = _sdp_parameters(is_complex)
 
     if schmidt
         JuMP.@variable(model, symmetric_meat[1:d, 1:d] ∈ psd_cone)
@@ -332,11 +330,15 @@ function _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
         end
     end
 
-   return eigvals!(SymTridiagonal(a, b))
+    return eigvals!(SymTridiagonal(a, b))
 end
 
-function _cone_and_wrapper(is_complex::Bool)
-    is_complex ? (JuMP.HermitianPSDCone(), Hermitian) : (JuMP.PSDCone(), Symmetric)
+function _sdp_parameters(is_complex::Bool)
+    if is_complex
+        return JuMP.HermitianPSDCone(), Hermitian, JuMP.HermitianMatrixSpace()
+    else
+        return JuMP.PSDCone(), Symmetric, JuMP.SymmetricMatrixSpace()
+    end
 end
 
 """
@@ -366,7 +368,7 @@ function _inner_dps_constraints!(
 
     d = dA * binomial(n + dB - 1, n)
     V = kron(I(dA), symmetric_isometry(T, dB, n))
-    psd_cone, wrapper = _cone_and_wrapper(is_complex)
+    psd_cone, wrapper, = _sdp_parameters(is_complex)
 
     Ξ = JuMP.@variable(model, [1:d, 1:d] ∈ psd_cone)
     # lifted = JuMP.@expression(model, wrapper(V * Ξ * V'))
@@ -379,11 +381,15 @@ function _inner_dps_constraints!(
         jm = minimum(1 .- Ket._jacobi_polynomial_zeros(T, n ÷ 2 + 1, dB - 2, n % 2))
         ϵ = 1 - jm * dB / (2 * (dB - 1))
         # the transposed bipartition here matters, see refs.
-        JuMP.@constraint(model, partial_transpose(lifted, 1:(ceil(Int, n / 2) + 1), ext_dims) ∈ psd_cone)
+        JuMP.@constraint(model, partial_transpose(lifted, 1:(ceil(Int, n / 2)+1), ext_dims) ∈ psd_cone)
     end
     # if σ is a state in DPS_n then this is separable:
     if witness
-        JuMP.@constraint(model, witness_constraint, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / T(dB))))
+        JuMP.@constraint(
+            model,
+            witness_constraint,
+            ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / T(dB)))
+        )
     else
         JuMP.@constraint(model, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / T(dB))))
     end

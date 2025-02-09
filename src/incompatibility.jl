@@ -23,37 +23,30 @@ function incompatibility_robustness(
     @assert measure ∈ ["d", "r", "p", "jm", "g"]
     d, o, m = _measurements_parameters(A)
     is_complex = T <: Complex
-    cone = is_complex ? JuMP.HermitianPSDCone() : JuMP.PSDCone()
+    psd_cone, wrapper, hermitian_space = _sdp_parameters(is_complex)
     stT = _solver_type(T)
     model = JuMP.GenericModel{stT}()
 
     # variables
-    if is_complex
-        X = [[JuMP.@variable(model, [1:d, 1:d], Hermitian) for a ∈ 1:o[x]] for x ∈ 1:m]
-        if measure ∈ ["jm", "g"]
-            N = JuMP.@variable(model, [1:d, 1:d], Hermitian)
-        end
-    else
-        X = [[JuMP.@variable(model, [1:d, 1:d], Symmetric) for a ∈ 1:o[x]] for x ∈ 1:m]
-        if measure ∈ ["jm", "g"]
-            N = JuMP.@variable(model, [1:d, 1:d], Symmetric)
-        end
+    X = [[JuMP.@variable(model, [1:d, 1:d] ∈ hermitian_space) for a ∈ 1:o[x]] for x ∈ 1:m]
+    if measure ∈ ["jm", "g"]
+        N = JuMP.@variable(model, [1:d, 1:d] ∈ hermitian_space)
     end
     if measure == "p"
         ξ = JuMP.@variable(model, [1:m])
     end
 
     # constraints
-    jumpT = typeof(real(X[1][1][1]))
+    jumpT = typeof(real(1 * X[1][1][1]))
     lhs = zero(jumpT)
     rhs = zero(jumpT)
     if measure ∈ ["d", "r", "p"]
-        con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ cone)
+        con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
         JuMP.add_to_expression!(lhs, 1)
     else
-        con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], N - sum(X[x][j.I[x]] for x ∈ 1:m) ∈ cone)
+        con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], N - sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
         if measure == "jm"
-            JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ cone)
+            JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
         end
         JuMP.add_to_expression!(rhs, 1)
     end
@@ -67,7 +60,7 @@ function incompatibility_robustness(
             elseif measure == "p"
                 JuMP.@constraint(model, ξ[x] ≥ real(tr(X[x][a])))
             elseif measure == "g"
-                JuMP.@constraint(model, X[x][a] ∈ cone)
+                JuMP.@constraint(model, X[x][a] ∈ psd_cone)
             end
         end
         if measure == "p"

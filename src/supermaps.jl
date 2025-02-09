@@ -33,21 +33,14 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypat
     ishermitian(J) || throw(ArgumentError("Supermap needs to be Hermitian"))
 
     is_complex = (T <: Complex)
+    psd_cone, wrapper, hermitian_space = _sdp_parameters(is_complex)
     din, dout = dims
     model = JuMP.GenericModel{_solver_type(T)}()
-    if is_complex
-        JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Hermitian)
-        JuMP.@variable(model, σ[1:din, 1:din], Hermitian)
-        bigσ = Hermitian(kron(σ, I(dout)))
-        JuMP.@constraint(model, bigσ - Y ∈ JuMP.HermitianPSDCone())
-        JuMP.@constraint(model, bigσ + Y ∈ JuMP.HermitianPSDCone())
-    else
-        JuMP.@variable(model, Y[1:din*dout, 1:din*dout], Symmetric)
-        JuMP.@variable(model, σ[1:din, 1:din], Symmetric)
-        bigσ = Symmetric(kron(σ, I(dout)))
-        JuMP.@constraint(model, bigσ - Y ∈ JuMP.PSDCone())
-        JuMP.@constraint(model, bigσ + Y ∈ JuMP.PSDCone())
-    end
+    JuMP.@variable(model, Y[1:din*dout, 1:din*dout] ∈ hermitian_space)
+    JuMP.@variable(model, σ[1:din, 1:din] ∈ hermitian_space)
+    bigσ = wrapper(kron(σ, I(dout)))
+    JuMP.@constraint(model, bigσ - Y ∈ psd_cone)
+    JuMP.@constraint(model, bigσ + Y ∈ psd_cone)
 
     JuMP.@constraint(model, tr(σ) == 1)
     JuMP.@objective(model, Max, real(dot(J, Y)))
