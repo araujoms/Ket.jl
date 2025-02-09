@@ -266,29 +266,21 @@ function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,
 end
 
 """
-    orthonormal_range(A::AbstractMatrix{T}; mode::Integer=-1, tol::T=nothing) where {T<:Number}
+    orthonormal_range(A::AbstractMatrix{T}; tol::T=nothing) where {T<:Number}
 
-Orthonormal basis for the range of `A`. When `A` is sparse and `T` is `Float64` or `ComplexF64` (or `mode = 0`), uses a QR factorization and returns a sparse result,
-otherwise uses an SVD and returns a dense matrix (`mode = 1`).
+Orthonormal basis for the range of `A`. When `A` is sparse and `T` ∈ [`Float64`, `ComplexF64`, `Float32`, `ComplexF32`], uses a QR factorization and returns a sparse result,
+otherwise uses an SVD and returns a dense matrix.
 Tolerance `tol` is used to compute the rank and is automatically set if not provided.
 """
 function orthonormal_range(
     A::SA.AbstractMatrix{T};
-    mode::Integer = -1,
     tol::Union{Real,Nothing} = nothing
 ) where {T<:Number}
-    mode == 1 && SA.issparse(A) && throw(ArgumentError("SVD does not work with sparse matrices, use a dense matrix."))
-    if mode == -1
         if (T <: SA.CHOLMOD.VTypes) && SA.issparse(A)
-            mode = 0
-        elseif SA.issparse(A)
-            A = Matrix(A)
-            mode = 1
+            return _orthonormal_range_qr(A; tol)
         else
-            mode = 1
+            return _orthonormal_range_svd(Matrix(A); tol)
         end
-    end
-    return (mode == 0 ? _orthonormal_range_qr(A; tol) : _orthonormal_range_svd(A; tol))
 end
 export orthonormal_range
 
@@ -353,7 +345,6 @@ function n_body_basis(
     n ≤ n_parties || throw(ArgumentError("Number of parties cannot be larger than n."))
 
     sb = [sb; [eye]]
-    display(sb)
     nb = length(sb) - 1
     idx_eye = length(sb)
     basis = (

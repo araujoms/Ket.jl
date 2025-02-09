@@ -336,10 +336,7 @@ function _jacobi_polynomial_zeros(T::Type, N::Integer, α::Real, β::Real)
 end
 
 function _cone_and_wrapper(is_complex::Bool)
-    if is_complex
-        return JuMP.HermitianPSDCone(), Hermitian
-    end
-    return JuMP.PSDCone(), Symmetric
+    is_complex ? (JuMP.HermitianPSDCone(), Hermitian) : (JuMP.PSDCone(), Symmetric)
 end
 
 """
@@ -376,19 +373,19 @@ function _inner_dps_constraints!(
     lifted = wrapper(V * Ξ * V')
     σ = JuMP.@expression(model, wrapper(partial_trace(lifted, 3:n+1, ext_dims)))
 
-    ϵ = n / (n + dB)
+    ϵ = T(n) / (n + dB)
     # the inner dps with ppt seems to perform rather poorly...
     if ppt
-        jm = minimum(1 .- Ket._jacobi_polynomial_zeros(T, Int(floor(n / 2) + 1), dB - 2, n % 2))
+        jm = minimum(1 .- Ket._jacobi_polynomial_zeros(T, n ÷ 2 + 1, dB - 2, n % 2))
         ϵ = 1 - jm * dB / (2 * (dB - 1))
         # the transposed bipartition here matters, see refs.
         JuMP.@constraint(model, partial_transpose(lifted, 1:(ceil(Int, n / 2) + 1), ext_dims) ∈ psd_cone)
     end
     # if σ is a state in DPS_n then this is separable:
     if witness
-        JuMP.@constraint(model, witness_constraint, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / dB)))
+        JuMP.@constraint(model, witness_constraint, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / T(dB))))
     else
-        JuMP.@constraint(model, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / dB)))
+        JuMP.@constraint(model, ρ == (ϵ * σ + (1 - ϵ) * kron(partial_trace(σ, 2, dims), I(dB) / T(dB))))
     end
 end
 

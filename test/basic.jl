@@ -89,11 +89,12 @@
                 d1 = rand(5:20)
                 d2 = rand(5:20)
                 a = rand(T, d1, d2)
-                s = orthonormal_range(a; mode = 1)
+                s = orthonormal_range(a)
                 @test size(s, 2) == rank(a)
                 @test rank(hcat(s, a)) == size(s, 2)
                 if T == Float64 || T == ComplexF64
-                    q = orthonormal_range(SparseArrays.sparse(a); mode = 0)
+                    q = orthonormal_range(SparseArrays.sparse(a))
+                    @test issparse(q)
                     @test size(s, 2) == size(q, 2)
                     @test rank(hcat(q, a)) == size(q, 2)
                 end
