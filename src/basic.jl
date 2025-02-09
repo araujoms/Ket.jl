@@ -262,7 +262,7 @@ function _orthonormal_range_qr(A::SA.AbstractSparseMatrix{T,M}; tol::Union{Real,
     dec = qr(A)
     tol = isnothing(tol) ? maximum(abs.(dec.R)) * _eps(T) : tol
     rank = sum(abs.(Diagonal(dec.R)) .> tol)
-    return SA.sparse(@view dec.Q[dec.rpivinv, 1:rank])
+    return @view SA.sparse(dec.Q)[dec.rpivinv, 1:rank]
 end
 
 """
