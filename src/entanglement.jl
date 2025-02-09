@@ -233,7 +233,7 @@ function entanglement_robustness(
     else
         JuMP.@variable(model, σ[1:d, 1:d] ∈ psd_cone)
         noisy_state = wrapper(ρ + σ)
-        JuMP.@objective(model, Min, tr(σ) / d)
+        JuMP.@objective(model, Min, real(tr(σ)) / d)
         if noise == "separable"
             _sep!(model, σ, dims, n; ppt, is_complex)
         end
