@@ -54,7 +54,7 @@ function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVector = _equ
 
     model = JuMP.GenericModel{Rs}()
 
-    JuMP.@variable(model, σ[1:d, 1:d], hermitian_space)
+    JuMP.@variable(model, σ[1:d, 1:d] ∈ hermitian_space)
     _dps_constraints!(model, σ, dims, n; is_complex)
     JuMP.@constraint(model, tr(σ) == 1)
 
