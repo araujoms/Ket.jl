@@ -25,10 +25,12 @@ Ket can be installed by running the following command in the Julia REPL:
 ```
 
 The `]` key opens Julia's built-in package manager, and the `add` command installs the package. Any officially registered package can be installed in the same way.
+=#
 
-!!! tip
-  Since Ket is in fast development, you might want to install the latest version by running `] add Ket#master` instead.
+# !!! tip
+#     Since Ket is in fast development, you might want to install the latest version by running `] add Ket#master` instead.
 
+#=
 After the installation is complete, you can check that Ket is working by running the following command in the REPL:
 =#
 
@@ -48,7 +50,10 @@ It is designed to be self-contained and to provide examples for each function.
 Inside the REPL, you can also type `?` followed by the name of the function to get a brief description of its usage, or use the function `@doc`, for example:
 =#
 
-@doc schmidt_decomposition
+# ```julia
+# @doc schmidt_decomposition
+# ```
+print(@doc schmidt_decomposition) #hide
 
 #=
 Beginners can be daunted by the first line in the function definitions, such as above, but they are only specifying the possible input arguments in terms of the types of variables.
@@ -60,7 +65,10 @@ In `schmidt_number`, the input `ψ::AbstractVector` can be any vector, while `di
 Some other functions accept an optional argument to specify the return type. For example:
 =#
 
-@doc ket
+# ```julia
+# @doc ket
+# ```
+print(@doc ket) #hide
 
 #=
 Here, the first argument `[T=ComplexF64,]` specifies that the return type of the function can be controlled by the user, and the default is `ComplexF64`.
@@ -71,7 +79,10 @@ Finally, some functions also have *keyword* arguments.
 They are specified after a `;` in the function definition:
 =#
 
-@doc entanglement_robustness
+# ```julia
+# @doc entanglement_robustness
+# ```
+print(@doc entanglement_robustness) #hide
 
 #=
 These are not *positional* arguments such as the ones that come before the `;`.
@@ -80,8 +91,9 @@ So, for example, `entanglement_robustness(ρ; noise = "separable")` is a valid c
 =#
 
 λ, W = entanglement_robustness(state_ghz(2, 2); noise = "separable")
-display(λ) ## the robustness
-display(W) ## and an entanglement witness
+λ #hide
+#-
+W #hide
 
 # !!! tip
 #     Julia's REPL has a tab-completion feature that can be used to explore the functions available in Ket.
