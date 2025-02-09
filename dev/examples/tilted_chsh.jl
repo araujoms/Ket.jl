@@ -44,11 +44,13 @@ local_bounds = local_bound.(tilted_chsh.(α)) ## the `.` operator applies the fu
 
 #=
 For the quantum value, we can:
-    1. Obtain lower bounds (with a quantum realization in a given dimension) using the [`seesaw`](@ref) function,
+
+1. Obtain lower bounds (with a quantum realization in a given dimension) using the [`seesaw`](@ref) function,
     whose inputs are an inequality in the Collins-Gisin representation, a vector specifying the scenario, and the dimension.
     Since the seesaw algorithm can get trapped in local maxima, it is recommended to run it multiple times and select the best shot.
     This is automated via the optional last argument `n_shots`.
-    2. Obtain upper bounds using the [`tsirelson_bound`](@ref) function, which is based on the NPA hierarchy.
+
+2. Obtain upper bounds using the [`tsirelson_bound`](@ref) function, which is based on the NPA hierarchy.
     It takes an inequality in the Collins-Gisin or full probability representation, a vector specifying the scenario
     (the number of outcomes and inputs per party), and the level of the NPA hierarchy.
 =#
@@ -58,7 +60,7 @@ tilted_chsh_cg(α) = tensor_collinsgisin(tilted_chsh(α))
 quantum_lbounds = [seesaw(tilted_chsh_cg(αi), [2, 2, 2, 2], 2, 100)[1] for αi in α] ## first element is the bound
 
 quantum_ubounds_l1 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 1) for αi in α]
-quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 2) for αi in α]
+quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 2) for αi in α];
 
 #=
 To visualize the bounds, we can plot the results and compare them to the analytical solutions:
