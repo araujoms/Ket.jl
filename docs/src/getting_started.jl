@@ -66,9 +66,9 @@ Some other functions accept an optional argument to specify the return type. For
 =#
 
 # ```julia
-# @doc ket
+# @doc random_state
 # ```
-print(@doc ket) #hide
+print(@doc random_state) #hide
 
 #=
 Here, the first argument `[T=ComplexF64,]` specifies that the return type of the function can be controlled by the user, and the default is `ComplexF64`.

@@ -1,5 +1,5 @@
 """
-    ket([T=ComplexF64,] i::Integer, d::Integer = 2)
+    ket([T=Bool,] i::Integer, d::Integer = 2)
 
 Produces a ket of dimension `d` with nonzero element `i`.
 """
@@ -22,7 +22,7 @@ end
 export ketbra
 
 """
-    proj([T=ComplexF64,] i::Integer, d::Integer = 2)
+    proj([T=Bool,] i::Integer, d::Integer = 2)
 
 Produces a projector onto the basis state `i` in dimension `d`.
 """
