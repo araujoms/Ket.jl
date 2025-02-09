@@ -34,6 +34,9 @@ for example in examples
     push!(generated_examples, "examples/$(splitext(example)[1]).md")
 end
 
+# Compile the getting started section
+Literate.markdown(joinpath(generated_path, "getting_started.jl"), generated_path)
+
 # Generate menu and pages:
 makedocs(;
     modules = [Ket],
@@ -49,8 +52,9 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "List of functions" => "api.md",
+        "Getting started" => "getting_started.md",
         "Examples" => generated_examples,
+        "List of functions" => "api.md",
     ],
     checkdocs = :exports
 )

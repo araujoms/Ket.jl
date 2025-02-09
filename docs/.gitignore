@@ -1,3 +1,5 @@
 Manifest.toml
 build/
 src/index.md
+src/getting_started.md
+src/examples/tilted_chsh.md
