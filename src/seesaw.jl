@@ -1,16 +1,4 @@
-"""
-    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer)
-
-Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
-`d` is an integer determining the local dimension of the strategy.
-
-If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
-
-References:
-- Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032)
-- Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551) (Sec. II.B.1)
-"""
-function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer) where {T<:Real}
+function _seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer) where {T<:Real}
     R = _solver_type(T)
     CG = R.(CG)
     T2 = Complex{R}
@@ -62,17 +50,26 @@ function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integ
     end
     return ω, ψ, A, B
 end
-export seesaw
 
 """
-    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer, n_trials::Integer)
+    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer, n_trials::Integer = 1)
 
-Select the best out of `n_trials` runs of `seesaw`.
+
+Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
+`d` is an integer determining the local dimension of the strategy.
+
+If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
+
+The heuristic is run `n_trials` times, and the best run is outputted.
+
+References:
+- Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032)
+- Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551) (Sec. II.B.1)
 """
-function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer, n_trials::Integer) where {T<:Real}
-    v0, ψ0, A0, B0 = seesaw(CG, scenario, d)
+function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer, n_trials::Integer=1) where {T<:Real}
+    v0, ψ0, A0, B0 = _seesaw(CG, scenario, d)
     for _ in 2:n_trials
-        v, ψ, A, B = seesaw(CG, scenario, d) # could be made faster with a seesaw! implementation
+        v, ψ, A, B = _seesaw(CG, scenario, d) # could be made faster with a seesaw! implementation
         if v > v0
             v0 = v
             ψ0 .= ψ
