@@ -108,8 +108,8 @@ end
                 prbox[i] = 0.5
             end
         end
-        @test nonlocality_robustness(prbox, "r") ≈ T(1) / 2
-        @test nonlocality_robustness(prbox, "l") ≈ T(2) / 3
-        @test nonlocality_robustness(prbox, "g") ≈ T(3) / 4
+        @test nonlocality_robustness(prbox; noise = "white") ≈ T(1) / 2
+        @test nonlocality_robustness(prbox; noise =  "local") ≈ T(2) / 3
+        @test nonlocality_robustness(prbox; noise =  "general") ≈ T(3) / 4
     end
 end
