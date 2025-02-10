@@ -496,23 +496,19 @@ end
 export tensor_correlation
 
 """
-    nonlocality_robustness(FP::Array, measure::String = "g")
+    nonlocality_robustness(FP::Array; noise::String = "white")
 
-Computes the nonlocality robustness of the behaviour `FP`.
-Depending on the noise model chosen, the second argument can be
-`"r"` (random),
-`"l"` (local),
-`"g"` (generalized).
+Computes the nonlocality robustness of the behaviour `FP`. Argument `noise` indicates the kind of noise to be used: "white" (default), "local", or "general".
 
 Reference: Baek, Ryu, Lee, [arxiv:2311.07077](https://arxiv.org/abs/2311.07077)
 """
 function nonlocality_robustness(
-    FP::Array{T,N2},
-    measure::String = "g";
+    FP::Array{T,N2};
+    noise::String = "white",
     verbose = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Real,N2}
-    @assert measure ∈ ["r", "l", "g"]
+    @assert noise ∈ ["white", "local", "general"]
 
     @assert iseven(N2)
     N = N2 ÷ 2
@@ -521,7 +517,7 @@ function nonlocality_robustness(
     ins::NTuple{N, Int} = scenario[N+1:2N]
     num_strategies::NTuple{N, Int} = outs .^ ins
 
-    normalization = sum(FP[CartesianIndices(outs), ones(Int, ins)...])
+    normalization = sum(FP[1:prod(outs)])
 
     exploding_party = findfirst(x -> x == 0, num_strategies)
     largest_party = exploding_party == nothing ? argmax(num_strategies) : exploding_party
@@ -548,7 +544,7 @@ function nonlocality_robustness(
         local_model[i] = 0
     end
 
-    if measure == "l"
+    if noise == "local"
         JuMP.@variable(model, ξ[1:total_num_strategies])
         q = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
 
@@ -573,21 +569,21 @@ function nonlocality_robustness(
             for x ∈ 1:ins[1]
                 for a ∈ 1:outs[1]-1
                     JuMP.add_to_expression!(local_model[a, b..., x, y], p[λ][a, x])
-                    measure == "l" && JuMP.add_to_expression!(local_noise[a, b..., x, y], q[λ][a, x])
+                    noise == "local" && JuMP.add_to_expression!(local_noise[a, b..., x, y], q[λ][a, x])
                 end
                 JuMP.add_to_expression!(local_model[outs[1], b..., x, y], last_p[λ, x])
-                measure == "l" && JuMP.add_to_expression!(local_noise[outs[1], b..., x, y], last_q[λ, x])
+                noise == "local" && JuMP.add_to_expression!(local_noise[outs[1], b..., x, y], last_q[λ, x])
             end
         end
     end
 
-    if measure == "r"
+    if noise == "white"
         JuMP.@constraint(model, η * FP .+ (1 - η) * normalization / prod(outs) == local_model)
     else
-        if measure == "l"
+        if noise == "local"
             JuMP.@constraint(model, η * FP + local_noise == local_model)
             JuMP.@constraint(model, last_q .≥ 0)
-        elseif measure == "g"
+        elseif noise == "general"
             JuMP.@constraint(model, η * FP - local_model .≤ 0)
         end
         JuMP.@constraint(model, sum(π) == normalization)
