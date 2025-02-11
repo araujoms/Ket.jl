@@ -102,14 +102,9 @@ end
 
 @testset "Nonlocality robustness" begin
     for T ∈ [Float64, Double64]
-        prbox = zeros(T, 2, 2, 2, 2)
-        for i ∈ CartesianIndices((2, 2, 2, 2))
-            if mod(((i.I[1] - 1) + (i.I[2] - 1)), 2) == (i.I[3] - 1) * (i.I[4] - 1)
-                prbox[i] = 0.5
-            end
-        end
+        prbox = 2*chsh(T)
         @test nonlocality_robustness(prbox; noise = "white") ≈ T(1) / 2
-        @test nonlocality_robustness(prbox; noise =  "local") ≈ T(2) / 3
-        @test nonlocality_robustness(prbox; noise =  "general") ≈ T(3) / 4
+        @test nonlocality_robustness(prbox; noise = "local") ≈ T(2) / 3
+        @test nonlocality_robustness(prbox; noise = "general") ≈ T(3) / 4
     end
 end
