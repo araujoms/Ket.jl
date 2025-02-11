@@ -76,11 +76,11 @@ end
 export channel_amplitude_damping
 
 """
-    channel_generalized_amplitude_damping(rho::AbstractMatrix, p::Real, γ::Real)
+    channel_amplitude_damping_generalized(rho::AbstractMatrix, p::Real, γ::Real)
 
 The generalized amplitude damping channel describes the effect of dissipation to an environment at finite temperature. 'γ' is the probability of the system to decay to the ground state. '1-p' can be thought of the energy of the stationary state.
 """
-function channel_generalized_amplitude_damping(rho::AbstractMatrix, p::Real, γ::Real)
+function channel_amplitude_damping_generalized(rho::AbstractMatrix, p::Real, γ::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
     E0 = [sqrt(p) 0; 0 sqrt(p)*sqrt(1 - γ)]
     E1 = [0 sqrt(p)*sqrt(γ); 0 0]
@@ -88,7 +88,7 @@ function channel_generalized_amplitude_damping(rho::AbstractMatrix, p::Real, γ:
     E3 = [0 0; sqrt(1 - p)*sqrt(γ) 0]
     return applykraus([E0, E1, E2, E3], rho)
 end
-export channel_generalized_amplitude_damping
+export channel_amplitude_damping_generalized
 
 """
     channel_phase_damping(rho::AbstractMatrix, λ::Real)

@@ -141,7 +141,7 @@ channel_bit_flip
 channel_phase_damping
 channel_phase_flip
 channel_amplitude_damping
-channel_generalized_amplitude_damping
+channel_amplitude_damping_generalized
 channel_bit_phase_flip
 channel_depolarizing
 ```

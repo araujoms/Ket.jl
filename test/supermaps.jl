@@ -18,7 +18,7 @@
               Hermitian([ρ[1, 1]+ρ[2, 2]*γ ρ[1, 2]*sqrt(1 - γ); ρ[2, 1]*sqrt(1 - γ) ρ[2, 2]*(1-γ)])
         ρ_st = ρ
         for _ ∈ 1:50
-            ρ_st = channel_generalized_amplitude_damping(ρ_st, p, γ)
+            ρ_st = channel_amplitude_damping_generalized(ρ_st, p, γ)
         end
         @test ρ_st ≈ Hermitian([p 0; 0 1-p])
         @test channel_phase_damping(ρ, γ) ≈ channel_phase_flip(ρ, (1 + sqrt(1 − γ)) / 2)
