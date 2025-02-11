@@ -16,7 +16,7 @@ export applykraus
 """
     channel_bit_flip(rho::AbstractMatrix, p::Real)
 
-The bit flip channel flips the eigenstates of Pauli-Z with probability `1 − p` (from |0> to |1> and vice versa).
+The bit flip channel applies Pauli-X with probability `1 − p` (flip from |0> to |1> and vice versa).
 """
 function channel_bit_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
@@ -29,7 +29,7 @@ export channel_bit_flip
 """
     channel_phase_flip(rho::AbstractMatrix, p::Real)
 
-The phase flip channel flips the eigenstates of Pauli-X with probability `1 − p` (from |0>+|1> to |0>-|1> and vice versa).
+The phase flip channel applies Pauli-Z with probability `1 − p`.
 """
 function channel_phase_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
@@ -42,7 +42,7 @@ export channel_phase_flip
 """
     channel_bit_phase_flip(rho::AbstractMatrix, p::Real)
 
-The phase flip channel flips the eigenstates of Pauli-Y with probability `1 − p` (from |0>+i|1> to |0>-i|1> and vice versa)
+The phase flip channel applies Pauli-Y (=iXY) with probability `1 − p`.
 """
 function channel_bit_phase_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
@@ -58,7 +58,7 @@ export channel_bit_phase_flip
 The depolarizing channel is a single qubit replaced by the completely mixed state with probability 'p'.
 """
 function channel_depolarizing(rho::AbstractMatrix, p::Real)
-    white_noise!(rho, 1-p)
+    return white_noise(rho, 1-p)
 end
 export channel_depolarizing
 
@@ -85,7 +85,7 @@ function channel_generalized_amplitude_damping(rho::AbstractMatrix, p::Real, γ:
     E0 = [sqrt(p) 0; 0 sqrt(p) * sqrt(1-γ)]
     E1 = [0 sqrt(p) * sqrt(γ); 0 0]
     E2 = [sqrt(1-p) * sqrt(1-γ) 0; 0 sqrt(1-p)]
-    E3 = [0 sqrt(1-p) * sqrt(γ); 0 0]
+    E3 = [0 0; sqrt(1-p) * sqrt(γ) 0]
     return applykraus([E0, E1, E2, E3], rho)
 end
 export channel_generalized_amplitude_damping
@@ -95,7 +95,7 @@ export channel_generalized_amplitude_damping
     
 The phase damping channel describes the photon scattering or electron perturbation. 'λ' is the probability being scattered or perturbed (without loss of energy).
 """
-function channel_phase_damping(rho::AbstractMatrix, λ::Real) # It can be reformulated as channel_phase_flip()
+function channel_phase_damping(rho::AbstractMatrix, λ::Real) # It can be reformulated as channel_phase_flip(rho, p = (1+√(1 − λ))/2)
     @assert size(rho) == (2, 2) "This is a qubit channel."
     E0 = [1 0; 0 sqrt(1-λ)]
     E1 = [0 0; 0 sqrt(λ)]
