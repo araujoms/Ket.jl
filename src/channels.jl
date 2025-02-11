@@ -3,15 +3,41 @@ _solver_type(::Type{T}) where {T<:AbstractFloat} = T
 _solver_type(::Type{Complex{T}}) where {T<:AbstractFloat} = T
 _solver_type(::Type{T}) where {T<:Number} = Float64
 
-"""
+@doc """
     applykraus(K::Vector{<:AbstractMatrix}, M::AbstractMatrix)
 
 Applies the CP map given by the Kraus operators `K` to the matrix `M`.
-"""
-function applykraus(K::Vector{<:AbstractMatrix}, M::AbstractMatrix)
-    return sum(Hermitian(Ki * M * Ki') for Ki ∈ K)
+""" applykraus(K::Vector{<:AbstractMatrix{T}}, M::AbstractMatrix{S}) where {T,S}
+
+for (matrixtype, wrapper) ∈ ((:AbstractMatrix, :identity), (:Symmetric, :Symmetric), (:Hermitian, :Hermitian))
+    @eval begin
+        function applykraus(K::Vector{<:AbstractMatrix{T}}, M::$matrixtype{S}) where {T,S}
+            dout, din = size(K[1])
+            TS = Base.promote_op(*, T, S)
+            temp = Matrix{TS}(undef, dout, din)
+            result = Matrix{TS}(undef, dout, dout)
+            return $wrapper(applykraus!(result, K, M, temp))
+        end
+    end
 end
 export applykraus
+
+"""
+    applykraus!(result::Matrix, K::Vector{<:AbstractMatrix}, M::AbstractMatrix, temp::Matrix)
+
+Applies the CP map given by the Kraus operators `K` to the matrix `M` without allocating. `result` and `temp` must be
+matrices of size `dout × dout` and `dout × din`, where `dout, din == size(K[1])`.
+"""
+function applykraus!(result::Matrix, K::Vector{<:AbstractMatrix}, M::AbstractMatrix, temp::Matrix)
+    mul!(temp, K[1], M)
+    mul!(result, temp, K[1]')
+    for i ∈ 2:length(K)
+        mul!(temp, K[i], M)
+        mul!(result, temp, K[i]', true, true)
+    end
+    return result
+end
+export applykraus!
 
 """
     channel_bit_flip(rho::AbstractMatrix, p::Real)

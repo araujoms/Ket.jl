@@ -1,4 +1,4 @@
-@testset "Supermaps          " begin
+@testset "Channels           " begin
     for R ∈ (Float64, Double64), T ∈ (R, Complex{R}) #Float128 and BigFloat take too long
         γ = R(8) / 10
         K = [[1 0; 0 √γ], [0 √(1 - γ); 0 0]]
