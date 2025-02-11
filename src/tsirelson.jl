@@ -62,5 +62,6 @@ function _npa(::Type{T}, functional, level; solver) where {T<:AbstractFloat}
     JuMP.set_optimizer(model, dual_solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     return JuMP.objective_value(model)
 end

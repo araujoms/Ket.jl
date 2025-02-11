@@ -329,11 +329,7 @@ Takes a multipartite Bell functional `CG` in Collins-Gisin notation and transfor
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
-function tensor_probability(
-    CG::AbstractArray{T,N},
-    scenario::Tuple,
-    behaviour::Bool = false
-) where {T,N}
+function tensor_probability(CG::AbstractArray{T,N}, scenario::Tuple, behaviour::Bool = false) where {T,N}
     p = zeros(_solver_type(T), scenario)
     outs = scenario[1:N]
     ins = scenario[N+1:2N]
@@ -368,7 +364,7 @@ Takes a bipartite Bell functional `FC` in full correlator notation and transform
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
 function tensor_probability(FC::AbstractArray{T,N}, behaviour::Bool = false) where {T,N}
-    o = ntuple(i->2, N)
+    o = ntuple(i -> 2, N)
     m = size(FC) .- 1
     FP = zeros(T, o..., m...)
     cia = CartesianIndices(o)
@@ -513,9 +509,9 @@ function nonlocality_robustness(
     @assert iseven(N2)
     N = N2 ÷ 2
     scenario = size(FP)
-    outs::NTuple{N, Int} = scenario[1:N]
-    ins::NTuple{N, Int} = scenario[N+1:2N]
-    num_strategies::NTuple{N, Int} = outs .^ ins
+    outs::NTuple{N,Int} = scenario[1:N]
+    ins::NTuple{N,Int} = scenario[N+1:2N]
+    num_strategies::NTuple{N,Int} = outs .^ ins
 
     normalization = sum(FP[1:prod(outs)])
 
@@ -538,7 +534,7 @@ function nonlocality_robustness(
     p = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
 
     last_p = [JuMP.@expression(model, π[λ] - sum(p[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
-    jumpT = typeof(1*η)
+    jumpT = typeof(1 * η)
     local_model = Array{jumpT,N2}(undef, size(FP))
     for i ∈ eachindex(local_model)
         local_model[i] = 0
@@ -596,10 +592,7 @@ function nonlocality_robustness(
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
-    if JuMP.is_solved_and_feasible(model)
-        return JuMP.objective_value(model)
-    else
-        return "Something went wrong: $(JuMP.raw_status(model))"
-    end
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
+    return JuMP.objective_value(model)
 end
 export nonlocality_robustness
