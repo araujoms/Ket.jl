@@ -138,6 +138,7 @@ function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; solver = Hypat
     JuMP.set_optimizer(model, solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     return JuMP.objective_value(model)
 end
 export diamond_norm

@@ -66,9 +66,14 @@ References:
 - Pál and Vértesi, [arXiv:1006.3032](https://arxiv.org/abs/1006.3032)
 - Tavakoli et al., [arXiv:2307.02551](https://arxiv.org/abs/2307.02551) (Sec. II.B.1)
 """
-function seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer, n_trials::Integer=1) where {T<:Real}
+function seesaw(
+    CG::Matrix{T},
+    scenario::AbstractVecOrTuple{<:Integer},
+    d::Integer,
+    n_trials::Integer = 1
+) where {T<:Real}
     v0, ψ0, A0, B0 = _seesaw(CG, scenario, d)
-    for _ in 2:n_trials
+    for _ ∈ 2:n_trials
         v, ψ, A, B = _seesaw(CG, scenario, d) # could be made faster with a seesaw! implementation
         if v > v0
             v0 = v
@@ -100,6 +105,7 @@ function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia
     JuMP.set_optimizer(model, solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:oa-1] for x ∈ 1:ia]
     return JuMP.value(ω), value_ρxa, Hermitian(JuMP.value.(ρ_B))
 end
@@ -120,6 +126,7 @@ function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypati
     JuMP.set_optimizer(model, solver)
     JuMP.set_silent(model)
     JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:ob-1] for y ∈ 1:ib]
     return JuMP.value(ω), B
 end

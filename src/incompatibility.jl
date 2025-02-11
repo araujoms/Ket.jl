@@ -80,21 +80,18 @@ function incompatibility_robustness(
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
-    if JuMP.is_solved_and_feasible(model)
-        η = JuMP.objective_value(model)
-        if return_parent && JuMP.has_duals(model)
-            # the parent POVM is best represented in the tensor format as it has many outcomes
-            G = zeros(T, d, d, o...)
-            for (j, c) ∈ zip(CartesianIndices(o), con)
-                G[:, :, j] .= JuMP.dual(c)
-            end
-            cleanup!(G)
-            return η, G
-        else
-            return η #, [[JuMP.value.(X[x][a]) for a ∈ 1:o[x]] for x ∈ 1:m]
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
+    η = JuMP.objective_value(model)
+    if return_parent && JuMP.has_duals(model)
+        # the parent POVM is best represented in the tensor format as it has many outcomes
+        G = zeros(T, d, d, o...)
+        for (j, c) ∈ zip(CartesianIndices(o), con)
+            G[:, :, j] .= JuMP.dual(c)
         end
+        cleanup!(G)
+        return η, G
     else
-        return "Something went wrong: $(JuMP.raw_status(model))"
+        return η #, [[JuMP.value.(X[x][a]) for a ∈ 1:o[x]] for x ∈ 1:m]
     end
 end
 export incompatibility_robustness
