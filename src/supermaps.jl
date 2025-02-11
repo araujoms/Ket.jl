@@ -16,12 +16,12 @@ export applykraus
 """
     channel_bit_flip(rho::AbstractMatrix, p::Real)
 
-The bit flip channel applies Pauli-X with probability `1 − p` (flip from |0> to |1> and vice versa).
+The bit flip channel applies Pauli-X with probability `1 − p` (flip from |0⟩ to |1⟩ and vice versa).
 """
 function channel_bit_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
     E0 = [sqrt(p) 0; 0 sqrt(p)]
-    E1 = [0 sqrt(1-p); sqrt(1-p) 0]
+    E1 = [0 sqrt(1 - p); sqrt(1 - p) 0]
     return applykraus([E0, E1], rho)
 end
 export channel_bit_flip
@@ -34,7 +34,7 @@ The phase flip channel applies Pauli-Z with probability `1 − p`.
 function channel_phase_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
     E0 = [sqrt(p) 0; 0 sqrt(p)]
-    E1 = [sqrt(1-p) 0; 0 -sqrt(1-p)]
+    E1 = [sqrt(1 - p) 0; 0 -sqrt(1 - p)]
     return applykraus([E0, E1], rho)
 end
 export channel_phase_flip
@@ -47,7 +47,7 @@ The phase flip channel applies Pauli-Y (=iXY) with probability `1 − p`.
 function channel_bit_phase_flip(rho::AbstractMatrix, p::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
     E0 = [sqrt(p) 0; 0 sqrt(p)]
-    E1 = [0 -im * sqrt(1-p); im * sqrt(1-p) 0]
+    E1 = [0 -im*sqrt(1 - p); im*sqrt(1 - p) 0]
     return applykraus([E0, E1], rho)
 end
 export channel_bit_phase_flip
@@ -58,7 +58,7 @@ export channel_bit_phase_flip
 The depolarizing channel is a single qubit replaced by the completely mixed state with probability 'p'.
 """
 function channel_depolarizing(rho::AbstractMatrix, p::Real)
-    return white_noise(rho, 1-p)
+    return white_noise(rho, 1 - p)
 end
 export channel_depolarizing
 
@@ -69,7 +69,7 @@ The amplitude damping channel describes the effect of dissipation to an environm
 """
 function channel_amplitude_damping(rho::AbstractMatrix, γ::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
-    E0 = [1 0; 0 sqrt(1-γ)]
+    E0 = [1 0; 0 sqrt(1 - γ)]
     E1 = [0 sqrt(γ); 0 0]
     return applykraus([E0, E1], rho)
 end
@@ -82,10 +82,10 @@ The generalized amplitude damping channel describes the effect of dissipation to
 """
 function channel_generalized_amplitude_damping(rho::AbstractMatrix, p::Real, γ::Real)
     @assert size(rho) == (2, 2) "This is a qubit channel."
-    E0 = [sqrt(p) 0; 0 sqrt(p) * sqrt(1-γ)]
-    E1 = [0 sqrt(p) * sqrt(γ); 0 0]
-    E2 = [sqrt(1-p) * sqrt(1-γ) 0; 0 sqrt(1-p)]
-    E3 = [0 0; sqrt(1-p) * sqrt(γ) 0]
+    E0 = [sqrt(p) 0; 0 sqrt(p)*sqrt(1 - γ)]
+    E1 = [0 sqrt(p)*sqrt(γ); 0 0]
+    E2 = [sqrt(1 - p)*sqrt(1 - γ) 0; 0 sqrt(1 - p)]
+    E3 = [0 0; sqrt(1 - p)*sqrt(γ) 0]
     return applykraus([E0, E1, E2, E3], rho)
 end
 export channel_generalized_amplitude_damping
@@ -97,7 +97,7 @@ The phase damping channel describes the photon scattering or electron perturbati
 """
 function channel_phase_damping(rho::AbstractMatrix, λ::Real) # It can be reformulated as channel_phase_flip(rho, p = (1+√(1 − λ))/2)
     @assert size(rho) == (2, 2) "This is a qubit channel."
-    E0 = [1 0; 0 sqrt(1-λ)]
+    E0 = [1 0; 0 sqrt(1 - λ)]
     E1 = [0 0; 0 sqrt(λ)]
     return applykraus([E0, E1], rho)
 end
