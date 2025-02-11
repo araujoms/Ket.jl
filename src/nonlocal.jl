@@ -509,21 +509,22 @@ function nonlocality_robustness(
     @assert iseven(N2)
     N = N2 ÷ 2
     scenario = size(FP)
-    outs::NTuple{N,Int} = scenario[1:N]
-    ins::NTuple{N,Int} = scenario[N+1:2N]
-    num_strategies::NTuple{N,Int} = outs .^ ins
+    temp_outs::NTuple{N,Int} = scenario[1:N]
+    temp_ins::NTuple{N,Int} = scenario[N+1:2N]
+    num_strategies::NTuple{N,Int} = temp_outs .^ temp_ins
 
-    normalization = sum(FP[1:prod(outs)])
+    normalization = sum(FP[1:prod(temp_outs)])
 
     exploding_party = findfirst(x -> x == 0, num_strategies)
     largest_party = exploding_party == nothing ? argmax(num_strategies) : exploding_party
     if largest_party != 1
         perm = [largest_party; 2:largest_party-1; 1; largest_party+1:N]
-        outs = outs[perm]
-        ins = ins[perm]
+        temp_outs = temp_outs[perm]
+        temp_ins = temp_ins[perm]
         num_strategies = num_strategies[perm]
         FP = permutedims(FP, [perm; perm .+ N])
     end
+    outs, ins = temp_outs, temp_ins #workaround for https://github.com/JuliaLang/julia/issues/15276
     total_num_strategies = prod(num_strategies[2:N])
 
     stT = _solver_type(T)
@@ -531,7 +532,7 @@ function nonlocality_robustness(
 
     JuMP.@variable(model, η)
     JuMP.@variable(model, π[1:total_num_strategies])
-    p = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
+    p = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0) for _ ∈ 1:total_num_strategies]
 
     last_p = [JuMP.@expression(model, π[λ] - sum(p[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
     jumpT = typeof(1 * η)
@@ -540,9 +541,13 @@ function nonlocality_robustness(
         local_model[i] = 0
     end
 
+    q = Vector{Matrix{typeof(η)}}(undef, 0)
     if noise == "local"
         JuMP.@variable(model, ξ[1:total_num_strategies])
-        q = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0.0) for _ ∈ 1:total_num_strategies]
+        resize!(q, total_num_strategies)
+        for i ∈ eachindex(q)
+            q[i] = JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0)
+        end
 
         last_q = [JuMP.@expression(model, ξ[λ] - sum(q[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
         local_noise = Array{jumpT,N2}(undef, size(FP))
