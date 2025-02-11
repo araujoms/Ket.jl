@@ -136,6 +136,7 @@ white_noise!
 
 ```@docs
 applykraus
+applykraus!
 choi
 channel_bit_flip
 channel_phase_damping
