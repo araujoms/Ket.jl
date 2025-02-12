@@ -40,9 +40,9 @@ end
 export applykraus!
 
 """
-    channel_bit_flip(rho::AbstractMatrix, p::Real)
+    channel_bit_flip(p::Real)
 
-The bit flip channel applies Pauli-X with probability `1 − p` (flip from |0⟩ to |1⟩ and vice versa).
+Return the Kraus operator representation of the bit flip channel. It applies Pauli-X with probability `1 − p` (flip from |0⟩ to |1⟩ and vice versa).
 """
 function channel_bit_flip(p::Real)
     E0 = [sqrt(p) 0; 0 sqrt(p)]
@@ -52,9 +52,9 @@ end
 export channel_bit_flip
 
 """
-    channel_phase_flip(rho::AbstractMatrix, p::Real)
+    channel_phase_flip(p::Real)
 
-The phase flip channel applies Pauli-Z with probability `1 − p`.
+Return the Kraus operator representation of the phase flip channel. It applies Pauli-Z with probability `1 − p`.
 """
 function channel_phase_flip(p::Real)
     E0 = [sqrt(p) 0; 0 sqrt(p)]
@@ -64,9 +64,9 @@ end
 export channel_phase_flip
 
 """
-    channel_bit_phase_flip(rho::AbstractMatrix, p::Real)
+    channel_bit_phase_flip(p::Real)
 
-The phase flip channel applies Pauli-Y (=iXY) with probability `1 − p`.
+Return the Kraus operator representation of the phase flip channel. It applies Pauli-Y (=iXY) with probability `1 − p`.
 """
 function channel_bit_phase_flip(p::Real)
     E0 = [sqrt(p) 0; 0 sqrt(p)]
@@ -78,7 +78,7 @@ export channel_bit_phase_flip
 """
     channel_depolarizing(rho::AbstractMatrix, p::Real)
 
-The depolarizing channel is a single qubit replaced by the completely mixed state with probability 'p'.
+Return the Kraus operator representation of the depolarizing channel. It replaces a single qubit by the completely mixed state with probability 'p'.
 """
 function channel_depolarizing(p::Real, d::Int = 2)
     K = [zeros(typeof(p), d, d) for _ ∈ 1:d^2+1]
@@ -96,19 +96,17 @@ export channel_depolarizing
 """
     channel_amplitude_damping(rho::AbstractMatrix, γ::Real)
 
-The amplitude damping channel describes the effect of dissipation to an environment at zero temperature. 'γ' is the probability of the system to decay to the ground state.
+Return the Kraus operator representation of the amplitude damping channel. It describes the effect of dissipation to an environment at zero temperature. 'γ' is the probability of the system to decay to the ground state.
 """
 function channel_amplitude_damping(γ::Real)
-    E0 = [1 0; 0 sqrt(1 - γ)]
-    E1 = [0 sqrt(γ); 0 0]
-    return [E0, E1]
+    return channel_amplitude_damping_generalized(1, γ)
 end
 export channel_amplitude_damping
 
 """
     channel_amplitude_damping_generalized(rho::AbstractMatrix, p::Real, γ::Real)
 
-The generalized amplitude damping channel describes the effect of dissipation to an environment at finite temperature. 'γ' is the probability of the system to decay to the ground state. '1-p' can be thought of the energy of the stationary state.
+Return the Kraus operator representation of the generalized amplitude damping channel. It describes the effect of dissipation to an environment at finite temperature. 'γ' is the probability of the system to decay to the ground state. '1-p' can be thought of the energy of the stationary state.
 """
 function channel_amplitude_damping_generalized(p::Real, γ::Real)
     E0 = [sqrt(p) 0; 0 sqrt(p)*sqrt(1 - γ)]
@@ -122,7 +120,7 @@ export channel_amplitude_damping_generalized
 """
     channel_phase_damping(rho::AbstractMatrix, λ::Real)
     
-The phase damping channel describes the photon scattering or electron perturbation. 'λ' is the probability being scattered or perturbed (without loss of energy).
+Return the Kraus operator representation of the phase damping channel. It describes the photon scattering or electron perturbation. 'λ' is the probability being scattered or perturbed (without loss of energy).
 """
 function channel_phase_damping(λ::Real) # It can be reformulated as channel_phase_flip(rho, p = (1+√(1 − λ))/2)
     E0 = [1 0; 0 sqrt(1 - λ)]
