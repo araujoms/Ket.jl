@@ -1,11 +1,8 @@
 @testset "Channels           " begin
     for R ∈ (Float64, Double64), T ∈ (R, Complex{R}) #Float128 and BigFloat take too long
-        γ = R(8) / 10
-        K = [[1 0; 0 √γ], [0 √(1 - γ); 0 0]]
         ρ = random_state(T, 2)
-        damped_ρ = Hermitian([ρ[1, 1]+ρ[2, 2]*(1-γ) ρ[1, 2]*√γ; ρ[2, 1]*√γ ρ[2, 2]*γ])
-        @test applykraus(K, ρ) ≈ damped_ρ
         p = R(7) / 10
+        γ = R(8) / 10
         @test applykraus(channel_bit_flip(p), ρ) ≈ Hermitian(
             [ρ[1, 1]*p+ρ[2, 2]*(1-p) ρ[1, 2]*p+ρ[2, 1]*(1-p); ρ[2, 1]*p+ρ[1, 2]*(1-p) ρ[1, 1]*(1-p)+ρ[2, 2]*p]
         )
