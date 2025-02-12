@@ -24,7 +24,7 @@ Let us first define the Bell expression in the full probability representation:
 #     and [`tensor_correlation`](@ref). They also accept a state and a set of measurements as inputs, returning the corresponding behavior.
 
 function tilted_chsh(α)
-    # in correlator notation, the tilted CHSH is:
+    ## in correlator notation, the tilted CHSH is:
     corr = [0  α  0;
             0  1  1;
             0  1 -1]
@@ -40,9 +40,9 @@ or full probability format.
 
 using Ket
 
-# we take 10 different values of α
+## we take 10 different values of α
 α = LinRange(0, 1, 10)
-# the `.` operator applies the function to each element of the vector
+## the `.` operator applies the function to each element of the vector
 local_bounds = local_bound.(tilted_chsh.(α))
 
 #=
@@ -60,7 +60,7 @@ For the quantum value, we can:
 
 tilted_chsh_cg(α) = tensor_collinsgisin(tilted_chsh(α))
 
-# the first output of seesaw is the bound
+## the first output of seesaw is the bound
 quantum_lbounds = [seesaw(tilted_chsh_cg(αi), [2, 2, 2, 2], 2, 100)[1] for αi in α]
 
 quantum_ubounds_l1 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 1) for αi in α]
