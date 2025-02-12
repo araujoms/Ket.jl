@@ -8,7 +8,7 @@ We will use the tilted CHSH inequality as an example
 (see [Acín et al.’s “Randomness versus nonlocality and entanglement”](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.108.100402)):
 
 ```math
-\alpha \langle A_0 \rangle + \langle A_0 B_0 \rangle + \langle A_0 B_1 \rangle + \langle A_1 B_0 \rangle - \langle A_1 B_1 \rangle \overset{C}\leq 2+\alpha \overset{Q}\leq \sqrt{8+2\alpha^2}
+\alpha \langle A_0 \rangle + \langle A_0 B_0 \rangle + \langle A_0 B_1 \rangle + \langle A_1 B_0 \rangle - \langle A_1 B_1 \rangle \overset{C}\leqslant 2+\alpha \overset{Q}\leqslant \sqrt{8+2\alpha^2}
 ```
 
 In this expression, the ``C`` bound is the local bound (that is, achievable with classical systems),
@@ -20,8 +20,8 @@ Let us first define the Bell expression in the full probability representation:
 =#
 
 # !!! tip
-#     You can convert between behaviour representations using the functions [`tensor_probability`](@ref), [`tensor_collinsgisin`](@ref)
-#     and [`tensor_correlation`](@ref). They also accept a state and a set of measurements as inputs, returning the corresponding behaviour.
+#     You can convert between behavior representations using the functions [`tensor_probability`](@ref), [`tensor_collinsgisin`](@ref)
+#     and [`tensor_correlation`](@ref). They also accept a state and a set of measurements as inputs, returning the corresponding behavior.
 
 function tilted_chsh(α)
     ## in correlator notation, the tilted CHSH is:
@@ -30,17 +30,20 @@ function tilted_chsh(α)
             0  1 -1]
     return tensor_probability(corr)
 end
+println() #hide
 
 #=
 Computing the lower bound amounts to finding the maximum of the expression over all deterministic strategies.
 This can be done using the [`local_bound`](@ref) function, which can be called on any expression written in correlation
-or full probability format. 
+or full probability format.
 =#
 
 using Ket
 
-α = LinRange(0, 1, 10); ## we take 10 different values of α
-local_bounds = local_bound.(tilted_chsh.(α)) ## the `.` operator applies the function to each element of the vector 
+## we take 10 different values of α
+α = LinRange(0, 1, 10)
+## the `.` operator applies the function to each element of the vector
+local_bounds = local_bound.(tilted_chsh.(α))
 
 #=
 For the quantum value, we can:
@@ -57,10 +60,12 @@ For the quantum value, we can:
 
 tilted_chsh_cg(α) = tensor_collinsgisin(tilted_chsh(α))
 
-quantum_lbounds = [seesaw(tilted_chsh_cg(αi), [2, 2, 2, 2], 2, 100)[1] for αi in α] ## first element is the bound
+## the first output of seesaw is the bound
+quantum_lbounds = [seesaw(tilted_chsh_cg(αi), [2, 2, 2, 2], 2, 100)[1] for αi in α]
 
 quantum_ubounds_l1 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 1) for αi in α]
-quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 2) for αi in α];
+quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 2) for αi in α]
+println() #hide
 
 #=
 To visualize the bounds, we can plot the results and compare them to the analytical solutions:
