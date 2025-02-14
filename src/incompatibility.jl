@@ -1,26 +1,26 @@
 """
-    incompatibility_robustness(A::Vector{Measurement{<:Number}}, measure::String = "g")
+    incompatibility_robustness(A::Vector{Measurement{<:Number}}; noise::String = "general")
 
 Computes the incompatibility robustness of the measurements in the vector `A`.
 Depending on the noise model chosen, the second argument can be
-`"d"` (depolarizing),
-`"r"` (random),
-`"p"` (probabilistic),
-`"jm"` (jointly measurable),
-or `"g"` (generalized),
+"depolarizing",
+"random",
+"probabilistic",
+"jointly_measurable",
+or "general" (default),
 see the corresponding functions below.
 Returns the parent POVM if `return_parent = true`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness(
-    A::Vector{Measurement{T}},
-    measure::String = "g";
+    A::Vector{Measurement{T}};
+    noise::String = "general",
     verbose = false,
     return_parent = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
-    @assert measure ∈ ["d", "r", "p", "jm", "g"]
+    @assert noise ∈ ["depolarizing", "random", "probabilistic", "jointly_measurable", "general"]
     d, o, m = _measurements_parameters(A)
     is_complex = T <: Complex
     psd_cone, wrapper, hermitian_space = _sdp_parameters(is_complex)
@@ -29,10 +29,10 @@ function incompatibility_robustness(
 
     # variables
     X = [[JuMP.@variable(model, [1:d, 1:d] ∈ hermitian_space) for a ∈ 1:o[x]] for x ∈ 1:m]
-    if measure ∈ ["jm", "g"]
+    if noise ∈ ["jointly_measurable", "general"]
         N = JuMP.@variable(model, [1:d, 1:d] ∈ hermitian_space)
     end
-    if measure == "p"
+    if noise == "probabilistic"
         ξ = JuMP.@variable(model, [1:m])
     end
 
@@ -40,12 +40,12 @@ function incompatibility_robustness(
     jumpT = typeof(real(1 * X[1][1][1]))
     lhs = zero(jumpT)
     rhs = zero(jumpT)
-    if measure ∈ ["d", "r", "p"]
+    if noise ∈ ["depolarizing", "random", "probabilistic"]
         con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
         JuMP.add_to_expression!(lhs, 1)
     else
         con = JuMP.@constraint(model, [j ∈ CartesianIndices(o)], N - sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
-        if measure == "jm"
+        if noise == "jointly_measurable"
             JuMP.@constraint(model, [j ∈ CartesianIndices(o)], sum(X[x][j.I[x]] for x ∈ 1:m) ∈ psd_cone)
         end
         JuMP.add_to_expression!(rhs, 1)
@@ -53,24 +53,24 @@ function incompatibility_robustness(
     for x ∈ 1:m
         for a ∈ 1:o[x]
             JuMP.add_to_expression!(lhs, dot(X[x][a], A[x][a]))
-            if measure == "d"
+            if noise == "depolarizing"
                 JuMP.add_to_expression!(rhs, (tr(A[x][a]) / d) * tr(X[x][a]))
-            elseif measure == "r"
+            elseif noise == "random"
                 JuMP.add_to_expression!(rhs, (1 / o[x]) * tr(X[x][a]))
-            elseif measure == "p"
+            elseif noise == "probabilistic"
                 JuMP.@constraint(model, ξ[x] ≥ real(tr(X[x][a])))
-            elseif measure == "g"
+            elseif noise == "general"
                 JuMP.@constraint(model, X[x][a] ∈ psd_cone)
             end
         end
-        if measure == "p"
+        if noise == "probabilistic"
             JuMP.add_to_expression!(rhs, ξ[x])
         end
     end
     JuMP.@constraint(model, lhs ≥ rhs)
 
     # objetive function
-    if measure ∈ ["d", "r", "p"]
+    if noise ∈ ["depolarizing", "random", "probabilistic"]
         JuMP.@objective(model, Min, lhs)
     else
         JuMP.@objective(model, Min, real(tr(N)))
@@ -104,7 +104,7 @@ Computes the incompatibility depolarizing robustness of the measurements in the 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness_depolarizing(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
-    return incompatibility_robustness(A, "d"; kwargs...)
+    return incompatibility_robustness(A; noise = "depolarizing", kwargs...)
 end
 export incompatibility_robustness_depolarizing
 
@@ -116,7 +116,7 @@ Computes the incompatibility random robustness of the measurements in the vector
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness_random(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
-    return incompatibility_robustness(A, "r"; kwargs...)
+    return incompatibility_robustness(A; noise = "random", kwargs...)
 end
 export incompatibility_robustness_random
 
@@ -128,7 +128,7 @@ Computes the incompatibility probabilistic robustness of the measurements in the
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness_probabilistic(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
-    return incompatibility_robustness(A, "p"; kwargs...)
+    return incompatibility_robustness(A; noise = "probabilistic", kwargs...)
 end
 export incompatibility_robustness_probabilistic
 
@@ -140,7 +140,7 @@ Computes the incompatibility jointly measurable robustness of the measurements i
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness_jointly_measurable(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
-    return incompatibility_robustness(A, "jm"; kwargs...)
+    return incompatibility_robustness(A; noise = "jointly_measurable", kwargs...)
 end
 export incompatibility_robustness_jointly_measurable
 
@@ -152,6 +152,6 @@ Computes the incompatibility generalized robustness of the measurements in the v
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
 """
 function incompatibility_robustness_generalized(A::Vector{Measurement{T}}; kwargs...) where {T<:Number}
-    return incompatibility_robustness(A, "g"; kwargs...)
+    return incompatibility_robustness(A; noise = "general", kwargs...)
 end
 export incompatibility_robustness_generalized
