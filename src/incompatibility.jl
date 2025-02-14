@@ -2,13 +2,7 @@
     incompatibility_robustness(A::Vector{Measurement{<:Number}}; noise::String = "general")
 
 Computes the incompatibility robustness of the measurements in the vector `A`.
-Depending on the noise model chosen, the second argument can be
-"depolarizing",
-"random",
-"probabilistic",
-"jointly_measurable",
-or "general" (default),
-see the corresponding functions below.
+Depending on the noise model chosen, the second argument can be "depolarizing", "random", "probabilistic", "jointly_measurable", or "general" (default).
 Returns the parent POVM if `return_parent = true`.
 
 Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
