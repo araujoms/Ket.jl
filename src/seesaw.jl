@@ -58,7 +58,13 @@ function _seesaw(
 end
 
 """
-    seesaw(CG::Matrix, scenario::AbstractVecOrTuple, d::Integer, n_trials::Integer = 1)
+    seesaw(
+        CG::Matrix,
+        scenario::AbstractVecOrTuple,
+        d::Integer,
+        n_trials::Integer = 1;
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
 
 Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].

@@ -37,7 +37,7 @@ end
 export entanglement_entropy
 
 """
-    entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1)
+    entanglement_entropy(ρ::AbstractMatrix, dims::AbstractVector = _equal_sizes(ρ), n::Integer = 1; verbose = false)
 
 Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy.
 If the argument `dims` is omitted equally-sized subsystems are assumed.
@@ -189,14 +189,14 @@ export schmidt_number
 
 """
     entanglement_robustness(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
-    n::Integer = 1;
-    noise::String = "white"
-    ppt::Bool = true,
-    inner::Bool = false,
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)})
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer} = _equal_sizes(ρ),
+        n::Integer = 1;
+        noise::String = "white"
+        ppt::Bool = true,
+        inner::Bool = false,
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
 Lower (or upper) bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy (or inner DPS, when `inner = true`). Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints.
 
@@ -419,10 +419,10 @@ end
 
 """
     function ppt_mixture(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer};
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)})
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer};
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
 Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state and a GME witness that detects ρ.
 
@@ -454,11 +454,11 @@ end
 
 """
     function ppt_mixture(
-    ρ::AbstractMatrix{T},
-    dims::AbstractVector{<:Integer},
-    obs::AbstractVector{<:AbstractMatrix} = Vector{Matrix}();
-    verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)})
+        ρ::AbstractMatrix{T},
+        dims::AbstractVector{<:Integer},
+        obs::AbstractVector{<:AbstractMatrix} = Vector{Matrix}();
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
 Lower bound on the white noise such that ρ is still a genuinely multipartite entangled state that
 can be detected with a witness using only the operators provided in `obs`, and the values of the coefficients

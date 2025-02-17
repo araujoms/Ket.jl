@@ -29,7 +29,7 @@ function tsirelson_bound(
 end
 export tsirelson_bound
 """
-    tsirelson_bound(FC::Matrix, level::Integer)
+    tsirelson_bound(FC::Matrix, level::Integer; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)})
 
 Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
 `level` is an integer or string determining the level of the NPA hierarchy.

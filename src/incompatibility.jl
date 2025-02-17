@@ -1,5 +1,10 @@
 """
-    incompatibility_robustness(A::Vector{Measurement{<:Number}}; noise::String = "general")
+    incompatibility_robustness(
+        A::Vector{Measurement{<:Number}};
+        noise::String = "general",
+        return_parent::Bool = false,
+        verbose::Bool = false,
+        solver = Hypatia.Optimizer{_solver_type(T)})
 
 Computes the incompatibility robustness of the measurements in the vector `A`.
 Depending on the noise model chosen, the second argument can be "depolarizing" (`tr(Aₐ) I/d`, where `d` is the dimension of the system), "random" (`I/n`, where `n` is the number of outcomes), "probabilistic" (`pₐ I`, where `p` is a probability distribution), "jointly_measurable", or "general" (default).
@@ -12,8 +17,8 @@ References:
 function incompatibility_robustness(
     A::Vector{Measurement{T}};
     noise::String = "general",
-    verbose = false,
-    return_parent = false,
+    return_parent::Bool = false,
+    verbose::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     @assert noise ∈ ["depolarizing", "random", "probabilistic", "jointly_measurable", "general"]
