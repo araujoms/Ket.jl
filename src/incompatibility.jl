@@ -2,10 +2,12 @@
     incompatibility_robustness(A::Vector{Measurement{<:Number}}; noise::String = "general")
 
 Computes the incompatibility robustness of the measurements in the vector `A`.
-Depending on the noise model chosen, the second argument can be "depolarizing", "random", "probabilistic", "jointly_measurable", or "general" (default).
+Depending on the noise model chosen, the second argument can be "depolarizing" (`tr(Aₐ) I/d`, where `d` is the dimension of the system), "random" (`I/n`, where `n` is the number of outcomes), "probabilistic" (`pₐ I`, where `p` is a probability distribution), "jointly_measurable", or "general" (default).
 Returns the parent POVM if `return_parent = true`.
 
-Reference: Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448)
+References:
+- Designolle, Farkas, Kaniewski, [arXiv:1906.00448](https://arxiv.org/abs/1906.00448) (for the different noise models)
+- Gühne et al., [arXiv:2112.06784](https://arxiv.org/abs/2112.06784) (Section III.B.2)
 """
 function incompatibility_robustness(
     A::Vector{Measurement{T}};
@@ -76,6 +78,7 @@ function incompatibility_robustness(
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     η = JuMP.objective_value(model)
+    IR = 1 / η - 1
     if return_parent && JuMP.has_duals(model)
         # the parent POVM is best represented in the tensor format as it has many outcomes
         G = zeros(T, d, d, o...)
@@ -83,9 +86,10 @@ function incompatibility_robustness(
             G[:, :, j] .= JuMP.dual(c)
         end
         cleanup!(G)
-        return η, G
+        return IR, G
     else
-        return η #, [[JuMP.value.(X[x][a]) for a ∈ 1:o[x]] for x ∈ 1:m]
+        # [[JuMP.value.(X[x][a]) for a ∈ 1:o[x]] for x ∈ 1:m]
+        return IR
     end
 end
 export incompatibility_robustness
