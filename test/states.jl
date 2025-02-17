@@ -41,5 +41,10 @@
         ref ./= 8
         @test rho ≈ ref
         @test minimum(eigvals(partial_transpose(rho, 1, [2, 4]))) ≥ 0
+        edges = [[(1, 1)], [(1, 2)], [(2, 1)], [(3, 4)], [(3, 4)], 
+            [(4, 3)], [(4, 3)], [(2, 5)], [(5, 2)], [(3, 2),(5, 4)],
+            [(3, 3),(4, 4)], [(2, 3),(4, 5)], [(1, 3),(2, 2),(3, 1)]]
+        @test minimum(eigvals(partial_transpose(state_grid(T, 5, 5, edges), 1, [5, 5]))) ≥ 0 
+        @test minimum(eigvals(partial_transpose(state_crosshatch(T), 1, [3, 3]))) ≥ 0 
     end
 end
