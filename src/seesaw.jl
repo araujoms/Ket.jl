@@ -1,4 +1,10 @@
-function _seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Integer) where {T<:Real}
+function _seesaw(
+    CG::Matrix{T},
+    scenario::AbstractVecOrTuple{<:Integer},
+    d::Integer;
+    verbose = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Real}
     R = _solver_type(T)
     CG = R.(CG)
     T2 = Complex{R}
@@ -15,9 +21,9 @@ function _seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Inte
         ω = -R(Inf)
         i = 1
         while true
-            _optimise_alice_projectors!(CG, λ, A, B)
-            _optimise_bob_projectors!(CG, λ, A, B)
-            new_ω = _optimise_state!(CG, λ, A, B)
+            _optimize_alice_projectors!(CG, λ, A, B)
+            _optimize_bob_projectors!(CG, λ, A, B)
+            new_ω = _optimize_state!(CG, λ, A, B)
             if new_ω - ω ≤ minimumincrease || i > maxiter
                 ω = new_ω
                 ψ = state_phiplus_ket(T2, d; coeff = λ)
@@ -37,8 +43,8 @@ function _seesaw(CG::Matrix{T}, scenario::AbstractVecOrTuple{<:Integer}, d::Inte
         ω = -R(Inf)
         i = 1
         while true
-            new_ω, ρxa, ρ_B = _optimise_alice_assemblage(CG, scenario, B)
-            new_ω, B = _optimise_bob_povm(CG, scenario, ρxa, ρ_B)
+            new_ω, ρxa, ρ_B = _optimize_alice_assemblage(CG, scenario, B; verbose, solver)
+            new_ω, B = _optimize_bob_povm(CG, scenario, ρxa, ρ_B; verbose, solver)
             if new_ω - ω ≤ minimumincrease || i > maxiter
                 ω = new_ω
                 ψ, A = _decompose_assemblage(scenario, ρxa, ρ_B)
@@ -70,11 +76,13 @@ function seesaw(
     CG::Matrix{T},
     scenario::AbstractVecOrTuple{<:Integer},
     d::Integer,
-    n_trials::Integer = 1
+    n_trials::Integer = 1;
+    verbose = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Real}
-    v0, ψ0, A0, B0 = _seesaw(CG, scenario, d)
+    v0, ψ0, A0, B0 = _seesaw(CG, scenario, d; verbose, solver)
     for _ ∈ 2:n_trials
-        v, ψ, A, B = _seesaw(CG, scenario, d) # could be made faster with a seesaw! implementation
+        v, ψ, A, B = _seesaw(CG, scenario, d; verbose, solver) # could be made faster with a seesaw! implementation
         if v > v0
             v0 = v
             ψ0 .= ψ
@@ -86,7 +94,7 @@ function seesaw(
 end
 export seesaw
 
-function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
+function _optimize_alice_assemblage(CG::Matrix{R}, scenario, B; verbose = false, solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
     oa, ob, ia, ib = scenario
     d = size(B[1][1], 1)
 
@@ -103,14 +111,14 @@ function _optimise_alice_assemblage(CG::Matrix{R}, scenario, B; solver = Hypatia
     JuMP.@objective(model, Max, ω)
 
     JuMP.set_optimizer(model, solver)
-    JuMP.set_silent(model)
+    !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:oa-1] for x ∈ 1:ia]
     return JuMP.value(ω), value_ρxa, Hermitian(JuMP.value.(ρ_B))
 end
 
-function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
+function _optimize_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; verbose = false, solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
     oa, ob, ia, ib = scenario
     d = size(ρ_B, 1)
 
@@ -124,7 +132,7 @@ function _optimise_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; solver = Hypati
     JuMP.@objective(model, Max, ω)
 
     JuMP.set_optimizer(model, solver)
-    JuMP.set_silent(model)
+    !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:ob-1] for y ∈ 1:ib]
@@ -137,21 +145,15 @@ function _compute_value_assemblage(CG::Matrix{R}, scenario, ρxa, ρ_B, B) where
     bind(b, y) = 1 + b + (y - 1) * (ob - 1)
 
     ω = CG[1, 1] * one(JuMP.GenericAffExpr{R,JuMP.GenericVariableRef{R}})
-    for a ∈ 1:oa-1
-        for x ∈ 1:ia
-            tempB = sum(CG[aind(a, x), bind(b, y)] * B[y][b] for b ∈ 1:ob-1 for y ∈ 1:ib)
-            ω += real(dot(tempB, ρxa[x][a]))
-        end
+    for a ∈ 1:oa-1, x ∈ 1:ia
+        tempB = sum(CG[aind(a, x), bind(b, y)] * B[y][b] for b ∈ 1:ob-1 for y ∈ 1:ib)
+        ω += real(dot(tempB, ρxa[x][a]))
     end
-    for a ∈ 1:oa-1
-        for x ∈ 1:ia
-            ω += CG[aind(a, x), 1] * real(tr(ρxa[x][a]))
-        end
+    for a ∈ 1:oa-1, x ∈ 1:ia
+        ω += CG[aind(a, x), 1] * real(tr(ρxa[x][a]))
     end
-    for b ∈ 1:ob-1
-        for y ∈ 1:ib
-            ω += CG[1, bind(b, y)] * real(dot(B[y][b], ρ_B))
-        end
+    for b ∈ 1:ob-1, y ∈ 1:ib
+        ω += CG[1, bind(b, y)] * real(dot(B[y][b], ρ_B))
     end
     return ω
 end
@@ -172,32 +174,28 @@ function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T
     return ψ, A
 end
 
-function _optimise_alice_projectors!(CG::Matrix, λ::Vector, A, B)
+function _optimize_alice_projectors!(CG::Matrix, λ::Vector, A, B)
     ia, ib = size(CG) .- 1
     d = length(λ)
     for x ∈ 1:ia
-        for j ∈ 1:d
-            for i ∈ 1:j
-                A[x].data[i, j] = CG[x+1, 1] * (i == j) * abs2(λ[i])
-                for y ∈ 1:ib
-                    A[x].data[i, j] += CG[x+1, y+1] * λ[i] * conj(λ[j] * B[y][i, j])
-                end
+        for j ∈ 1:d, i ∈ 1:j
+            A[x].data[i, j] = CG[x+1, 1] * (i == j) * abs2(λ[i])
+            for y ∈ 1:ib
+                A[x].data[i, j] += CG[x+1, y+1] * λ[i] * conj(λ[j] * B[y][i, j])
             end
         end
         _positive_projection!(A[x])
     end
 end
 
-function _optimise_bob_projectors!(CG::Matrix, λ::Vector, A, B)
+function _optimize_bob_projectors!(CG::Matrix, λ::Vector, A, B)
     ia, ib = size(CG) .- 1
     d = length(λ)
     for y ∈ 1:ib
-        for j ∈ 1:d
-            for i ∈ 1:j
-                B[y].data[i, j] = CG[1, y+1] * (i == j) * abs2(λ[i])
-                for x ∈ 1:ia
-                    B[y].data[i, j] += CG[x+1, y+1] * λ[i] * conj(λ[j] * A[x][i, j])
-                end
+        for j ∈ 1:d, i ∈ 1:j
+            B[y].data[i, j] = CG[1, y+1] * (i == j) * abs2(λ[i])
+            for x ∈ 1:ia
+                B[y].data[i, j] += CG[x+1, y+1] * λ[i] * conj(λ[j] * A[x][i, j])
             end
         end
         _positive_projection!(B[y])
@@ -215,7 +213,7 @@ function _positive_projection!(M::AbstractMatrix{T}) where {T}
     return M
 end
 
-function _optimise_state!(CG::Matrix, λ::Vector{T}, A, B) where {T}
+function _optimize_state!(CG::Matrix, λ::Vector{T}, A, B) where {T}
     ia, ib = size(CG) .- 1
     d = length(λ)
     M = Hermitian(zeros(T, d, d))
@@ -225,14 +223,8 @@ function _optimise_state!(CG::Matrix, λ::Vector{T}, A, B) where {T}
     for y ∈ 1:ib
         M += CG[1, y+1] * real(Diagonal(B[y]))
     end
-    for y ∈ 1:ib
-        for x ∈ 1:ia
-            for j ∈ 1:d
-                for i ∈ 1:j
-                    M.data[i, j] += CG[x+1, y+1] * A[x].data[i, j] * B[y].data[i, j]
-                end
-            end
-        end
+    for y ∈ 1:ib, x ∈ 1:ia, j ∈ 1:d, i ∈ 1:j
+        M.data[i, j] += CG[x+1, y+1] * A[x].data[i, j] * B[y].data[i, j]
     end
     vals, U = eigen!(M)
     λ .= U[:, d]
@@ -240,4 +232,5 @@ function _optimise_state!(CG::Matrix, λ::Vector{T}, A, B) where {T}
     #TODO: for large matrices it's perhaps better to do
     #decomp, history = ArnoldiMethod.partialschur(M, nev = 1)
     #λ = decomp.Q[:,1]
+    #SD: or to use Arpack.eigs, or LAPACK.syevr! with a custom range
 end

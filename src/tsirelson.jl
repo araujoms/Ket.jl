@@ -9,6 +9,7 @@ function tsirelson_bound(
     CG::Array{T,N},
     scenario::AbstractVecOrTuple{<:Integer},
     level;
+    verbose = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
     outs = Tuple(scenario[1:N])
@@ -23,7 +24,7 @@ function tsirelson_bound(
         end
     end
 
-    Q = _npa(_solver_type(T), bell_functional, level; solver)
+    Q = _npa(_solver_type(T), bell_functional, level; verbose, solver)
     return Q
 end
 export tsirelson_bound
@@ -33,7 +34,7 @@ export tsirelson_bound
 Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
 `level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(FC::Array{T,N}, level; solver = Hypatia.Optimizer{_solver_type(T)}) where {T<:Number,N}
+function tsirelson_bound(FC::Array{T,N}, level; verbose = false, solver = Hypatia.Optimizer{_solver_type(T)}) where {T<:Number,N}
     ins = size(FC) .- 1
     O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n ∈ 1:N]
 
@@ -42,11 +43,11 @@ function tsirelson_bound(FC::Array{T,N}, level; solver = Hypatia.Optimizer{_solv
         bell_functional += FC[x] * prod(O[n][x[n]] for n ∈ 1:N)
     end
 
-    Q = _npa(_solver_type(T), bell_functional, level; solver)
+    Q = _npa(_solver_type(T), bell_functional, level; verbose, solver)
     return Q
 end
 
-function _npa(::Type{T}, functional, level; solver) where {T<:AbstractFloat}
+function _npa(::Type{T}, functional, level; verbose, solver) where {T<:AbstractFloat}
     model = JuMP.GenericModel{T}()
     moments = QuantumNPA.npa_moment(functional, level)
     dΓ = size(moments)[1]
@@ -60,7 +61,7 @@ function _npa(::Type{T}, functional, level; solver) where {T<:AbstractFloat}
     end
     dual_solver = () -> Dualization.DualOptimizer{T}(MOI.instantiate(solver))
     JuMP.set_optimizer(model, dual_solver)
-    JuMP.set_silent(model)
+    !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
     return JuMP.objective_value(model)
