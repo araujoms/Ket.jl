@@ -96,7 +96,9 @@ export channel_depolarizing
 """
     channel_amplitude_damping(rho::AbstractMatrix, γ::Real)
 
-Return the Kraus operator representation of the amplitude damping channel. It describes the effect of dissipation to an environment at zero temperature. 'γ' is the probability of the system to decay to the ground state.
+Return the Kraus operator representation of the amplitude damping channel.
+It describes the effect of dissipation to an environment at zero temperature.
+`γ` is the probability of the system to decay to the ground state.
 """
 function channel_amplitude_damping(γ::Real)
     return channel_amplitude_damping_generalized(1, γ)
@@ -106,7 +108,10 @@ export channel_amplitude_damping
 """
     channel_amplitude_damping_generalized(rho::AbstractMatrix, p::Real, γ::Real)
 
-Return the Kraus operator representation of the generalized amplitude damping channel. It describes the effect of dissipation to an environment at finite temperature. 'γ' is the probability of the system to decay to the ground state. '1-p' can be thought of the energy of the stationary state.
+Return the Kraus operator representation of the generalized amplitude damping channel.
+It describes the effect of dissipation to an environment at finite temperature.
+`γ` is the probability of the system to decay to the ground state.
+`1-p` can be thought as the energy of the stationary state.
 """
 function channel_amplitude_damping_generalized(p::Real, γ::Real)
     E0 = [sqrt(p) 0; 0 sqrt(p)*sqrt(1 - γ)]

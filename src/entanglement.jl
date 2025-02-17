@@ -254,7 +254,7 @@ Constrains state `ρ` of dimensions `dims` in JuMP model `model` to respect the 
 Dimensions are specified in `dims = [dA, dB]` and the extensions will be done on the second subsystem.
 The extensions can be symmetric real matrices (`is_complex = false`) or Hermitian PSD.
 With `ppt = true`, PPT constraints are enforced for transposed subsystems 2:i, for i ∈ 2:n+1.
-Use `isometry` to specify a ``V`` to be applied in the constraint ``ρ == V' * tr_{B_2 ... B_n}(Ξ) V``.
+Use `isometry` to specify a ``V`` to be applied in the constraint ``ρ = V' * tr_{B_2 ... B_n}(Ξ) V``.
 
 Reference: Doherty, Parrilo, Spedalieri, [arXiv:quant-ph/0308032](https://arxiv.org/abs/quant-ph/0308032)
 """

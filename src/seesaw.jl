@@ -70,7 +70,7 @@ end
 Maximizes bipartite Bell functional in Collins-Gisin notation `CG` using the seesaw heuristic. `scenario` is a vector detailing the number of inputs and outputs, in the order [oa, ob, ia, ib].
 `d` is an integer determining the local dimension of the strategy.
 
-If `oa` == `ob` == 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
+If `oa` = `ob` = 2 the heuristic reduces to a bunch of eigenvalue problems. Otherwise semidefinite programming is needed and we use the assemblage version of seesaw.
 
 The heuristic is run `n_trials` times, and the best run is outputted.
 
