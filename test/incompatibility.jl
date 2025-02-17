@@ -1,4 +1,4 @@
-@testset "Incompatibility    " begin
+@testset "Incompatibility       " begin
     A = povm(mub(2))
     @test incompatibility_robustness(A; noise = "depolarizing") ≈ 1 / √3
     @test incompatibility_robustness(A; noise = "random") ≈ 1 / √3

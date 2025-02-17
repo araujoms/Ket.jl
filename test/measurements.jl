@@ -1,4 +1,4 @@
-@testset "Measurements       " begin
+@testset "Measurements          " begin
     @testset "POVMs" begin
         for T ∈ [Float64, Double64, Float128, BigFloat]
             E = random_povm(Complex{T}, 2, 3)

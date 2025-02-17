@@ -1,4 +1,4 @@
-@testset "Basic              " begin
+@testset "Basic                 " begin
     @testset "Kets" begin
         @test isa(ket(1, 3), Vector{Bool})
         @test isa(proj(1, 3), Hermitian{Bool})

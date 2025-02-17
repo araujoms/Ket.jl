@@ -1,4 +1,4 @@
-@testset "States             " begin
+@testset "States                " begin
     for R ∈ [Float64, Double64, Float128, BigFloat]
         T = Complex{R}
         ψ = state_phiplus_ket(T)

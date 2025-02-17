@@ -1,4 +1,4 @@
-@testset "Entanglement       " begin
+@testset "Entanglement          " begin
     @testset "Schmidt decomposition" begin
         for R ∈ (Float64, Double64, Float128, BigFloat)
             T = Complex{R}

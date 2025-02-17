@@ -1,4 +1,4 @@
-@testset "Multilinear algebra" begin
+@testset "Multilinear algebra   " begin
     @testset "Partial trace      " begin
         model = JuMP.Model()
         JuMP.@variable(model, ρ[1:4, 1:4], Hermitian)

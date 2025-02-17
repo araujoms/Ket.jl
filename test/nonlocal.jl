@@ -1,4 +1,4 @@
-@testset "Nonlocal games     " begin
+@testset "Nonlocal games        " begin
     @test eltype(chsh()) <: Float64
     @test eltype(cglmp()) <: Float64
     @test eltype(inn22()) <: Int
@@ -64,7 +64,7 @@
     end
 end
 
-@testset "FP and FC notations" begin
+@testset "FP and FC notations   " begin
     for T ∈ [Float64, Double64, Float128, BigFloat]
         Aax = povm(mub(Complex{T}, 2))
         fc_phiplus = Diagonal([1, 1, 1, -1])
@@ -84,7 +84,7 @@ end
     end
 end
 
-@testset "FP and CG notations" begin
+@testset "FP and CG notations   " begin
     for T ∈ [Float64, Double64, Float128, BigFloat]
         Aax = povm(mub(Complex{T}, 2))
         cg_phiplus = [1.0 0.5 0.5 0.5; 0.5 0.5 0.25 0.25; 0.5 0.25 0.5 0.25; 0.5 0.25 0.25 0.0]
