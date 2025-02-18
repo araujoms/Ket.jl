@@ -123,6 +123,8 @@ state_dicke_ket
 state_dicke
 state_horodecki33
 state_horodecki24
+state_grid
+state_crosshatch
 white_noise
 white_noise!
 ```
