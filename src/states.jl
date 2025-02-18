@@ -208,7 +208,7 @@ function state_dicke_ket(::Type{T}, k::Integer, N::Integer; coeff = inv(_sqrt(T,
     N > 0 && 0 ≤ k ≤ N || throw(ArgumentError("Invalid number of excitations"))
     psi = zeros(T, 2^N)
     ind = zeros(Int8, N)
-    @inbounds for i in eachindex(psi)
+    @inbounds for i ∈ eachindex(psi)
         if sum(ind) == k
             psi[i] = coeff
         end
@@ -294,13 +294,13 @@ export state_horodecki24
 
 Produces the bipartite `dA × dB` grid state according the `dA × dB` 2D (hyper-)graph with `edges` and `weights`.
 
-Reference: Biswash Ghimire et al., [arXiv:2207.09826](https://arxiv.org/abs/2207.09826)
+Reference: Ghimire et al., [arXiv:2207.09826](https://arxiv.org/abs/2207.09826)
 """
 function state_grid(::Type{T}, dA::Integer, dB::Integer, edges::Vector{Vector{NTuple{2, Int}}}; weights::Vector{T} = ones(T, length(edges))) where {T<:Number}
     rho = zeros(T, dA * dB, dA * dB)
-    for (i, e) in enumerate(edges)
+    for (i, e) ∈ enumerate(edges)
         edge_ket = zeros(T, dA * dB)
-        for v in e
+        for v ∈ e
             edge_ket += kron(ket(T, v[1], dA), ket(T, v[2], dB))
         end
         rho .+= weights[i] * ketbra(edge_ket)
@@ -318,7 +318,7 @@ Produces a bound entangled bipartite 3 × 3 crosshatch state.
 """
 function state_crosshatch(::Type{T}) where {T<:Number}
     dA, dB = 3, 3
-    edges = [[(1, 1),(3, 2)], [(1, 2),(3, 3)], [(2, 1),(1, 3)], [(3, 1),(2, 3)]]
+    edges = [[(1, 1), (3, 2)], [(1, 2), (3, 3)], [(2, 1), (1, 3)], [(3, 1), (2, 3)]]
     return state_grid(T, dA, dB, edges)
 end
 state_crosshatch() = state_crosshatch(ComplexF64)
