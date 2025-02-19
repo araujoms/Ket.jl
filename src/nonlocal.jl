@@ -530,18 +530,18 @@ function nonlocality_robustness(
     stT = _solver_type(T)
     model = JuMP.GenericModel{stT}()
 
-    JuMP.@variable(model, η)
+    JuMP.@variable(model, t)
     JuMP.@variable(model, π[1:total_num_strategies])
     p = [JuMP.@variable(model, [1:outs[1]-1, 1:ins[1]], lower_bound = 0) for _ ∈ 1:total_num_strategies]
 
     last_p = [JuMP.@expression(model, π[λ] - sum(p[λ][:, x])) for λ ∈ 1:total_num_strategies, x ∈ 1:ins[1]]
-    jumpT = typeof(1 * η)
+    jumpT = typeof(1 * t)
     local_model = Array{jumpT,N2}(undef, size(FP))
     for i ∈ eachindex(local_model)
         local_model[i] = 0
     end
 
-    q = Vector{Matrix{typeof(η)}}(undef, 0)
+    q = Vector{Matrix{typeof(t)}}(undef, 0)
     if noise == "local"
         JuMP.@variable(model, ξ[1:total_num_strategies])
         resize!(q, total_num_strategies)
@@ -579,25 +579,25 @@ function nonlocality_robustness(
     end
 
     if noise == "white"
-        JuMP.@constraint(model, η * FP .+ (1 - η) * normalization / prod(outs) == local_model)
+        JuMP.@constraint(model, FP .+ t * normalization / prod(outs) == local_model)
     else
         if noise == "local"
-            JuMP.@constraint(model, η * FP + local_noise == local_model)
+            JuMP.@constraint(model, FP + local_noise == local_model)
             JuMP.@constraint(model, last_q .≥ 0)
         elseif noise == "general"
-            JuMP.@constraint(model, η * FP - local_model .≤ 0)
+            JuMP.@constraint(model, FP - local_model .≤ 0)
         end
-        JuMP.@constraint(model, sum(π) == normalization)
+        JuMP.@constraint(model, sum(π) == (1 + t) * normalization)
     end
     JuMP.@constraint(model, last_p .≥ 0)
-    JuMP.@constraint(model, η ≤ 1)
+    JuMP.@constraint(model, t ≥ 0)
 
-    JuMP.@objective(model, Max, η)
+    JuMP.@objective(model, Min, t)
 
     JuMP.set_optimizer(model, solver)
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model)
+    return 1/(1 + JuMP.objective_value(model))
 end
 export nonlocality_robustness
