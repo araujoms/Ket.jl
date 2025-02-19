@@ -31,5 +31,6 @@ include("channels.jl")
 include("entanglement.jl")
 include("seesaw.jl")
 include("tsirelson.jl")
+include("parameterizations.jl")
 
 end # module Ket

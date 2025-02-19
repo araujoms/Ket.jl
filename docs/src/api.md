@@ -144,6 +144,12 @@ channel_bit_phase_flip
 channel_depolarizing
 ```
 
+## Parameterizations
+
+```@docs
+parameterization_unitary
+```
+
 ## Internal functions
 
 ```@docs

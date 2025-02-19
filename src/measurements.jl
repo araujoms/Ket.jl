@@ -294,7 +294,7 @@ Computes the fiducial Weyl-Heisenberg vector of dimension `d`.
 
 References:
 - Appleby, Yadsan-Appleby, Zauner, [arXiv:1209.1813](http://arxiv.org/abs/1209.1813)
-- http://www.gerhardzauner.at/sicfiducials.html
+- [www.gerhardzauner.at/sicfiducials.html](http://www.gerhardzauner.at/sicfiducials.html)
 """
 function _fiducial_WH(::Type{T}, d::Integer) where {T}
     R = real(T)
