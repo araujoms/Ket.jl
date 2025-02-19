@@ -598,6 +598,6 @@ function nonlocality_robustness(
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return 1/(1 + JuMP.objective_value(model))
+    return JuMP.objective_value(model)
 end
 export nonlocality_robustness
