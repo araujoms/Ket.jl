@@ -9,28 +9,28 @@ import Base.AbstractVecOrTuple
 import Combinatorics
 import Dualization
 import GenericLinearAlgebra
-import SparseArrays as SA
 import Hypatia, Hypatia.Cones
 import JuMP
 import Nemo
 import QuantumNPA
+import SparseArrays as SA
 
 const MOI = JuMP.MOI
 
 include("basic.jl")
-include("measurements.jl")
-include("states.jl")
-include("nonlocal.jl")
-include("random.jl")
-include("games.jl")
-include("incompatibility.jl")
-include("entropy.jl")
-include("norms.jl")
-include("multilinear.jl")
 include("channels.jl")
 include("entanglement.jl")
-include("seesaw.jl")
-include("tsirelson.jl")
+include("entropy.jl")
+include("games.jl")
+include("incompatibility.jl")
+include("measurements.jl")
+include("multilinear.jl")
+include("nonlocal.jl")
+include("norms.jl")
 include("parameterizations.jl")
+include("random.jl")
+include("seesaw.jl")
+include("states.jl")
+include("tsirelson.jl")
 
 end # module Ket

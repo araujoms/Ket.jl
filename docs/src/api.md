@@ -27,14 +27,19 @@ permutation_matrix
 n_body_basis
 ```
 
-## Entropy
+## Channels
 
 ```@docs
-entropy
-binary_entropy
-relative_entropy
-binary_relative_entropy
-conditional_entropy
+applykraus
+applykraus!
+choi
+channel_bit_flip
+channel_phase_damping
+channel_phase_flip
+channel_amplitude_damping
+channel_amplitude_damping_generalized
+channel_bit_phase_flip
+channel_depolarizing
 ```
 
 ## Entanglement
@@ -45,6 +50,22 @@ entanglement_entropy
 entanglement_robustness
 schmidt_number
 ppt_mixture
+```
+
+## Entropy
+
+```@docs
+entropy
+binary_entropy
+relative_entropy
+binary_relative_entropy
+conditional_entropy
+```
+
+## Incompatibility
+
+```@docs
+incompatibility_robustness
 ```
 
 ## Measurements
@@ -60,12 +81,6 @@ tensor_to_povm
 povm_to_tensor
 mub
 test_mub
-```
-
-## Incompatibility
-
-```@docs
-incompatibility_robustness
 ```
 
 ## Nonlocality
@@ -91,6 +106,12 @@ trace_norm
 kyfan_norm
 schatten_norm
 diamond_norm
+```
+
+## Parameterizations
+
+```@docs
+parameterization_unitary
 ```
 
 ## Random
@@ -127,27 +148,6 @@ state_grid
 state_crosshatch
 white_noise
 white_noise!
-```
-
-## Channels
-
-```@docs
-applykraus
-applykraus!
-choi
-channel_bit_flip
-channel_phase_damping
-channel_phase_flip
-channel_amplitude_damping
-channel_amplitude_damping_generalized
-channel_bit_phase_flip
-channel_depolarizing
-```
-
-## Parameterizations
-
-```@docs
-parameterization_unitary
 ```
 
 ## Internal functions

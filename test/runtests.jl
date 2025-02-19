@@ -1,24 +1,26 @@
 using Ket
 using Ket: _rtol, _eps
-using LinearAlgebra
-using SparseArrays
+
 using CyclotomicNumbers
 using DoubleFloats
+using LinearAlgebra
 using Quadmath
+using SparseArrays
 using Test
+
+import JuMP
 import Random
 import SCS
-import JuMP
 
 include("basic.jl")
-include("entropy.jl")
+include("channels.jl")
 include("entanglement.jl")
-include("measurements.jl")
+include("entropy.jl")
 include("incompatibility.jl")
+include("measurements.jl")
+include("multilinear.jl")
 include("nonlocal.jl")
 include("norms.jl")
-include("multilinear.jl")
+include("parameterizations.jl")
 include("random.jl")
 include("states.jl")
-include("channels.jl")
-include("parameterizations.jl")
