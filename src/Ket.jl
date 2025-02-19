@@ -17,6 +17,14 @@ import SparseArrays as SA
 
 const MOI = JuMP.MOI
 
+"""
+    Measurement{T}
+
+Alias for `Vector{Hermitian{T,Matrix{T}}}`
+"""
+const Measurement{T} = Vector{Hermitian{T,Matrix{T}}}
+export Measurement
+
 include("basic.jl")
 include("channels.jl")
 include("entanglement.jl")

@@ -133,15 +133,6 @@ function test_mub(B::Vector{Matrix{T}}) where {T<:Number}
 end
 export test_mub
 
-# POVMs
-"""
-    Measurement{T}
-
-Alias for `Vector{Hermitian{T,Matrix{T}}}`
-"""
-const Measurement{T} = Vector{Hermitian{T,Matrix{T}}}
-export Measurement
-
 """
     povm(B::Vector{<:AbstractMatrix{T}})
 

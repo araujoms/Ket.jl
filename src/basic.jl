@@ -318,6 +318,7 @@ function symmetric_isometry(::Type{T}, dim::Integer, n::Integer; partial::Bool =
 end
 export symmetric_isometry
 symmetric_isometry(dim::Integer, n::Integer) = symmetric_isometry(Float64, dim, n)
+
 """
     n_body_basis(
     n::Integer,
