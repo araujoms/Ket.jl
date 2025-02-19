@@ -111,7 +111,7 @@ diamond_norm
 ## Parameterizations
 
 ```@docs
-parameterization_unitary
+parameterized_unitary
 ```
 
 ## Random
