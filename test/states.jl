@@ -46,5 +46,14 @@
             [(3, 3),(4, 4)], [(2, 3),(4, 5)], [(1, 3),(2, 2),(3, 1)]]
         @test minimum(eigvals(partial_transpose(state_grid(T, 5, 5, edges), 1, [5, 5]))) ≥ 0 
         @test minimum(eigvals(partial_transpose(state_crosshatch(T), 1, [3, 3]))) ≥ 0 
+        ψ = state_symmetric_ket(T, 2, 1, 2)
+        @test ψ == state_bell_ket(T, 1, 0, 2)
+        @test ketbra(ψ) ≈ state_symmetric(T, 2, 1, 2)
+        ψ = state_antisymmetric_ket(T, 2, 1, 2)
+        @test ψ == state_bell_ket(T, 1, 1, 2)
+        @test ketbra(ψ) ≈ state_antisymmetric(T, 2, 1, 2)
+        ψ = state_sindici_piani_ket(T, 4)
+        @test ψ ≈ (state_antisymmetric_ket(T, 4, 1, 2) + state_antisymmetric_ket(T, 4, 3, 4))./Ket._sqrt(T, 2)
+        @test ketbra(ψ) ≈ state_sindici_piani(T, 4)
     end
 end

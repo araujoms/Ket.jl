@@ -146,6 +146,12 @@ state_horodecki33
 state_horodecki24
 state_grid
 state_crosshatch
+state_symmetric_ket
+state_symmetric
+state_antisymmetric_ket
+state_antisymmetric
+state_sindici_piani_ket
+state_sindici_piani
 white_noise
 white_noise!
 ```
