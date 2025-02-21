@@ -146,7 +146,7 @@ export choi
 """
     diamond_norm(
         J::AbstractMatrix,
-        dims::AbstractVector;
+        dims::AbstractVecOrTuple;
         verbose::Bool = false,
         solver = Hypatia.Optimizer{_solver_type(T)})
 
@@ -154,7 +154,7 @@ Computes the diamond norm of the supermap `J` given in the Choi-Jamiołkowski re
 
 Reference: [Diamond norm](https://en.wikipedia.org/wiki/Diamond_norm)
 """
-function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVector; verbose = false, solver = Hypatia.Optimizer{_solver_type(T)}) where {T}
+function diamond_norm(J::AbstractMatrix{T}, dims::AbstractVecOrTuple; verbose = false, solver = Hypatia.Optimizer{_solver_type(T)}) where {T}
     ishermitian(J) || throw(ArgumentError("Supermap needs to be Hermitian"))
 
     is_complex = T <: Complex

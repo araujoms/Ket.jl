@@ -137,7 +137,7 @@ end
 conditional_entropy(pAB::AbstractMatrix) = conditional_entropy(2, pAB)
 
 """
-    conditional_entropy([base=2,], rho::AbstractMatrix, csys::AbstractVector, dims::AbstractVector)
+    conditional_entropy([base=2,], rho::AbstractMatrix, csys::AbstractVecOrTuple, dims::AbstractVecOrTuple)
 
 Computes the conditional von Neumann entropy of `rho` with subsystem dimensions `dims` and conditioning systems `csys`, using a base `base` logarithm.
 
@@ -146,8 +146,8 @@ Reference: [Conditional quantum entropy](https://en.wikipedia.org/wiki/Condition
 function conditional_entropy(
     base::Real,
     rho::AbstractMatrix,
-    csys::AbstractVector{<:Integer},
-    dims::AbstractVector{<:Integer}
+    csys::AbstractVecOrTuple,
+    dims::AbstractVecOrTuple
 )
     isempty(csys) && return entropy(base, rho)
     length(csys) == length(dims) && return zero(real(eltype(rho)))
@@ -163,10 +163,10 @@ function conditional_entropy(
     rho_cond = partial_trace(rho, remove, dims)
     return entropy(base, rho) - entropy(base, rho_cond)
 end
-conditional_entropy(base::Real, rho::AbstractMatrix, csys::Integer, dims::AbstractVector{<:Integer}) =
+conditional_entropy(base::Real, rho::AbstractMatrix, csys::Integer, dims::AbstractVecOrTuple) =
     conditional_entropy(base, rho, [csys], dims)
-conditional_entropy(rho::AbstractMatrix, csys::AbstractVector{<:Integer}, dims::AbstractVector{<:Integer}) =
+conditional_entropy(rho::AbstractMatrix, csys::AbstractVecOrTuple, dims::AbstractVecOrTuple) =
     conditional_entropy(2, rho, csys, dims)
-conditional_entropy(rho::AbstractMatrix, csys::Integer, dims::AbstractVector{<:Integer}) =
+conditional_entropy(rho::AbstractMatrix, csys::Integer, dims::AbstractVecOrTuple) =
     conditional_entropy(2, rho, [csys], dims)
 export conditional_entropy
