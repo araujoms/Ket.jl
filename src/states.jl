@@ -335,7 +335,7 @@ Produces the ket of the eigenstate of symmetric space of local dimensions `d` ×
 ```|ψ⁺ₖₗ⟩ = (|k⟩|l⟩ + |l⟩|k⟩) / √2.```
 """
 function state_symmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
-    ψ = Vector{T}(undef, d^2)
+    ψ = zeros(T, d^2)
     state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, coeff])
     return ψ
 end
@@ -343,7 +343,6 @@ state_symmetric_ket(d::Integer, k::Integer = 1, l::Integer = d) = state_symmetri
 export state_symmetric_ket
 
 function state_symmetric_ket!(ψ, d::Integer, k::Integer, l::Integer; coeffs = [inv(_sqrt(T, 2)), inv(_sqrt(T, 2))])
-    ψ .= 0
     ψ[d*(k-1)+l] = coeffs[1]
     ψ[d*(l-1)+k] = coeffs[2]
 end
@@ -368,7 +367,7 @@ Produces the ket of the eigenstate of antisymmetric space with local dimension `
 ```|ψ⁻ₖₗ⟩ = (|k⟩|l⟩ - |l⟩|k⟩) / √2.```
 """
 function state_antisymmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
-    ψ = Vector{T}(undef, d^2)
+    ψ = zeros(T, d^2)
     state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, -coeff])
     return ψ
 end
