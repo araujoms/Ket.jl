@@ -292,9 +292,11 @@ export state_horodecki24
 """
     state_grid([T=ComplexF64], dA::Integer, dB::Integer, edges::Vector{Vector{ntuple{2, Int}}}; weights::Vector{T} = ones(T, length(edges)))
 
-Produces the bipartite `dA × dB` grid state according the `dA × dB` 2D (hyper-)graph with `edges` and `weights`.
+Produces the bipartite `dA × dB` grid state according to the `dA × dB` 2D (hyper-)graph with `edges` and `weights`.
 
-Reference: Ghimire et al., [arXiv:2207.09826](https://arxiv.org/abs/2207.09826)
+Reference:
+- Lockhart et al., [arXiv:1705.09261](http://arxiv.org/abs/1705.09261)
+- Ghimire et al., [arXiv:2207.09826](https://arxiv.org/abs/2207.09826)
 """
 function state_grid(::Type{T}, dA::Integer, dB::Integer, edges::Vector{Vector{NTuple{2, Int}}}; weights::Vector{T} = ones(T, length(edges))) where {T<:Number}
     rho = zeros(T, dA * dB, dA * dB)
@@ -315,6 +317,7 @@ export state_grid
     state_crosshatch([T=ComplexF64])
 
 Produces a bound entangled bipartite 3 × 3 crosshatch state.
+Reference: Lockhart et al., [arXiv:1705.09261](http://arxiv.org/abs/1705.09261)
 """
 function state_crosshatch(::Type{T}) where {T<:Number}
     dA, dB = 3, 3
