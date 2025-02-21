@@ -298,7 +298,7 @@ Reference:
 - Lockhart et al., [arXiv:1705.09261](http://arxiv.org/abs/1705.09261)
 - Ghimire et al., [arXiv:2207.09826](https://arxiv.org/abs/2207.09826)
 """
-function state_grid(::Type{T}, dA::Integer, dB::Integer, edges::Vector{Vector{NTuple{2, Int}}}; weights::Vector{T} = ones(T, length(edges))) where {T<:Number}
+function state_grid(::Type{T}, dA::Integer, dB::Integer, edges::Vector{Vector{NTuple{2, Int}}}; weights::Vector{T} = ones(T, length(edges)), v::Real = 1) where {T<:Number}
     rho = zeros(T, dA * dB, dA * dB)
     for (i, e) ∈ enumerate(edges)
         edge_ket = zeros(T, dA * dB)
@@ -308,7 +308,7 @@ function state_grid(::Type{T}, dA::Integer, dB::Integer, edges::Vector{Vector{NT
         rho .+= weights[i] * ketbra(edge_ket)
     end
     rho ./= tr(rho)
-    return Hermitian(rho)
+    return white_noise!(Hermitian(rho), v)
 end
 state_grid(dA::Integer, dB::Integer, edges::Vector{Vector{NTuple{2, Int}}}; kwargs...) = state_grid(ComplexF64, dA, dB, edges; kwargs...)
 export state_grid
@@ -319,10 +319,10 @@ export state_grid
 Produces a bound entangled bipartite 3 × 3 crosshatch state.
 Reference: Lockhart et al., [arXiv:1705.09261](http://arxiv.org/abs/1705.09261)
 """
-function state_crosshatch(::Type{T}) where {T<:Number}
+function state_crosshatch(::Type{T}; v::Real = 1) where {T<:Number}
     dA, dB = 3, 3
     edges = [[(1, 1), (3, 2)], [(1, 2), (3, 3)], [(2, 1), (1, 3)], [(3, 1), (2, 3)]]
-    return state_grid(T, dA, dB, edges)
+    return state_grid(T, dA, dB, edges; v)
 end
 state_crosshatch() = state_crosshatch(ComplexF64)
 export state_crosshatch
