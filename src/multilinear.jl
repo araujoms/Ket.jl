@@ -11,7 +11,7 @@ end
 
 function _tidx!(tidx::AbstractVector{<:Integer}, idx::Integer, dims::Vector{<:Integer})
     nsys = length(dims)
-    cidx = idx - 1          # Current index
+    cidx = idx - 1 # Current index
     dr = prod(dims)
     for k ∈ 1:nsys
         # Everytime you increase a tensor index you shift by the product of remaining dimensions
@@ -30,7 +30,6 @@ Converts a tensor index `tidx` = [i₁, i₂, ...] with subsystems dimensions `d
 function _idx(tidx::Vector{<:Integer}, dims::Vector{<:Integer})
     i = 1
     shift = 1
-
     for k ∈ length(tidx):-1:1
         i += (tidx[k] - 1) * shift
         shift *= dims[k]
@@ -56,20 +55,20 @@ for (T, limit, wrapper) ∈
             isempty(remove) && return X
             length(remove) == length(dims) && return $wrapper([eltype(X)(tr(X));;])
 
-            keep = Vector{eltype(remove)}(undef, length(dims) - length(remove))  # Systems kept
+            keep = Vector{eltype(remove)}(undef, length(dims) - length(remove)) # Systems kept
             counter = 0
             for i ∈ 1:length(dims)
-                if !(i ∈ remove)
+                if i ∉ remove
                     counter += 1
                     keep[counter] = i
                 end
             end
-            dimsY = dims[keep]                      # The tensor dimensions of Y
-            dimsR = dims[remove]                          # The tensor dimensions of the traced out systems
-            dY = prod(dimsY)                           # Dimension of Y
-            dR = prod(dimsR)                           # Dimension of system traced out
+            dimsY = dims[keep]                        # The tensor dimensions of Y
+            dimsR = dims[remove]                      # The tensor dimensions of the traced out systems
+            dY = prod(dimsY)                          # Dimension of Y
+            dR = prod(dimsR)                          # Dimension of system traced out
 
-            Y = similar(X, (dY, dY))       # Final output Y
+            Y = similar(X, (dY, dY))                  # Final output Y
             tXi = Vector{Int}(undef, length(dims))    # Tensor indexing of X for column
             tXj = Vector{Int}(undef, length(dims))    # Tensor indexing of X for row
 
@@ -137,17 +136,17 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
             isempty(transp) && return X
             length(transp) == length(dims) && return $wrapper(collect(transpose(X)))
 
-            keep = Vector{eltype(transp)}(undef, length(dims) - length(transp))  # Systems kept
+            keep = Vector{eltype(transp)}(undef, length(dims) - length(transp)) # Systems kept
             counter = 0
             for i ∈ 1:length(dims)
-                if !(i ∈ transp)
+                if i ∉ transp
                     counter += 1
                     keep[counter] = i
                 end
             end
 
-            d = size(X, 1)                              # Dimension of the final output Y
-            Y = similar(X, (d, d))                      # Final output Y
+            d = size(X, 1)                            # Dimension of the final output Y
+            Y = similar(X, (d, d))                    # Final output Y
 
             tXi = Vector{Int}(undef, length(dims))    # Tensor indexing of X for row
             tXj = Vector{Int}(undef, length(dims))    # Tensor indexing of X for column
@@ -157,7 +156,7 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
 
             @inbounds for j ∈ 1:d
                 _tidx!(tYj, j, dims)
-                for i ∈ 1:(j-1)
+                for i ∈ 1:j-1
                     _tidx!(tYi, i, dims)
 
                     for k ∈ keep
@@ -239,7 +238,6 @@ function permute_systems(
 ) where {T}
     perm == 1:length(perm) && return X
     X == 1:length(X) && return _idxperm!(X, perm, dims)
-
     p = _idxperm(perm, dims)
     return X[p]
 end
@@ -265,7 +263,6 @@ for (T, wrapper) ∈ [(:AbstractMatrix, :identity), (:(Hermitian), :(Hermitian))
             rows_only::Bool = false
         )
             perm == 1:length(perm) && return X
-
             p = _idxperm(perm, dims)
             return rows_only ? $wrapper(X[p, :]) : $wrapper(X[p, p])
         end
@@ -280,7 +277,6 @@ Permutes the order of the subsystems of the matrix `X`, which is composed by sub
 """
 function permute_systems(X::AbstractMatrix, perm::AbstractVector{<:Integer}, dims::Matrix{<:Integer})
     perm == 1:length(perm) && return X
-
     rowp = _idxperm(perm, dims[:, 1])
     colp = _idxperm(perm, dims[:, 2])
     return X[rowp, colp]
