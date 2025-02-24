@@ -61,10 +61,10 @@ For the quantum value, we can:
 tilted_chsh_cg(α) = tensor_collinsgisin(tilted_chsh(α))
 
 ## the first output of seesaw is the bound
-quantum_lbounds = [seesaw(tilted_chsh_cg(αi), [2, 2, 2, 2], 2, 100)[1] for αi in α]
+quantum_lbounds = [seesaw(tilted_chsh_cg(αi), (2, 2, 2, 2), 2, 100)[1] for αi in α]
 
-quantum_ubounds_l1 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 1) for αi in α]
-quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), [2, 2, 2, 2], 2) for αi in α]
+quantum_ubounds_l1 = [tsirelson_bound(tilted_chsh_cg(αi), (2, 2, 2, 2), 1)[1] for αi in α]
+quantum_ubounds_l2 = [tsirelson_bound(tilted_chsh_cg(αi), (2, 2, 2, 2), 2)[1] for αi in α]
 println() #hide
 
 #=
