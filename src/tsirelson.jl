@@ -1,68 +1,100 @@
 """
-    tsirelson_bound(CG::Matrix, scenario::AbstractVecOrTuple, level)
+    tsirelson_bound(CG::Array, scenario::Tuple, level; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)}, dualize::Bool = false)
 
 Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written in Collins-Gisin notation.
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
-`level` is an integer or string determining the level of the NPA hierarchy.
+`level` is an integer or a string like "1 + A B" determining the level of the NPA hierarchy.
+`verbose` determines whether solver output is printed.
+`dualize` determines whether the dual problem is solved instead. WARNING: This is critical for performance, and the correct choice depends on the solver.
 """
 function tsirelson_bound(
     CG::Array{T,N},
-    scenario::AbstractVecOrTuple{<:Integer},
+    scenario::Tuple,
     level;
-    verbose = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)},
+    dualize::Bool = false
 ) where {T<:Number,N}
-    outs = Tuple(scenario[1:N])
-    ins = Tuple(scenario[N+1:2N])
+    outs = scenario[1:N]
+    ins = scenario[N+1:2N]
     Π = [[[QuantumNPA.Id for _ ∈ 1:outs[n]-1] QuantumNPA.projector(n, 1:outs[n]-1, 1:ins[n])] for n ∈ 1:N]
     cgindex(a, x) = (x .!= 1) .* (a .+ (x .- 2) .* (outs .- 1)) .+ 1
-
-    bell_functional = QuantumNPA.Polynomial()
+    behaviour_operator = Array{QuantumNPA.Monomial,N}(undef, size(CG))
     for x ∈ CartesianIndices(ins .+ 1)
         for a ∈ CartesianIndices((x.I .!= 1) .* (outs .- 2) .+ 1)
-            bell_functional += CG[cgindex(a.I, x.I)...] * prod(Π[n][a.I[n], x.I[n]] for n ∈ 1:N)
+            behaviour_operator[cgindex(a.I, x.I)...] = prod(Π[n][a.I[n], x.I[n]] for n ∈ 1:N)
         end
     end
-
-    Q = _npa(_solver_type(T), bell_functional, level; verbose, solver)
-    return Q
+    Q, behaviour = _npa(_solver_type(T).(CG), behaviour_operator, level; verbose, solver, dualize)
+    return Q, behaviour
 end
 export tsirelson_bound
-"""
-    tsirelson_bound(FC::Matrix, level::Integer; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)})
 
-Upper bounds the Tsirelson bound of a bipartite Bell funcional `FC`, written in full correlation notation.
-`level` is an integer or string determining the level of the NPA hierarchy.
 """
-function tsirelson_bound(FC::Array{T,N}, level; verbose = false, solver = Hypatia.Optimizer{_solver_type(T)}) where {T<:Number,N}
+    tsirelson_bound(FC::Array, level; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)}, dualize::Bool = false)
+
+Upper bounds the Tsirelson bound of a multipartite Bell funcional `FC`, written in correlator notation.
+`level` is an integer or a string like "1 + A B" determining the level of the NPA hierarchy.
+`verbose` determines whether solver output is printed.
+`dualize` determines whether the dual problem is solved instead. WARNING: This is critical for performance, and the correct choice depends on the solver.
+"""
+function tsirelson_bound(
+    FC::Array{T,N},
+    level;
+    verbose::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)},
+    dualize::Bool = false
+) where {T<:Number,N}
     ins = size(FC) .- 1
     O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n ∈ 1:N]
 
-    bell_functional = QuantumNPA.Polynomial()
+    behaviour_operator = Array{QuantumNPA.Monomial,N}(undef, size(FC))
     for x ∈ CartesianIndices(ins .+ 1)
-        bell_functional += FC[x] * prod(O[n][x[n]] for n ∈ 1:N)
+        behaviour_operator[x] = prod(O[n][x[n]] for n ∈ 1:N)
     end
 
-    Q = _npa(_solver_type(T), bell_functional, level; verbose, solver)
-    return Q
+    Q, behaviour = _npa(_solver_type(T).(FC), behaviour_operator, level; verbose, solver, dualize)
+    return Q, behaviour
 end
 
-function _npa(::Type{T}, functional, level; verbose, solver) where {T<:AbstractFloat}
+function _npa(functional::Array{T,N}, behaviour_operator, level; verbose, solver, dualize) where {T<:AbstractFloat,N}
     model = JuMP.GenericModel{T}()
-    moments = QuantumNPA.npa_moment(functional, level)
-    dΓ = size(moments)[1]
-    JuMP.@variable(model, Z[1:dΓ, 1:dΓ] ∈ JuMP.PSDCone())
-    id_matrix = moments[QuantumNPA.Id]
-    objective = dot(id_matrix, Z) + functional[QuantumNPA.Id]
-    JuMP.@objective(model, Min, objective)
-    mons = collect(m for m ∈ QuantumNPA.monomials(functional, moments) if !QuantumNPA.isidentity(m))
-    for m ∈ mons
-        JuMP.@constraint(model, dot(moments[m], Z) + functional[m] == 0)
+    Γ_basis = QuantumNPA.npa_moment(behaviour_operator, level)
+    monomials = QuantumNPA.monomials(Γ_basis)
+    JuMP.@variable(model, var[monomials])
+    dΓ = size(Γ_basis)[1]
+    Γ = Matrix{typeof(1 * first(var))}(undef, dΓ, dΓ)
+    for i ∈ eachindex(Γ)
+        Γ[i] = 0
     end
-    dual_solver = () -> Dualization.DualOptimizer{T}(MOI.instantiate(solver))
-    JuMP.set_optimizer(model, dual_solver)
+    for m ∈ monomials
+        _jump_muladd!(Γ, Γ_basis[m], var[m])
+    end
+    JuMP.@constraint(model, Symmetric(Γ) ∈ JuMP.PSDCone())
+    JuMP.@constraint(model, var[QuantumNPA.Id] == 1)
+    behaviour = Array{eltype(var),N}(undef, size(behaviour_operator))
+    for i ∈ eachindex(behaviour)
+        behaviour[i] = var[behaviour_operator[i]]
+    end
+    objective = dot(functional, behaviour)
+    JuMP.@objective(model, Max, objective)
+    if dualize
+        dual_solver = () -> Dualization.DualOptimizer{T}(MOI.instantiate(solver))
+        JuMP.set_optimizer(model, dual_solver)
+    else
+        JuMP.set_optimizer(model, solver)
+    end
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model)
+    return JuMP.objective_value(model), JuMP.value.(behaviour)
+end
+
+function _jump_muladd!(G, A::SA.SparseMatrixCSC, jumpvar)
+    for j ∈ 1:size(A, 2)
+        for k ∈ SA.nzrange(A, j)
+            JuMP.add_to_expression!(G[SA.rowvals(A)[k], j], SA.nonzeros(A)[k], jumpvar)
+        end
+    end
+    return G
 end

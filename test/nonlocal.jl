@@ -2,6 +2,14 @@
     @test eltype(chsh()) <: Float64
     @test eltype(cglmp()) <: Float64
     @test eltype(inn22()) <: Int
+    for T ∈ [Float64, Double64, Float128, BigFloat]
+        @test eltype(chsh(T)) <: T
+        @test eltype(cglmp(T)) <: T
+        @test cglmp(T, 4)[3] == T(1) / 12
+    end
+end
+
+@testset "Local bound           " begin
     @test local_bound(chsh()) ≈ 0.75
     @test local_bound(chsh(Int, 3)) == 6
     @test local_bound(cglmp(Int, 4)) == 9
@@ -35,33 +43,39 @@
         @views bigfc1[2:5, 2:6, 2:7] .= fc1
         @test local_bound(fc1; marg = false) ≈ local_bound(bigfc1; marg = true)
     end
+end
 
-    Random.seed!(1337)
-    cglmp_cg = tensor_collinsgisin(cglmp())
-    @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
-    @test seesaw(inn22(), (2, 2, 3, 3), 2)[1] ≈ 1.25
-    @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), "1 + A B") ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
+@testset "Tsirelson bound       " begin
+    chsh_fc = [
+        0 0 0
+        0 1 1
+        0 1 -1
+    ]
+    @test all(tsirelson_bound(chsh_fc, 2) .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
     τ = Double64(9) / 10
     tilted_chsh_fc = [
         0 τ 0
         τ 1 1
         0 1 -1
     ]
-    @test tsirelson_bound(tilted_chsh_fc, 3) ≈ 3.80128907501837942169727948014219026
+    @test tsirelson_bound(tilted_chsh_fc, 3)[1] ≈ 3.80128907501837942169727948014219026
+    cglmp_cg = tensor_collinsgisin(cglmp())
+    @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), "1 + A B")[1] ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
     gyni_cg = tensor_collinsgisin(gyni())
-    @test tsirelson_bound(gyni_cg, 2 * ones(Int, 6), 3) ≈ 0.25 rtol = 1e-6 #for some reason CI gives a different result
+    @test tsirelson_bound(gyni_cg, (2, 2, 2, 2, 2, 2), 3)[1] ≈ 0.25 rtol = 1e-6
     Śliwa18 = [
         0 0 0; 1 1 0; 1 1 0;;;
         0 -2 0; 1 0 1; 1 0 -1;;;
         0 0 2; 0 1 -1; 0 -1 -1
     ]
-    @test tsirelson_bound(Śliwa18, 2) ≈ 2 * (7 - sqrt(17)) rtol = 1e-7
+    @test tsirelson_bound(Śliwa18, 2)[1] ≈ 2 * (7 - sqrt(17)) rtol = 1e-7
+end
 
-    for T ∈ [Float64, Double64, Float128, BigFloat]
-        @test eltype(chsh(T)) <: T
-        @test eltype(cglmp(T)) <: T
-        @test cglmp(T, 4)[3] == T(1) / 12
-    end
+@testset "Seesaw                " begin
+    Random.seed!(1337)
+    cglmp_cg = tensor_collinsgisin(cglmp())
+    @test seesaw(cglmp_cg, (3, 3, 2, 2), 3)[1] ≈ (15 + sqrt(33)) / 24
+    @test seesaw(inn22(), (2, 2, 3, 3), 2)[1] ≈ 1.25
 end
 
 @testset "FP and FC notations   " begin
@@ -102,7 +116,7 @@ end
 
 @testset "Nonlocality robustness" begin
     for T ∈ [Float64, Double64]
-        prbox = 2*chsh(T)
+        prbox = 2 * chsh(T)
         @test nonlocality_robustness(prbox; noise = "white") ≈ T(1)
         @test nonlocality_robustness(prbox; noise = "local") ≈ T(1) / 2
         @test nonlocality_robustness(prbox; noise = "general") ≈ T(1) / 3
