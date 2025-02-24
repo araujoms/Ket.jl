@@ -1,5 +1,5 @@
 """
-    tsirelson_bound(CG::Array, scenario::Tuple, level; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)}, dualize::Bool = false)
+    tsirelson_bound(CG::Array, scenario::Tuple, level; verbose::Bool = false, dualize::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)})
 
 Upper bounds the Tsirelson bound of a multipartite Bell funcional `CG`, written in Collins-Gisin notation.
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
@@ -12,8 +12,8 @@ function tsirelson_bound(
     scenario::Tuple,
     level;
     verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)},
-    dualize::Bool = false
+    dualize::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
     outs = scenario[1:N]
     ins = scenario[N+1:2N]
@@ -31,7 +31,7 @@ end
 export tsirelson_bound
 
 """
-    tsirelson_bound(FC::Array, level; verbose::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)}, dualize::Bool = false)
+    tsirelson_bound(FC::Array, level; verbose::Bool = false, dualize::Bool = false, solver = Hypatia.Optimizer{_solver_type(T)})
 
 Upper bounds the Tsirelson bound of a multipartite Bell funcional `FC`, written in correlator notation.
 `level` is an integer or a string like "1 + A B" determining the level of the NPA hierarchy.
@@ -42,8 +42,8 @@ function tsirelson_bound(
     FC::Array{T,N},
     level;
     verbose::Bool = false,
-    solver = Hypatia.Optimizer{_solver_type(T)},
-    dualize::Bool = false
+    dualize::Bool = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
     ins = size(FC) .- 1
     O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n ∈ 1:N]
@@ -79,8 +79,7 @@ function _npa(functional::Array{T,N}, behaviour_operator, level; verbose, solver
     objective = dot(functional, behaviour)
     JuMP.@objective(model, Max, objective)
     if dualize
-        dual_solver = () -> Dualization.DualOptimizer{T}(MOI.instantiate(solver))
-        JuMP.set_optimizer(model, dual_solver)
+        JuMP.set_optimizer(model, Dualization.dual_optimizer(solver; coefficient_type = T))
     else
         JuMP.set_optimizer(model, solver)
     end

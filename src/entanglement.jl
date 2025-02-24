@@ -42,7 +42,12 @@ export entanglement_entropy
 Lower bounds the relative entropy of entanglement of a bipartite state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy.
 If the argument `dims` is omitted equally-sized subsystems are assumed.
 """
-function entanglement_entropy(ρ::AbstractMatrix{T}, dims::AbstractVecOrTuple = _equal_sizes(ρ), n::Integer = 1; verbose = false) where {T}
+function entanglement_entropy(
+    ρ::AbstractMatrix{T},
+    dims::AbstractVecOrTuple = _equal_sizes(ρ),
+    n::Integer = 1;
+    verbose = false
+) where {T}
     ishermitian(ρ) || throw(ArgumentError("State needs to be Hermitian"))
     length(dims) != 2 && throw(ArgumentError("Two subsystem sizes must be specified."))
 
@@ -196,9 +201,10 @@ export schmidt_number
         ppt::Bool = true,
         inner::Bool = false,
         verbose::Bool = false,
+        dualize::Bool = false,
         solver = Hypatia.Optimizer{_solver_type(T)})
 
-Lower (or upper) bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy (or inner DPS, when `inner = true`). Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints.
+Lower (or upper) bounds the entanglement robustness of state `ρ` with subsystem dimensions `dims` using level `n` of the DPS hierarchy (or inner DPS, when `inner = true`). Argument `noise` indicates the kind of noise to be used: "white" (default), "separable", or "general". Argument `ppt` indicates whether to include the partial transposition constraints. Argument `dualize` determines whether the dual problem is solved instead. WARNING: This is critical for performance, and the correct choice depends on the solver.
 
 Returns the robustness and a witness W (note that for `inner = true`, this might not be a valid entanglement witness).
 """
@@ -210,6 +216,7 @@ function entanglement_robustness(
     ppt::Bool = true,
     inner::Bool = false,
     verbose::Bool = false,
+    dualize::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number}
     ishermitian(ρ) || throw(ArgumentError("State must be Hermitian"))
@@ -236,8 +243,11 @@ function entanglement_robustness(
     end
     _sep!(model, noisy_state, dims, n; witness = true, ppt, is_complex)
 
-    JuMP.set_optimizer(model, solver)
-    #JuMP.set_optimizer(model, Dualization.dual_optimizer(solver))    #necessary for acceptable performance with some solvers
+    if dualize
+        JuMP.set_optimizer(model, Dualization.dual_optimizer(solver; coefficient_type = _solver_type(T)))
+    else
+        JuMP.set_optimizer(model, solver)
+    end
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
 
