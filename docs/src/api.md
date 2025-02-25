@@ -88,6 +88,7 @@ test_mub
 ```@docs
 chsh
 cglmp
+braunsteincaves
 inn22
 gyni
 local_bound
