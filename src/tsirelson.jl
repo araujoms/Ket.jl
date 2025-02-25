@@ -60,20 +60,21 @@ end
 function _npa(functional::Array{T,N}, behaviour_operator, level; verbose, solver, dualize) where {T<:AbstractFloat,N}
     model = JuMP.GenericModel{T}()
     Γ_basis = QuantumNPA.npa_moment(behaviour_operator, level)
-    monomials = QuantumNPA.monomials(Γ_basis)
+    monomials = setdiff(QuantumNPA.monomials(Γ_basis), [QuantumNPA.Id])
     JuMP.@variable(model, var[monomials])
     dΓ = size(Γ_basis)[1]
     Γ = Matrix{typeof(1 * first(var))}(undef, dΓ, dΓ)
     for i ∈ eachindex(Γ)
         Γ[i] = 0
     end
+    Γ .+= Γ_basis[QuantumNPA.Id]
     for m ∈ monomials
         _jump_muladd!(Γ, Γ_basis[m], var[m])
     end
-    JuMP.@constraint(model, Symmetric(Γ) ∈ JuMP.PSDCone())
-    JuMP.@constraint(model, var[QuantumNPA.Id] == 1)
-    behaviour = Array{eltype(var),N}(undef, size(behaviour_operator))
-    for i ∈ eachindex(behaviour)
+    JuMP.@constraint(model, Γ ∈ JuMP.PSDCone())
+    behaviour = Array{typeof(1 * first(var)),N}(undef, size(behaviour_operator))
+    behaviour[1] = 1
+    for i ∈ 2:length(behaviour)
         behaviour[i] = var[behaviour_operator[i]]
     end
     objective = dot(functional, behaviour)
