@@ -15,6 +15,7 @@ end
     @test local_bound(cglmp(Int, 4)) == 9
     @test local_bound(gyni(Int, 3)) == 1
     @test local_bound(gyni(Int, 4)) == 1
+    @test local_bound(braunsteincaves(Int)) == 5
     @test local_bound([1 2; 2 -2]; marg = false) == 5
     Random.seed!(0)
     fp1 = rand(0:1, 2, 2, 2, 2, 2, 2, 2, 2)
@@ -61,6 +62,8 @@ end
         0 1 -1
     ]
     @test tsirelson_bound(tilted_chsh_fc, 3)[1] ≈ 3.80128907501837942169727948014219026
+    bc_cg = tensor_collinsgisin(braunsteincaves())
+    @test tsirelson_bound(bc_cg,(2,2,3,3),1)[1] ≈ cos(π/12)^2
     scenario = (2, 3, 3, 2)
     rand_cg = tensor_collinsgisin(randn(scenario))
     q, behaviour = tsirelson_bound(rand_cg, scenario, "1 + A B")

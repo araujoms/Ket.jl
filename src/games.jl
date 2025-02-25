@@ -1,7 +1,7 @@
 """
     chsh([T=Float64,] d::Integer = 2)
 
-CHSH-d nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+CHSH-d nonlocal game in probability notation. If `T` is an integer type the game is unnormalized.
 
 Reference: Buhrman and Massar, [arXiv:quant-ph/0409066](https://arxiv.org/abs/quant-ph/0409066)
 """
@@ -22,9 +22,37 @@ chsh(d::Integer = 2) = chsh(Float64, d)
 export chsh
 
 """
+    braunsteincaves([T=Float64,] s::Integer = 3)
+
+Braunstein-Caves nonlocal game in probability notation. Known in the computer science literature as odd cycle game. If `T` is an integer type the game is unnormalized.
+
+References: Braunstein and Caves [doi:10.1016/0003-4916(90)90339-P](https://doi.org/10.1016/0003-4916(90)90339-P)
+Cleve et al., [arXiv:quant-ph/0404076](https://arxiv.org/abs/quant-ph/0404076)
+"""
+function braunsteincaves(::Type{T}, s::Integer = 3) where {T}
+    G = zeros(T, 2, 2, s, s)
+
+    normalization = T <: Integer ? 1 : inv(T(2s))
+
+    for y ∈ 0:s-1, x ∈ 0:s-1
+        if x == y || (x - y - 1) % s == 0
+            for a ∈ 0:1, b ∈ 0:1
+                if (a + b + (x == 0) * (y == 0)) % 2 == 0
+                    G[a+1, b+1, x+1, y+1] = normalization
+                end
+            end
+        end
+    end
+
+    return G
+end
+braunsteincaves(s::Integer = 3) = braunsteincaves(Float64, s)
+export braunsteincaves
+
+"""
     cglmp([T=Float64,] d::Integer = 3)
 
-CGLMP nonlocal game in full probability notation. If `T` is an integer type the game is unnormalized.
+CGLMP nonlocal game in probability notation. If `T` is an integer type the game is unnormalized.
 
 References:
 - Collins, Gisin, Linden, Massar, Popescu, [arXiv:quant-ph/0106024](https://arxiv.org/abs/quant-ph/0106024) (original game)
@@ -74,7 +102,7 @@ export inn22
 """
     gyni([T=Float64,] n::Integer)
 
-Guess your neighbour's input nonlocal game in full probability notation.
+Guess your neighbour's input nonlocal game in probability notation.
 If `T` is an integer type the game is unnormalized.
 
 Reference: Almeida et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844)
