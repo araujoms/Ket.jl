@@ -46,12 +46,14 @@ end
 end
 
 @testset "Tsirelson bound       " begin
+    @test tsirelson_bound(inn22(), (2, 2, 3, 3), 1)[1] ≈ 11 / 8
     chsh_fc = [
         0 0 0
         0 1 1
         0 1 -1
     ]
-    @test all(tsirelson_bound(chsh_fc, 2) .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
+    @test all(tsirelson_bound(chsh_fc, 1) .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
+    @test all(tsirelson_bound(chsh_fc, "1 + A B") .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
     τ = Double64(9) / 10
     tilted_chsh_fc = [
         0 τ 0
@@ -59,6 +61,10 @@ end
         0 1 -1
     ]
     @test tsirelson_bound(tilted_chsh_fc, 3)[1] ≈ 3.80128907501837942169727948014219026
+    scenario = (2, 3, 3, 2)
+    rand_cg = tensor_collinsgisin(randn(scenario))
+    q, behaviour = tsirelson_bound(rand_cg, scenario, "1 + A B")
+    @test q ≈ dot(rand_cg, behaviour)
     cglmp_cg = tensor_collinsgisin(cglmp())
     @test tsirelson_bound(cglmp_cg, (3, 3, 2, 2), "1 + A B")[1] ≈ (15 + sqrt(33)) / 24 rtol = 1.0e-7
     gyni_cg = tensor_collinsgisin(gyni())

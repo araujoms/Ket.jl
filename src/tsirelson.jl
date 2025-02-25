@@ -15,6 +15,10 @@ function tsirelson_bound(
     dualize::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
+    @assert length(scenario) == 2N
+    if N == 2 && level == 1
+        return _tsirelson_bound_q1(_solver_type(T).(CG), scenario; verbose, dualize = !dualize, solver)
+    end
     outs = scenario[1:N]
     ins = scenario[N+1:2N]
     Π = [[[QuantumNPA.Id for _ ∈ 1:outs[n]-1] QuantumNPA.projector(n, 1:outs[n]-1, 1:ins[n])] for n ∈ 1:N]
@@ -45,6 +49,9 @@ function tsirelson_bound(
     dualize::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
+    if N == 2 && level == 1
+        return _tsirelson_bound_q1(_solver_type(T).(FC); verbose, dualize = !dualize, solver)
+    end
     ins = size(FC) .- 1
     O = [[QuantumNPA.Id; QuantumNPA.dichotomic(n, 1:ins[n])] for n ∈ 1:N]
 
@@ -97,4 +104,80 @@ function _jump_muladd!(G, A::SA.SparseMatrixCSC, jumpvar)
         end
     end
     return G
+end
+
+function _tsirelson_bound_q1(CG::Matrix{T}, scenario::Tuple; verbose, dualize, solver) where {T<:AbstractFloat}
+    oa, ob, ia, ib = scenario
+    alice_ops = ia * (oa - 1)
+    bob_ops = ib * (ob - 1)
+    dq1 = 1 + alice_ops + bob_ops
+    model = JuMP.GenericModel{T}()
+    JuMP.@variable(model, Γ[1:dq1, 1:dq1] in JuMP.PSDCone())
+    ## normalization constraints
+    JuMP.@constraint(model, Γ[1, 1] == 1)
+    for i ∈ 2:dq1
+        JuMP.@constraint(model, Γ[1, i] == Γ[i, i])
+    end
+    ## orthogonality constraints
+    for x ∈ 1:ia
+        first_proj = 2 + (x - 1) * (oa - 1)
+        for j ∈ 0:oa-2
+            for i ∈ 0:j-1
+                JuMP.@constraint(model, Γ[first_proj+i, first_proj+j] == 0)
+            end
+        end
+    end
+    for y ∈ 1:ib
+        first_proj = 2 + alice_ops + (y - 1) * (ob - 1)
+        for j ∈ 0:ob-2
+            for i ∈ 0:j-1
+                JuMP.@constraint(model, Γ[first_proj+i, first_proj+j] == 0)
+            end
+        end
+    end
+
+    alice_marginal = Γ[1, 2:alice_ops+1]
+    bob_marginal = Γ[1, alice_ops+2:dq1]
+    correlation = Γ[2:alice_ops+1, alice_ops+2:dq1]
+    behaviour = [Γ[1, 1] bob_marginal'; alice_marginal correlation]
+
+    objective = dot(CG, behaviour)
+    JuMP.@objective(model, Max, objective)
+    if dualize
+        JuMP.set_optimizer(model, Dualization.dual_optimizer(solver; coefficient_type = T))
+    else
+        JuMP.set_optimizer(model, solver)
+    end
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
+    return JuMP.objective_value(model), JuMP.value.(behaviour)
+end
+
+function _tsirelson_bound_q1(FC::Matrix{T}; verbose, dualize, solver) where {T<:AbstractFloat}
+    ia, ib = size(FC) .- 1
+    dq1 = 1 + ia + ib
+    model = JuMP.GenericModel{T}()
+    JuMP.@variable(model, Γ[1:dq1, 1:dq1] in JuMP.PSDCone())
+    ## normalization constraints
+    for i ∈ 1:dq1
+        JuMP.@constraint(model, Γ[i, i] == 1)
+    end
+
+    alice_marginal = Γ[1, 2:ia+1]
+    bob_marginal = Γ[1, ia+2:dq1]
+    correlation = Γ[2:ia+1, ia+2:dq1]
+    behaviour = [Γ[1, 1] bob_marginal'; alice_marginal correlation]
+
+    objective = dot(FC, behaviour)
+    JuMP.@objective(model, Max, objective)
+    if dualize
+        JuMP.set_optimizer(model, Dualization.dual_optimizer(solver; coefficient_type = T))
+    else
+        JuMP.set_optimizer(model, solver)
+    end
+    !verbose && JuMP.set_silent(model)
+    JuMP.optimize!(model)
+    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
+    return JuMP.objective_value(model), JuMP.value.(behaviour)
 end
