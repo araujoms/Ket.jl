@@ -2,7 +2,7 @@
     local_bound(G::Array{T,N}; correlation = N < 4, marg = true)
 
 Computes the local bound of a multipartite Bell functional `G` given as an `N`-dimensional array.
-If `correlation` is `false`, `G` is assumed to be written in full probability notation.
+If `correlation` is `false`, `G` is assumed to be written in probability notation.
 If `correlation` is `true`, `G` is assumed to be written in correlation notation, with or without marginals depending on `marg`.
 
 Reference: Araújo, Hirsch, Quintino, [arXiv:2005.13418](https://arxiv.org/abs/2005.13418)
@@ -266,7 +266,7 @@ end
 """
     tensor_collinsgisin(p::Array, behaviour::Bool = false)
 
-Takes a multipartite Bell functional `p` in full probability notation and transforms it to Collins-Gisin notation.
+Takes a multipartite Bell functional `p` in probability notation and transforms it to Collins-Gisin notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 
 Also accepts the arguments of `tensor_probability` (state and measurements) for convenience.
@@ -325,7 +325,7 @@ end
 """
     tensor_probability(CG::Array, scenario::Tuple, behaviour::Bool = false)
 
-Takes a multipartite Bell functional `CG` in Collins-Gisin notation and transforms it to full probability notation.
+Takes a multipartite Bell functional `CG` in Collins-Gisin notation and transforms it to probability notation.
 `scenario` is a tuple detailing the number of inputs and outputs, in the order (oa, ob, ..., ia, ib, ...).
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
@@ -360,7 +360,7 @@ end
 """
     tensor_probability(FC::Matrix, behaviour::Bool = false)
 
-Takes a bipartite Bell functional `FC` in full correlator notation and transforms it to full probability notation.
+Takes a bipartite Bell functional `FC` in correlation notation and transforms it to probability notation.
 If `behaviour` is `true` do instead the transformation for behaviours. Doesn't assume normalization.
 """
 function tensor_probability(FC::AbstractArray{T,N}, behaviour::Bool = false) where {T,N}

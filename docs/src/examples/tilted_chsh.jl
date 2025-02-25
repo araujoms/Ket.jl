@@ -24,7 +24,7 @@ Let us first define the Bell expression in the full probability representation:
 #     and [`tensor_correlation`](@ref). They also accept a state and a set of measurements as inputs, returning the corresponding behavior.
 
 function tilted_chsh(α)
-    ## in correlator notation, the tilted CHSH is:
+    ## in correlation notation, the tilted CHSH is:
     corr = [0  α  0;
             0  1  1;
             0  1 -1]
