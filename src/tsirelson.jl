@@ -123,21 +123,13 @@ function _tsirelson_bound_q1(CG::Matrix{T}, scenario::Tuple; verbose, dualize, s
         JuMP.@constraint(model, Γ[1, i] == Γ[i, i])
     end
     ## orthogonality constraints
-    for x ∈ 1:ia
-        first_proj = 2 + (x - 1) * (oa - 1)
-        for j ∈ 0:oa-2
-            for i ∈ 0:j-1
-                JuMP.@constraint(model, Γ[first_proj+i, first_proj+j] == 0)
-            end
-        end
+    aind(a, x) = 1 + a + (x - 1) * (oa - 1)
+    for x ∈ 1:ia, a1 ∈ 1:oa-1, a2 ∈ a1+1:oa-1
+        JuMP.@constraint(model, Γ[aind(a1, x), aind(a2, x)] == 0)
     end
-    for y ∈ 1:ib
-        first_proj = 2 + alice_ops + (y - 1) * (ob - 1)
-        for j ∈ 0:ob-2
-            for i ∈ 0:j-1
-                JuMP.@constraint(model, Γ[first_proj+i, first_proj+j] == 0)
-            end
-        end
+    bind(b, y) = 1 + alice_ops + b + (y - 1) * (ob - 1)
+    for y ∈ 1:ib, b1 ∈ 1:ob-1, b2 ∈ b1+1:ob-1
+        JuMP.@constraint(model, Γ[bind(b1, y), bind(b2, y)] == 0)
     end
 
     alice_marginal = Γ[1, 2:alice_ops+1]
