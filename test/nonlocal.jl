@@ -55,6 +55,7 @@ end
     ]
     @test all(tsirelson_bound(chsh_fc, 1) .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
     @test all(tsirelson_bound(chsh_fc, "1 + A B") .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
+    @test all(tsirelson_bound(chsh_fc, 2) .≈ (2√2, [1 0 0; 0 1/√2 1/√2; 0 1/√2 -1/√2]))
     τ = Double64(9) / 10
     tilted_chsh_fc = [
         0 τ 0
