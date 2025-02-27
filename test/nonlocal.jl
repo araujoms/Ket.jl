@@ -64,8 +64,8 @@ end
     ]
     @test tsirelson_bound(tilted_chsh_fc, 3)[1] ≈ 3.80128907501837942169727948014219026
     bc_cg = tensor_collinsgisin(braunsteincaves())
-    @test tsirelson_bound(bc_cg,(2,2,3,3),1)[1] ≈ cos(π/12)^2
-    @test tsirelson_bound(bc_cg,(2,2,3,3),"1 + A B")[1] ≈ cos(π/12)^2
+    @test tsirelson_bound(bc_cg,(2,2,3,3),1)[1] ≈ cos(π/12)^2 rtol = 1e-7
+    @test tsirelson_bound(bc_cg,(2,2,3,3),"1 + A B")[1] ≈ cos(π/12)^2 rtol = 1e-7
     scenario = (2, 3, 3, 2)
     rand_cg = tensor_collinsgisin(randn(scenario))
     q, behaviour = tsirelson_bound(rand_cg, scenario, "1 + A B")

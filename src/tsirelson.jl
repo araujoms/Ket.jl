@@ -56,11 +56,12 @@ function tsirelson_bound(
     dualize::Bool = false,
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
+    FC = _solver_type(T).(FC)
     if N == 2
         if level == 1
-            return _tsirelson_bound_q1(_solver_type(T).(FC); verbose, dualize = !dualize, solver)
+            return _tsirelson_bound_manual(FC, false; verbose, dualize = !dualize, solver)
         elseif level == "1 + A B" || level == "1+ A B" || level == "1 +A B" || level == "1+A B"
-            return _tsirelson_bound_q1ab(_solver_type(T).(FC); verbose, dualize = !dualize, solver)
+            return _tsirelson_bound_manual(FC, true; verbose, dualize = !dualize, solver)
         end
     end
     ins = size(FC) .- 1
@@ -71,7 +72,7 @@ function tsirelson_bound(
         behaviour_operator[x] = prod(O[n][x[n]] for n ∈ 1:N)
     end
 
-    Q, behaviour = _npa(_solver_type(T).(FC), behaviour_operator, level; verbose, solver, dualize)
+    Q, behaviour = _npa(FC, behaviour_operator, level; verbose, solver, dualize)
     return Q, behaviour
 end
 
@@ -246,11 +247,13 @@ function _tsirelson_bound_manual(
     return JuMP.objective_value(model), JuMP.value.(behaviour)
 end
 
-function _tsirelson_bound_q1(FC::Matrix{T}; verbose, dualize, solver) where {T<:AbstractFloat}
+function _tsirelson_bound_manual(FC::Matrix{T}, include_ab::Bool; verbose, dualize, solver) where {T<:AbstractFloat}
     ia, ib = size(FC) .- 1
     dq1 = 1 + ia + ib
+    dq1ab = dq1 + ia * ib
     model = JuMP.GenericModel{T}()
-    JuMP.@variable(model, Γ[1:dq1, 1:dq1] in JuMP.PSDCone())
+    dΓ = include_ab ? dq1ab : dq1
+    JuMP.@variable(model, Γ[1:dΓ, 1:dΓ] in JuMP.PSDCone())
     ## normalization constraints
     for i ∈ 1:dq1
         JuMP.@constraint(model, Γ[i, i] == 1)
@@ -261,64 +264,42 @@ function _tsirelson_bound_q1(FC::Matrix{T}; verbose, dualize, solver) where {T<:
     correlation = Γ[2:ia+1, ia+2:dq1]
     behaviour = [Γ[1, 1] bob_marginal'; alice_marginal correlation]
 
-    objective = dot(FC, behaviour)
-    JuMP.@objective(model, Max, objective)
-    if dualize
-        JuMP.set_optimizer(model, Dualization.dual_optimizer(solver; coefficient_type = T))
-    else
-        JuMP.set_optimizer(model, solver)
-    end
-    !verbose && JuMP.set_silent(model)
-    JuMP.optimize!(model)
-    JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model), JuMP.value.(behaviour)
-end
+    if include_ab
+        ## first line of ab
+        JuMP.@constraint(model, vec(correlation') .== Γ[1, dq1+1:dq1ab])
 
-function _tsirelson_bound_q1ab(FC::Matrix{T}; verbose, dualize, solver) where {T<:AbstractFloat}
-    ia, ib = size(FC) .- 1
-    dq1 = 1 + ia + ib
-    dq1ab = dq1 + ia * ib
-    model = JuMP.GenericModel{T}()
-    JuMP.@variable(model, Γ[1:dq1ab, 1:dq1ab] in JuMP.PSDCone())
-    ## normalization constraints
-    for i ∈ 1:dq1ab
-        JuMP.@constraint(model, Γ[i, i] == 1)
-    end
-
-    alice_marginal = Γ[1, 2:ia+1]
-    bob_marginal = Γ[1, ia+2:dq1]
-    correlation = Γ[2:ia+1, ia+2:dq1]
-    behaviour = [Γ[1, 1] bob_marginal'; alice_marginal correlation]
-
-    ## first line of ab
-    JuMP.@constraint(model, vec(correlation') .== Γ[1, dq1+1:dq1ab])
-
-    f(x, y) = dq1 + y + (x - 1) * ib
-    ## q1 × q1ab self equality constraints
-    for x ∈ 1:ia, y ∈ 1:ib
-        JuMP.@constraint(model, Γ[1+x, f(x, y)] == Γ[1, 1+ia+y])
-    end
-    for y ∈ 1:ib, x ∈ 1:ia
-        JuMP.@constraint(model, Γ[1+ia+y, f(x, y)] == Γ[1, 1+x])
-    end
-
-    ## q1 × q1ab cross equality constraints
-    for x1 ∈ 1:ia, x2 ∈ x1+1:ia, y ∈ 1:ib
-        JuMP.@constraint(model, Γ[1+x1, f(x2, y)] == Γ[1+x2, f(x1, y)])
-    end
-    for y1 ∈ 1:ib, y2 ∈ y1+1:ib, x ∈ 1:ia
-        JuMP.@constraint(model, Γ[1+ia+y1, f(x, y2)] == Γ[1+ia+y2, f(x, y1)])
-    end
-
-    ## q1ab × q1ab cross equality constraints
-    for x ∈ 1:ia
-        for y1 ∈ 1:ib, y2 ∈ y1+1:ib
-            JuMP.@constraint(model, Γ[f(x, y1), f(x, y2)] == Γ[1+ia+y1, 1+ia+y2])
+        ## more normalization
+        for i ∈ dq1+1:dq1ab
+            JuMP.@constraint(model, Γ[i, i] == 1)
         end
-    end
-    for y ∈ 1:ib
-        for x1 ∈ 1:ia, x2 ∈ x1+1:ia
-            JuMP.@constraint(model, Γ[f(x1, y), f(x2, y)] == Γ[1+x1, 1+x2])
+
+        f(x, y) = dq1 + y + (x - 1) * ib
+        ## q1 × q1ab self equality constraints
+        for x ∈ 1:ia, y ∈ 1:ib
+            JuMP.@constraint(model, Γ[1+x, f(x, y)] == Γ[1, 1+ia+y])
+        end
+        for y ∈ 1:ib, x ∈ 1:ia
+            JuMP.@constraint(model, Γ[1+ia+y, f(x, y)] == Γ[1, 1+x])
+        end
+
+        ## q1 × q1ab cross equality constraints
+        for x1 ∈ 1:ia, x2 ∈ x1+1:ia, y ∈ 1:ib
+            JuMP.@constraint(model, Γ[1+x1, f(x2, y)] == Γ[1+x2, f(x1, y)])
+        end
+        for y1 ∈ 1:ib, y2 ∈ y1+1:ib, x ∈ 1:ia
+            JuMP.@constraint(model, Γ[1+ia+y1, f(x, y2)] == Γ[1+ia+y2, f(x, y1)])
+        end
+
+        ## q1ab × q1ab cross equality constraints
+        for x ∈ 1:ia
+            for y1 ∈ 1:ib, y2 ∈ y1+1:ib
+                JuMP.@constraint(model, Γ[f(x, y1), f(x, y2)] == Γ[1+ia+y1, 1+ia+y2])
+            end
+        end
+        for y ∈ 1:ib
+            for x1 ∈ 1:ia, x2 ∈ x1+1:ia
+                JuMP.@constraint(model, Γ[f(x1, y), f(x2, y)] == Γ[1+x1, 1+x2])
+            end
         end
     end
 
