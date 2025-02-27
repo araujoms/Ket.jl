@@ -16,8 +16,15 @@ function tsirelson_bound(
     solver = Hypatia.Optimizer{_solver_type(T)}
 ) where {T<:Number,N}
     @assert length(scenario) == 2N
-    if N == 2 && level == 1
-        return _tsirelson_bound_q1(_solver_type(T).(CG), scenario; verbose, dualize = !dualize, solver)
+    CG = _solver_type(T).(CG)
+    if N == 2
+        if level == 1
+            return _tsirelson_bound_manual(CG, scenario, false; verbose, dualize = !dualize, solver)
+        elseif level == "1 + A B" || level == "1+ A B" || level == "1 +A B" || level == "1+A B"
+            if max(scenario[3], scenario[4]) ≥ 3 #heuristic for when it's faster
+                return _tsirelson_bound_manual(CG, scenario, true; verbose, dualize = !dualize, solver)
+            end
+        end
     end
     outs = scenario[1:N]
     ins = scenario[N+1:2N]
@@ -29,7 +36,7 @@ function tsirelson_bound(
             behaviour_operator[cgindex(a.I, x.I)...] = prod(Π[n][a.I[n], x.I[n]] for n ∈ 1:N)
         end
     end
-    Q, behaviour = _npa(_solver_type(T).(CG), behaviour_operator, level; verbose, solver, dualize)
+    Q, behaviour = _npa(CG, behaviour_operator, level; verbose, solver, dualize)
     return Q, behaviour
 end
 export tsirelson_bound
@@ -110,19 +117,28 @@ function _jump_muladd!(G, A::SA.SparseMatrixCSC, jumpvar)
     return G
 end
 
-function _tsirelson_bound_q1(CG::Matrix{T}, scenario::Tuple; verbose, dualize, solver) where {T<:AbstractFloat}
+function _tsirelson_bound_manual(
+    CG::Matrix{T},
+    scenario::Tuple,
+    include_ab::Bool;
+    verbose,
+    dualize,
+    solver
+) where {T<:AbstractFloat}
     oa, ob, ia, ib = scenario
     alice_ops = ia * (oa - 1)
     bob_ops = ib * (ob - 1)
     dq1 = 1 + alice_ops + bob_ops
+    dq1ab = dq1 + alice_ops * bob_ops
     model = JuMP.GenericModel{T}()
-    JuMP.@variable(model, Γ[1:dq1, 1:dq1] in JuMP.PSDCone())
+    dΓ = include_ab ? dq1ab : dq1
+    JuMP.@variable(model, Γ[1:dΓ, 1:dΓ] in JuMP.PSDCone())
     ## normalization constraints
     JuMP.@constraint(model, Γ[1, 1] == 1)
     for i ∈ 2:dq1
         JuMP.@constraint(model, Γ[1, i] == Γ[i, i])
     end
-    ## orthogonality constraints
+    ## q1 orthogonality constraints
     aind(a, x) = 1 + a + (x - 1) * (oa - 1)
     for x ∈ 1:ia, a1 ∈ 1:oa-1, a2 ∈ a1+1:oa-1
         JuMP.@constraint(model, Γ[aind(a1, x), aind(a2, x)] == 0)
@@ -136,6 +152,86 @@ function _tsirelson_bound_q1(CG::Matrix{T}, scenario::Tuple; verbose, dualize, s
     bob_marginal = Γ[1, alice_ops+2:dq1]
     correlation = Γ[2:alice_ops+1, alice_ops+2:dq1]
     behaviour = [Γ[1, 1] bob_marginal'; alice_marginal correlation]
+
+    if include_ab
+        ## first line of q1ab
+        JuMP.@constraint(model, Γ[1, dq1+1:dq1ab] .== vec(correlation'))
+
+        ## more normalization
+        for i ∈ dq1+1:dq1ab
+            JuMP.@constraint(model, Γ[1, i] == Γ[i, i])
+        end
+
+        function abind(a, b, x, y)
+            apos = a + (x - 1) * (oa - 1)
+            bpos = b + (y - 1) * (ob - 1)
+            return dq1 + bpos + (apos - 1) * bob_ops
+        end
+
+        ## q1 × q1ab orthogonality constraints
+        for x ∈ 1:ia
+            for a1 ∈ 1:oa-1, a2 ∈ a1+1:oa-1, y ∈ 1:ib, b ∈ 1:ob-1
+                JuMP.@constraint(model, Γ[aind(a1, x), abind(a2, b, x, y)] == 0)
+                JuMP.@constraint(model, Γ[aind(a2, x), abind(a1, b, x, y)] == 0)
+            end
+        end
+        for y ∈ 1:ib
+            for b1 ∈ 1:ob-1, b2 ∈ b1+1:ob-1, x ∈ 1:ia, a ∈ 1:oa-1
+                JuMP.@constraint(model, Γ[bind(b1, y), abind(a, b2, x, y)] == 0)
+                JuMP.@constraint(model, Γ[bind(b2, y), abind(a, b1, x, y)] == 0)
+            end
+        end
+
+        ## q1 × q1ab self equality constraints
+        for x ∈ 1:ia, a ∈ 1:oa-1, y ∈ 1:ib, b ∈ 1:ob-1
+            JuMP.@constraint(model, Γ[aind(a, x), abind(a, b, x, y)] == Γ[1, abind(a, b, x, y)])
+        end
+        for y ∈ 1:ib, b ∈ 1:ob-1, x ∈ 1:ia, a ∈ 1:oa-1
+            JuMP.@constraint(model, Γ[bind(b, y), abind(a, b, x, y)] == Γ[1, abind(a, b, x, y)])
+        end
+
+        ## q1 × q1ab cross equality constraints
+        for x1 ∈ 1:ia, x2 ∈ x1+1:ia
+            for a1 ∈ 1:oa-1, a2 ∈ 1:oa-1, y ∈ 1:ib, b ∈ 1:ob-1
+                JuMP.@constraint(model, Γ[aind(a1, x1), abind(a2, b, x2, y)] == Γ[aind(a2, x2), abind(a1, b, x1, y)])
+            end
+        end
+        for y1 ∈ 1:ib, y2 ∈ y1+1:ib
+            for b1 ∈ 1:ob-1, b2 ∈ 1:ob-1, x ∈ 1:ia, a ∈ 1:oa-1
+                JuMP.@constraint(model, Γ[bind(b1, y1), abind(a, b2, x, y2)] == Γ[bind(b2, y2), abind(a, b1, x, y1)])
+            end
+        end
+
+        ## q1ab × q1ab cross equality constraints
+        for x ∈ 1:ia, a ∈ 1:oa-1
+            for y1 ∈ 1:ib, y2 ∈ y1+1:ib, b1 ∈ 1:ob-1, b2 ∈ 1:ob-1
+                JuMP.@constraint(
+                    model,
+                    Γ[abind(a, b1, x, y1), abind(a, b2, x, y2)] == Γ[bind(b1, y1), abind(a, b2, x, y2)]
+                )
+            end
+        end
+        for y ∈ 1:ib, b ∈ 1:ob-1
+            for x1 ∈ 1:ia, x2 ∈ x1+1:ia, a1 ∈ 1:oa-1, a2 ∈ 1:oa-1
+                JuMP.@constraint(
+                    model,
+                    Γ[abind(a1, b, x1, y), abind(a2, b, x2, y)] == Γ[aind(a1, x1), abind(a2, b, x2, y)]
+                )
+            end
+        end
+
+        ## q1ab × q1ab orthogonality constraints
+        for x ∈ 1:ia, a1 ∈ 1:oa-1, a2 ∈ a1+1:oa-1
+            for y1 ∈ 1:ib, y2 ∈ 1:ib, b1 ∈ 1:ob-1, b2 ∈ 1:ob-1
+                JuMP.@constraint(model, Γ[abind(a1, b1, x, y1), abind(a2, b2, x, y2)] == 0)
+            end
+        end
+        for y ∈ 1:ib, b1 ∈ 1:ob-1, b2 ∈ b1+1:ob-1
+            for x1 ∈ 1:ia, x2 ∈ 1:ia, a1 ∈ 1:oa-1, a2 ∈ 1:oa-1
+                JuMP.@constraint(model, Γ[abind(a1, b1, x1, y), abind(a2, b2, x2, y)] == 0)
+            end
+        end
+    end
 
     objective = dot(CG, behaviour)
     JuMP.@objective(model, Max, objective)
