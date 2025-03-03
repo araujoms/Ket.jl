@@ -44,7 +44,7 @@
         edges = [[(1, 1)], [(1, 2)], [(2, 1)], [(3, 4)], [(3, 4)], 
             [(4, 3)], [(4, 3)], [(2, 5)], [(5, 2)], [(3, 2),(5, 4)],
             [(3, 3),(4, 4)], [(2, 3),(4, 5)], [(1, 3),(2, 2),(3, 1)]]
-        @test minimum(eigvals(partial_transpose(state_grid(T, 5, 5, edges), 1, [5, 5]))) ≥ 0 
+        @test minimum(eigvals(partial_transpose(state_grid(T, edges,5, 5), 1, [5, 5]))) ≥ 0 
         @test minimum(eigvals(partial_transpose(state_crosshatch(T), 1, [3, 3]))) ≥ 0 
         ψ = state_symmetric_ket(T, 2, 1, 2)
         @test ψ == state_bell_ket(T, 1, 0, 2)
