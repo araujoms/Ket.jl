@@ -329,74 +329,13 @@ state_crosshatch() = state_crosshatch(ComplexF64)
 export state_crosshatch
 
 """
-    state_symmetric_ket([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; coeff = 1/√2)
-
-Produces the ket of the eigenstate of symmetric space of local dimensions `d` × `d`, i.e.,
-```|ψ⁺ₖₗ⟩ = (|k⟩|l⟩ + |l⟩|k⟩) / √2.```
-"""
-function state_symmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
-    ψ = zeros(T, d^2)
-    _state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, coeff])
-    return ψ
-end
-state_symmetric_ket(d::Integer, k::Integer = 1, l::Integer = d) = state_symmetric_ket(ComplexF64, d, k, l)
-export state_symmetric_ket
-
-function _state_symmetric_ket!(ψ, d::Integer, k::Integer, l::Integer; coeffs = [inv(_sqrt(T, 2)), inv(_sqrt(T, 2))])
-    ψ[d*(k-1)+l] = coeffs[1]
-    ψ[d*(l-1)+k] = coeffs[2]
-end
-
-"""
-    state_symmetric([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1)
-
-Produces the bipartite symmetric state ψ⁺`ₖₗ` of local dimensions `d` × `d` with visibility `v`, with 
-```|ψ⁺ₖₗ⟩ = (|k⟩|l⟩ + |l⟩|k⟩) / √2.```
-"""
-function state_symmetric(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1) where {T<:Number}
-    ρ = ketbra(state_symmetric_ket(T, d, k, l; coeff = one(T)))
-    parent(ρ) ./= d
-    return white_noise!(ρ, v)
-end
-state_symmetric(d::Integer, k::Integer = 1, l::Integer = d) = state_symmetric(ComplexF64, d, k, l)
-export state_symmetric
-
-"""
-    state_antisymmetric_ket([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; coeff = 1/√2)
-
-Produces the ket of the eigenstate of antisymmetric space with local dimension `d`×`d`, i.e.,
-```|ψ⁻ₖₗ⟩ = (|k⟩|l⟩ - |l⟩|k⟩) / √2.```
-"""
-function state_antisymmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
-    ψ = zeros(T, d^2)
-    _state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, -coeff])
-    return ψ
-end
-state_antisymmetric_ket(d::Integer, k::Integer = 1, l::Integer = d) = state_antisymmetric_ket(ComplexF64, d, k, l)
-export state_antisymmetric_ket
-
-"""
-    state_antisymmetric([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1)
-
-Produces the bipartite antisymmetric state ψ⁻`ₖₗ` of local dimensions `d` × `d` with visibility `v`, with 
-```|ψ⁻ₖₗ⟩ = (|k⟩|l⟩ - |l⟩|k⟩) / √2.```
-"""
-function state_antisymmetric(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1) where {T<:Number}
-    ρ = ketbra(state_antisymmetric_ket(T, d, k, l; coeff = one(T)))
-    parent(ρ) ./= d
-    return white_noise!(ρ, v)
-end
-state_antisymmetric(d::Integer, k::Integer = 1, l::Integer = d) = state_antisymmetric(ComplexF64, d, k, l)
-export state_antisymmetric
-
-"""
     state_sindici_piani_ket([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2)))
 
 Produces the ket of Sindici-Piani state of even local dimensions `d` × `d`
 
 Reference: Sindici and Piani, [arXiv:1708.06595](http://arxiv.org/abs/1708.06595)
 """
-function state_sindici_piani_ket(::Type{T}, d::Integer; coeffs = ones(T, Int(d/2)) .* inv(_sqrt(T, Int(d/2)))) where {T<:Number}
+function state_sindici_piani_ket(::Type{T}, d::Integer; coeffs = ones(T, d ÷ 2) .* inv(_sqrt(T, d ÷ 2))) where {T<:Number}
     @assert iseven(d) "The Sindici-Piani state is defined for even `d`."
     ψ = zeros(T, d^2)
     for i in 1:Int(d/2)
@@ -406,6 +345,11 @@ function state_sindici_piani_ket(::Type{T}, d::Integer; coeffs = ones(T, Int(d/2
 end
 state_sindici_piani_ket(d::Integer) = state_sindici_piani_ket(ComplexF64, d)
 export state_sindici_piani_ket
+
+function _state_symmetric_ket!(ψ, d::Integer, k::Integer, l::Integer; coeffs = [inv(_sqrt(T, 2)), inv(_sqrt(T, 2))])
+    ψ[d*(k-1)+l] = coeffs[1]
+    ψ[d*(l-1)+k] = coeffs[2]
+end
 
 """
     state_sindici_piani([T=ComplexF64], d::Integer; coeffs = [√2/√d, ⋯, √2/√d])
