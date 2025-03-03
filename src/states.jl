@@ -336,13 +336,13 @@ Produces the ket of the eigenstate of symmetric space of local dimensions `d` ×
 """
 function state_symmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
     ψ = zeros(T, d^2)
-    state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, coeff])
+    _state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, coeff])
     return ψ
 end
 state_symmetric_ket(d::Integer, k::Integer = 1, l::Integer = d) = state_symmetric_ket(ComplexF64, d, k, l)
 export state_symmetric_ket
 
-function state_symmetric_ket!(ψ, d::Integer, k::Integer, l::Integer; coeffs = [inv(_sqrt(T, 2)), inv(_sqrt(T, 2))])
+function _state_symmetric_ket!(ψ, d::Integer, k::Integer, l::Integer; coeffs = [inv(_sqrt(T, 2)), inv(_sqrt(T, 2))])
     ψ[d*(k-1)+l] = coeffs[1]
     ψ[d*(l-1)+k] = coeffs[2]
 end
@@ -368,7 +368,7 @@ Produces the ket of the eigenstate of antisymmetric space with local dimension `
 """
 function state_antisymmetric_ket(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; coeff = inv(_sqrt(T, 2))) where {T<:Number}
     ψ = zeros(T, d^2)
-    state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, -coeff])
+    _state_symmetric_ket!(ψ, d, k, l; coeffs = [coeff, -coeff])
     return ψ
 end
 state_antisymmetric_ket(d::Integer, k::Integer = 1, l::Integer = d) = state_antisymmetric_ket(ComplexF64, d, k, l)
@@ -398,7 +398,7 @@ function state_sindici_piani_ket(::Type{T}, d::Integer; coeffs = ones(T, Int(d/2
     @assert iseven(d) "The Sindici-Piani state is defined for even `d`."
     ψ = zeros(T, d^2)
     for i in 1:Int(d/2)
-        state_symmetric_ket!(ψ, d, 2i - 1, 2i; coeffs = [inv(_sqrt(T, 2)), -inv(_sqrt(T, 2))] .* coeffs[i])
+        _state_symmetric_ket!(ψ, d, 2i - 1, 2i; coeffs = [inv(_sqrt(T, 2)), -inv(_sqrt(T, 2))] .* coeffs[i])
     end
     return ψ
 end
@@ -413,8 +413,8 @@ Produces the Sindici-Piani state of even local dimensions `d` × `d` with visibi
 Reference: Sindici and Piani, [arXiv:1708.06595](http://arxiv.org/abs/1708.06595)
 """
 function state_sindici_piani(::Type{T}, d::Integer; v::Real = 1) where {T<:Number}
-    ρ = ketbra(state_sindici_piani_ket(T, d::Integer; coeffs = ones(T, Int(d/2)) ))
-    parent(ρ) ./= d/2
+    ρ = ketbra(state_sindici_piani_ket(T, d; coeffs = ones(T, d ÷ 2)))
+    parent(ρ) ./= d / 2
     return white_noise!(ρ, v)
 end
 state_sindici_piani(d::Integer) = state_sindici_piani(ComplexF64, d)
