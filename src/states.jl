@@ -350,7 +350,8 @@ end
 """
     state_symmetric([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1)
 
-Produces the bipartite symmetric state ψ⁺`ₖₗ` of local dimensions `d` × `d` with visibility `v`.
+Produces the bipartite symmetric state ψ⁺`ₖₗ` of local dimensions `d` × `d` with visibility `v`, with 
+```|ψ⁺ₖₗ⟩ = (|k⟩|l⟩ + |l⟩|k⟩) / √2.```
 """
 function state_symmetric(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1) where {T<:Number}
     ρ = ketbra(state_symmetric_ket(T, d, k, l; coeff = one(T)))
@@ -377,7 +378,8 @@ export state_antisymmetric_ket
 """
     state_antisymmetric([T=ComplexF64], d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1)
 
-Produces the bipartite antisymmetric state ψ⁻`ₖₗ` of local dimensions `d` × `d` with visibility `v`.
+Produces the bipartite antisymmetric state ψ⁻`ₖₗ` of local dimensions `d` × `d` with visibility `v`, with 
+```|ψ⁻ₖₗ⟩ = (|k⟩|l⟩ - |l⟩|k⟩) / √2.```
 """
 function state_antisymmetric(::Type{T}, d::Integer, k::Integer = 1, l::Integer = d; v::Real = 1) where {T<:Number}
     ρ = ketbra(state_antisymmetric_ket(T, d, k, l; coeff = one(T)))
