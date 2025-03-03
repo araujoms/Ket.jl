@@ -76,11 +76,11 @@ end
 export channel_bit_phase_flip
 
 """
-    channel_depolarizing(rho::AbstractMatrix, p::Real)
+    channel_depolarizing(p::Real, d::Integer = 2)
 
-Return the Kraus operator representation of the depolarizing channel. It replaces a single qubit by the completely mixed state with probability 'p'.
+Return the Kraus operator representation of the depolarizing channel of dimension `d`. It replaces a single qubit by the completely mixed state with probability 'p'.
 """
-function channel_depolarizing(p::Real, d::Int = 2)
+function channel_depolarizing(p::Real, d::Integer = 2)
     K = [zeros(typeof(p), d, d) for _ ∈ 1:d^2+1]
     K[1][1,1] = sqrt(1 - p)
     K[1][2,2] = sqrt(1 - p)
@@ -94,14 +94,16 @@ end
 export channel_depolarizing
 
 """
-    channel_amplitude_damping(rho::AbstractMatrix, γ::Real)
+    channel_amplitude_damping(γ::Real)
 
 Return the Kraus operator representation of the amplitude damping channel.
 It describes the effect of dissipation to an environment at zero temperature.
 `γ` is the probability of the system to decay to the ground state.
 """
 function channel_amplitude_damping(γ::Real)
-    return channel_amplitude_damping_generalized(1, γ)
+    E0 = [1 0; 0 sqrt(1 - γ)]
+    E1 = [0 sqrt(γ); 0 0]
+    return [E0, E1]
 end
 export channel_amplitude_damping
 
@@ -123,7 +125,7 @@ end
 export channel_amplitude_damping_generalized
 
 """
-    channel_phase_damping(rho::AbstractMatrix, λ::Real)
+    channel_phase_damping(λ::Real)
     
 Return the Kraus operator representation of the phase damping channel. It describes the photon scattering or electron perturbation. 'λ' is the probability being scattered or perturbed (without loss of energy).
 """
