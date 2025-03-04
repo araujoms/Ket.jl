@@ -108,12 +108,12 @@ If `T` is an integer type the game is unnormalized.
 Reference: Almeida et al., [arXiv:1003.3844](https://arxiv.org/abs/1003.3844)
 """
 function gyni(::Type{T}, n::Integer = 3) where {T}
-    G = zeros(T, 2 * ones(Int, 2 * n)...)
+    G = zeros(T, ntuple(_ -> 2, 2 * n))
 
     normalization = T <: Integer ? 1 : inv(T(2^(n - 1)))
 
     nmax = n % 2 == 1 ? n : n - 1
-    for x ∈ CartesianIndices(Tuple(2 * ones(Int, n)))
+    for x ∈ CartesianIndices(ntuple(_ -> 2, n))
         if sum(x.I[1:nmax] .- 1) % 2 == 0
             a = (x.I[2:n]..., x.I[1])
             G[a..., x] = normalization

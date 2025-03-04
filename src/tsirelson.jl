@@ -106,7 +106,7 @@ function _npa(functional::Array{T,N}, behaviour_operator, level; verbose, solver
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model), JuMP.value.(behaviour)
+    return JuMP.objective_value(model)::T, JuMP.value.(behaviour)::Array{T,N}
 end
 
 function _jump_muladd!(G, A::SA.SparseMatrixCSC, jumpvar)
@@ -244,7 +244,7 @@ function _tsirelson_bound_manual(
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model), JuMP.value.(behaviour)
+    return JuMP.objective_value(model)::T, JuMP.value.(behaviour)::Matrix{T}
 end
 
 function _tsirelson_bound_manual(FC::Matrix{T}, include_ab::Bool; verbose, dualize, solver) where {T<:AbstractFloat}
@@ -313,5 +313,5 @@ function _tsirelson_bound_manual(FC::Matrix{T}, include_ab::Bool; verbose, duali
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    return JuMP.objective_value(model), JuMP.value.(behaviour)
+    return JuMP.objective_value(model)::T, JuMP.value.(behaviour)::Matrix{T}
 end
