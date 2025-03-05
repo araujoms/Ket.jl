@@ -15,8 +15,8 @@ function relative_entropy(base::Real, ρ::AbstractMatrix{T}, σ::AbstractMatrix{
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ and σ must be square."))
     end
-    ρ_λ, ρ_U = eigen(ρ)
-    σ_λ, σ_U = eigen(σ)
+    ρ_λ, ρ_U = eigen(ρ)::Eigen{T,real(T),Matrix{T},Vector{real(T)}}
+    σ_λ, σ_U = eigen(σ)::Eigen{T,real(T),Matrix{T},Vector{real(T)}}
     if any(ρ_λ .< -_rtol(T)) || any(σ_λ .< -_rtol(T))
         throw(ArgumentError("ρ and σ must be positive semidefinite."))
     end
@@ -77,7 +77,7 @@ function entropy(base::Real, ρ::AbstractMatrix{T}) where {T<:Number}
     if size(ρ, 1) != size(ρ, 2)
         throw(ArgumentError("ρ must be square."))
     end
-    λ = eigvals(ρ)
+    λ = eigvals(ρ)::Vector{real(T)}
     if any(λ .< -_rtol(T))
         throw(ArgumentError("ρ must be positive semidefinite."))
     end
@@ -111,7 +111,7 @@ Computes the Shannon entropy -p log(p) - (1-p)log(1-p) of a probability `p` usin
 
 Reference: [Entropy (information theory)](https://en.wikipedia.org/wiki/Entropy_(information_theory))
 """
-binary_entropy(base::Real, p::Real) = p == 0 || p == 1 ? zero(p) : -p * log(base, p) - (1 - p) * log(base, 1 - p)
+binary_entropy(base::Real, p::Real) = p == 0 || p == 1 ? zero(float(p)) : -p * log(base, p) - (1 - p) * log(base, 1 - p)
 binary_entropy(p::Real) = binary_entropy(2, p)
 export binary_entropy
 

@@ -178,13 +178,13 @@ function _compute_value_assemblage(CG::Matrix{R}, scenario, ρxa, ρ_B, B) where
     ω = CG[1, 1] * one(JuMP.GenericAffExpr{R,JuMP.GenericVariableRef{R}})
     for a ∈ 1:oa-1, x ∈ 1:ia
         tempB = sum(CG[aind(a, x), bind(b, y)] * B[y][b] for b ∈ 1:ob-1 for y ∈ 1:ib)
-        ω += real(dot(tempB, ρxa[x][a]))
+        JuMP.add_to_expression!(ω, 1, real(dot(tempB, ρxa[x][a])))
     end
     for a ∈ 1:oa-1, x ∈ 1:ia
-        ω += CG[aind(a, x), 1] * real(tr(ρxa[x][a]))
+        JuMP.add_to_expression!(ω, CG[aind(a, x), 1], real(tr(ρxa[x][a])))
     end
     for b ∈ 1:ob-1, y ∈ 1:ib
-        ω += CG[1, bind(b, y)] * real(dot(B[y][b], ρ_B))
+        JuMP.add_to_expression!(ω, CG[1, bind(b, y)], real(dot(B[y][b], ρ_B)))
     end
     return ω
 end
