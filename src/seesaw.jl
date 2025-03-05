@@ -1,62 +1,3 @@
-function _seesaw(
-    CG::Matrix{T},
-    scenario::AbstractVecOrTuple{<:Integer},
-    d::Integer;
-    verbose = false,
-    solver = Hypatia.Optimizer{_solver_type(T)}
-) where {T<:Real}
-    R = _solver_type(T)
-    CG = R.(CG)
-    T2 = Complex{R}
-    minimumincrease = _rtol(R)
-    maxiter = 100
-
-    oa, ob, ia, ib = scenario
-
-    if oa == 2 && ob == 2
-        λ = T2.(sqrt.(random_probability(R, d)))
-        B = [random_povm(T2, d, 2)[1] for _ ∈ 1:ib]
-        A = [Hermitian(zeros(T2, d, d)) for _ ∈ 1:ia]
-        local ψ
-        ω = -R(Inf)
-        i = 1
-        while true
-            _optimize_alice_projectors!(CG, λ, A, B)
-            _optimize_bob_projectors!(CG, λ, A, B)
-            new_ω = _optimize_state!(CG, λ, A, B)
-            if new_ω - ω ≤ minimumincrease || i > maxiter
-                ω = new_ω
-                ψ = state_phiplus_ket(T2, d; coeff = λ)
-                A = [[A[x]] for x ∈ 1:ia] #rather inconvenient format
-                B = [[B[y]] for y ∈ 1:ib] #but consistent with the general case
-                break
-            end
-            ω = new_ω
-            i += 1
-        end
-    else
-        B = Vector{Measurement{T2}}(undef, ib)
-        for y ∈ 1:ib
-            B[y] = random_povm(T2, d, ob)[1:ob-1]
-        end
-        local ψ, A
-        ω = -R(Inf)
-        i = 1
-        while true
-            new_ω, ρxa, ρ_B = _optimize_alice_assemblage(CG, scenario, B; verbose, solver)
-            new_ω, B = _optimize_bob_povm(CG, scenario, ρxa, ρ_B; verbose, solver)
-            if new_ω - ω ≤ minimumincrease || i > maxiter
-                ω = new_ω
-                ψ, A = _decompose_assemblage(scenario, ρxa, ρ_B)
-                break
-            end
-            ω = new_ω
-            i += 1
-        end
-    end
-    return ω, ψ, A, B
-end
-
 """
     seesaw(
         CG::Matrix,
@@ -100,7 +41,83 @@ function seesaw(
 end
 export seesaw
 
-function _optimize_alice_assemblage(CG::Matrix{R}, scenario, B; verbose = false, solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
+function _seesaw(
+    CG::Matrix{T},
+    scenario::AbstractVecOrTuple{<:Integer},
+    d::Integer;
+    verbose = false,
+    solver = Hypatia.Optimizer{_solver_type(T)}
+) where {T<:Real}
+    R = _solver_type(T)
+    CG = R.(CG)
+    minimumincrease = _rtol(R)
+    maxiter = 100
+
+    if all(scenario[1:2] .== 2)
+        ω, ψ, A, B = _seesaw_eigenvalue(CG, d, minimumincrease, maxiter)
+    else
+        ω, ψ, A, B = _seesaw_sdp(CG, scenario, d, minimumincrease, maxiter; verbose, solver)
+    end
+    return ω, ψ, A, B
+end
+
+function _seesaw_eigenvalue(CG::Matrix{R}, d, minimumincrease, maxiter) where {R<:AbstractFloat}
+    ia, ib = size(CG) .- 1
+    T2 = Complex{R}
+    λ = T2.(sqrt.(random_probability(R, d)))
+    B = [random_povm(T2, d, 2)[1] for _ ∈ 1:ib]::Measurement{T2}
+    A = [Hermitian(zeros(T2, d, d)) for _ ∈ 1:ia]::Measurement{T2}
+    local ψ, Aout, Bout
+    ω = -R(Inf)
+    i = 1
+    while true
+        _optimize_alice_projectors!(CG, λ, A, B)
+        _optimize_bob_projectors!(CG, λ, A, B)
+        new_ω = _optimize_state!(CG, λ, A, B)
+        if new_ω - ω ≤ minimumincrease || i > maxiter
+            ω = new_ω
+            ψ = state_phiplus_ket(T2, d; coeff = λ)
+            Aout = [[A[x]] for x ∈ 1:ia] #rather inconvenient format
+            Bout = [[B[y]] for y ∈ 1:ib] #but consistent with the general case
+            break
+        end
+        ω = new_ω
+        i += 1
+    end
+    return ω, ψ, Aout, Bout
+end
+
+function _seesaw_sdp(CG::Matrix{R}, scenario, d, minimumincrease, maxiter; verbose, solver) where {R<:AbstractFloat}
+    oa, ob, ia, ib = scenario
+    T2 = Complex{R}
+    B = Vector{Measurement{T2}}(undef, ib)
+    for y ∈ 1:ib
+        B[y] = random_povm(T2, d, ob)[1:ob-1]
+    end
+    local ψ, A
+    ω = -R(Inf)
+    i = 1
+    while true
+        new_ω, ρxa, ρ_B = _optimize_alice_assemblage(CG, scenario, B; verbose, solver)
+        new_ω, B = _optimize_bob_povm(CG, scenario, ρxa, ρ_B; verbose, solver)
+        if new_ω - ω ≤ minimumincrease || i > maxiter
+            ω = new_ω
+            ψ, A = _decompose_assemblage(scenario, ρxa, ρ_B)
+            break
+        end
+        ω = new_ω
+        i += 1
+    end
+    return ω, ψ, A, B
+end
+
+function _optimize_alice_assemblage(
+    CG::Matrix{R},
+    scenario,
+    B;
+    verbose = false,
+    solver = Hypatia.Optimizer{R}
+) where {R<:AbstractFloat}
     oa, ob, ia, ib = scenario
     d = size(B[1][1], 1)
 
@@ -120,11 +137,19 @@ function _optimize_alice_assemblage(CG::Matrix{R}, scenario, B; verbose = false,
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:oa-1] for x ∈ 1:ia]
-    return JuMP.value(ω), value_ρxa, Hermitian(JuMP.value.(ρ_B))
+    value_ρxa = [[Hermitian(JuMP.value.(ρxa[x][a])) for a ∈ 1:oa-1] for x ∈ 1:ia]::typeof(B)
+    value_ρB = Hermitian(JuMP.value.(ρ_B))::typeof(B[1][1])
+    return JuMP.value(ω)::R, value_ρxa, value_ρB
 end
 
-function _optimize_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; verbose = false, solver = Hypatia.Optimizer{R}) where {R<:AbstractFloat}
+function _optimize_bob_povm(
+    CG::Matrix{R},
+    scenario,
+    ρxa,
+    ρ_B;
+    verbose = false,
+    solver = Hypatia.Optimizer{R}
+) where {R<:AbstractFloat}
     oa, ob, ia, ib = scenario
     d = size(ρ_B, 1)
 
@@ -141,8 +166,8 @@ function _optimize_bob_povm(CG::Matrix{R}, scenario, ρxa, ρ_B; verbose = false
     !verbose && JuMP.set_silent(model)
     JuMP.optimize!(model)
     JuMP.is_solved_and_feasible(model) || throw(error(JuMP.raw_status(model)))
-    B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:ob-1] for y ∈ 1:ib]
-    return JuMP.value(ω), B
+    value_B = [[Hermitian(JuMP.value.(B[y][b])) for b ∈ 1:ob-1] for y ∈ 1:ib]::typeof(ρxa)
+    return JuMP.value(ω)::R, value_B
 end
 
 function _compute_value_assemblage(CG::Matrix{R}, scenario, ρxa, ρ_B, B) where {R<:AbstractFloat}
@@ -172,7 +197,9 @@ function _decompose_assemblage(scenario, ρxa, ρ_B::AbstractMatrix{T}) where {T
     λ, U = eigen(ρ_B)
     ψ = zeros(T, d^2)
     for i ∈ 1:d
-        @views ψ .+= sqrt(λ[i]) * kron(conj(U[:, i]), U[:, i])
+        if λ[i] ≥ _rtol(T)
+            @views ψ .+= sqrt(λ[i]) * kron(conj(U[:, i]), U[:, i])
+        end
     end
     invrootλ = map(x -> x ≥ _rtol(T) ? 1 / sqrt(x) : zero(x), λ)
     W = U * Diagonal(invrootλ) * U'
@@ -213,7 +240,7 @@ function _positive_projection!(M::AbstractMatrix{T}) where {T}
     fill!(M, 0)
     for i ∈ 1:length(λ)
         if λ[i] > _rtol(T)
-            @views M.data .+= ketbra(U[:, i])
+            @views M.data .+= ketbra(U[:, i]) #TODO: use syrk!
         end
     end
     return M
